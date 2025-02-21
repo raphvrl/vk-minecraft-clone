@@ -1,0 +1,49 @@
+# Build directories
+build/
+bin/
+out/
+Debug/
+Release/
+x64/
+x86/
+
+# IDEs and editors
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+*.suo
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.pdb
+
+# Vulkan specific
+*.spv
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+*.cmake
+!CMakeLists.txt
+
+# Dependencies
+extern/
+third-party/
+vendor/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
