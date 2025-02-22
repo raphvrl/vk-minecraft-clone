@@ -15,7 +15,7 @@ A Minecraft-like game built with Vulkan.
 
 4. Build the project:
 ```bash
-make clean
+git submodule update --init --recursive
 make all
 ```
 
