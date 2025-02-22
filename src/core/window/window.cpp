@@ -28,6 +28,14 @@ void Window::init(u32 width, u32 height, const std::string &title)
         glfwTerminate();
         throw std::runtime_error("Failed to create window");
     }
+
+    m_keys.fill(false);
+    m_mouseButtons.fill(false);
+
+    glfwSetWindowUserPointer(m_handle, this);
+
+    glfwSetKeyCallback(m_handle, keyCallback);
+    glfwSetMouseButtonCallback(m_handle, mouseButtonCallback);
 }
 
 void Window::destroy()
@@ -39,6 +47,54 @@ void Window::destroy()
 void Window::update()
 {
     glfwPollEvents();
+
+    double x, y;
+    glfwGetCursorPos(m_handle, &x, &y);
+
+    m_mouseRel = glm::vec2(x, y) - m_mousePos;
+    m_mousePos = glm::vec2(x, y);
+
+    f32 currentFrame = static_cast<f32>(glfwGetTime());
+    m_deltaTime = currentFrame - m_lastFrame;
+    m_lastFrame = currentFrame;
+}
+
+void Window::keyCallback(
+    GLFWwindow *window,
+    int key,
+    int scancode,
+    int action,
+    int mods
+)
+{
+    UNUSED(scancode);
+    UNUSED(mods);
+
+    Window *win = static_cast<Window *>(glfwGetWindowUserPointer(window));
+
+    if (action == GLFW_PRESS) {
+        win->m_keys[key] = true;
+    } else if (action == GLFW_RELEASE) {
+        win->m_keys[key] = false;
+    }
+}
+
+void Window::mouseButtonCallback(
+    GLFWwindow *window,
+    int button,
+    int action,
+    int mods
+)
+{
+    UNUSED(mods);
+
+    Window *win = static_cast<Window *>(glfwGetWindowUserPointer(window));
+
+    if (action == GLFW_PRESS) {
+        win->m_mouseButtons[button] = true;
+    } else if (action == GLFW_RELEASE) {
+        win->m_mouseButtons[button] = false;
+    }
 }
 
 } // namespace core

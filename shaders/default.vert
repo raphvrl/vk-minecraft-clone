@@ -14,7 +14,11 @@ vec3 colors[3] = vec3[3](
 
 layout (location = 0) out vec3 fragColor;
 
+layout(push_constant) uniform PushConstants {
+    mat4 mvp;
+} camera;
+
 void main() {
     fragColor = colors[gl_VertexIndex];
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+    gl_Position = camera.mvp * vec4(positions[gl_VertexIndex], 0.0, 1.0);
 }

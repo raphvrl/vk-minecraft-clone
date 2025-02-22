@@ -17,6 +17,23 @@ Pipeline::Builder &Pipeline::Builder::setShader(
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::addPushConstant(
+    ShaderType type,
+    u32 offset,
+    u32 size
+)
+{
+    VkPushConstantRange pushConstantRange = {};
+    pushConstantRange.stageFlags = type == ShaderType::VERTEX
+        ? VK_SHADER_STAGE_VERTEX_BIT
+        : VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = offset;
+    pushConstantRange.size = size;
+
+    m_pushConstants.push_back(pushConstantRange);
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -117,6 +134,10 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.pushConstantRangeCount =  static_cast<u32>(
+        m_pushConstants.size()
+    );
+    pipelineLayoutInfo.pPushConstantRanges = m_pushConstants.data();
 
     VkPipelineLayout pipelineLayout;
     VkResult res = vkCreatePipelineLayout(
@@ -221,6 +242,20 @@ void Pipeline::bind()
         m_ctx->getCommandBuffer(),
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         m_handle
+    );
+}
+
+void Pipeline::push(ShaderType type, u32 offset, u32 size, const void *data)
+{
+    vkCmdPushConstants(
+        m_ctx->getCommandBuffer(),
+        m_layout,
+        type == ShaderType::VERTEX
+            ? VK_SHADER_STAGE_VERTEX_BIT
+            : VK_SHADER_STAGE_FRAGMENT_BIT,
+        offset,
+        size,
+        data
     );
 }
 

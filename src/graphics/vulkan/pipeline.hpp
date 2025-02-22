@@ -20,6 +20,21 @@ enum class ShaderType
     GEOMETRY
 };
 
+struct DescriptorLayout
+{
+    u32 binding;
+    VkDescriptorType type;
+    u32 count;
+    VkShaderStageFlags stage;
+};
+
+struct UniformBuffer
+{
+    VkBuffer buffer;
+    VmaAllocation allocation;
+    VkDeviceSize size;
+};
+
 class Pipeline
 {
 
@@ -31,6 +46,7 @@ public:
         Builder(VulkanCtx &ctx);
 
         Builder &setShader(ShaderType type, const std::string &path);
+        Builder &addPushConstant(ShaderType type, u32 offset, u32 size);
 
         Pipeline build();
 
@@ -38,6 +54,7 @@ public:
         VulkanCtx& m_ctx;
 
         std::map<int, std::string> m_shaderPaths;
+        std::vector<VkPushConstantRange> m_pushConstants;
 
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);
@@ -48,6 +65,7 @@ public:
     void destroy();
 
     void bind();
+    void push(ShaderType type, u32 offset, u32 size, const void *data);
 
 private:
     friend class Builder;
