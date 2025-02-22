@@ -25,6 +25,7 @@ make all
 - [x] Window management with GLFW
 - [x] GLSL shader support
 - [x] Console utilities
+- [x] First triangle rendering
 - [ ] More coming soon...
 
 ## Development
