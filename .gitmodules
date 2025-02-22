@@ -7,3 +7,6 @@
 [submodule "lib/vma"]
 	path = lib/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "lib/tomplusplus"]
+	path = lib/tomplusplus
+	url = https://github.com/marzer/tomlplusplus.git

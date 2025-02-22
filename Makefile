@@ -56,6 +56,11 @@ GLM_DIR = $(LIB_DIR)/glm
 
 CXXFLAGS += -I$(GLM_DIR)
 
+TOMPLUSPLUS_DIR = $(LIB_DIR)/tomplusplus
+TOMPLUSPLUS_INC = $(TOMPLUSPLUS_DIR)/include
+
+CXXFLAGS += -I$(TOMPLUSPLUS_INC)
+
 VULKAN_INC = $(VULKAN_SDK)/Include
 VULKAN_LIB = $(VULKAN_SDK)/Lib
 
@@ -84,7 +89,7 @@ endif
 
 LDFLAGS += -static-libgcc -static-libstdc++ -static
 
-all: glfw shaders $(TARGET)
+all: glfw libconfig shaders $(TARGET)
 
 $(TARGET): $(OBJ)
 	@$(PRINT) "Linking $@"
@@ -128,6 +133,7 @@ $(GLFW_STAMP):
 clean-glfw:
 	@$(PRINT) "Cleaning GLFW"
 	@$(RM) $(GLFW_BIN)
+
 clean:
 	@$(PRINT) "Cleaning"
 	@$(RM) $(OBJ) $(DEP) $(TARGET)

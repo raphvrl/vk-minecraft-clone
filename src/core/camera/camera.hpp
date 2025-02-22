@@ -18,6 +18,7 @@ public:
     Camera &operator=(const Camera &) = delete;
 
     void update();
+    void updateProj(f32 aspect);
 
     void moveForward(f32 speed);
     void moveBackward(f32 speed);

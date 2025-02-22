@@ -36,6 +36,12 @@ void Camera::update()
     m_view = glm::lookAt(m_pos, m_pos + m_front, m_up);
 }
 
+void Camera::updateProj(f32 aspect)
+{
+    m_aspect = aspect;
+    m_proj = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
+}
+
 void Camera::moveForward(f32 speed)
 {
     m_pos += m_front * speed;
