@@ -27,6 +27,8 @@ public:
     void moveUp(f32 speed);
     void moveDown(f32 speed);
 
+    void rotate(f32 xoffset, f32 yoffset);
+
     glm::mat4 getView() { return m_view; }
     glm::mat4 getProj() { return m_proj; }
 

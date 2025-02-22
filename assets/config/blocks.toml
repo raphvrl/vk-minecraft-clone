@@ -1,0 +1,18 @@
+[atlas]
+size = 256
+tile_size = 16
+
+[blocks]
+	[blocks.stone]
+	id = 1
+	textures.all = { x = 0, y = 0 }
+
+	[blocks.grass]
+	id = 2
+	textures.top = { x = 1, y = 0 }
+	textures.bottom = { x = 1, y = 0 }
+	textures.sides = { x = 1, y = 0 }
+
+	[blocks.dirt]
+	id = 3
+	textures.all = { x = 1, y = 0 }

@@ -2,8 +2,11 @@
 #include "utils/drawer/box_drawer.hpp"
 #include "utils/console/console.hpp"
 #include "core/camera/camera.hpp"
-#include "graphics/vulkan/vulkan_ctx.hpp"
-#include "graphics/vulkan/pipeline.hpp"
+#include "graphics/vulkan_ctx.hpp"
+#include "graphics/pipeline.hpp"
+#include "graphics/texture.hpp"
+#include "world/chunk_mesh.hpp"
+#include "world/block_registry.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -20,28 +23,72 @@ int main()
     #endif
 
     core::Window window;
-
-    window.init(1280, 720, "Vulkan");
+    
+    window.init(1280, 720, "Daskans ZIZI");
+    window.setCursorVisible(false);
 
     gfx::VulkanCtx ctx;
     ctx.init(window);
+
+    auto bindingDesc = wld::ChunkMesh::Vertex::getBindingDescription();
+    auto attrDesc = wld::ChunkMesh::Vertex::getAttributeDescriptions();
 
     gfx::Pipeline pipeline = gfx::Pipeline::Builder(ctx)
         .setShader(gfx::ShaderType::VERTEX, "default.vert.spv")
         .setShader(gfx::ShaderType::FRAGMENT, "default.frag.spv")
         .addPushConstant(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4))
+        .setVertexInput(
+            &bindingDesc,
+            attrDesc.data(),
+            attrDesc.size()
+        )
+        .addDescriptorBinding({
+            .binding = 0,
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
+        })
         .build();
 
     core::Camera cam;
 
+    wld::Chunk chunk;
+    for (u32 y = 0; y < wld::Chunk::CHUNK_HEIGHT; y++) {
+        for (u32 z = 0; z < wld::Chunk::CHUNK_SIZE; z++) {
+            for (u32 x = 0; x < wld::Chunk::CHUNK_SIZE; x++) {
+                if (y < 4) {
+                    chunk.setBlock(x, y, z, wld::BlockType::STONE);
+                } else {
+                    chunk.setBlock(x, y, z, wld::BlockType::AIR);
+                }
+            }
+        }
+    }
+    
+    wld::BlockRegistry blockRegistry;
+    blockRegistry.load("assets/config/blocks.toml");
+
+    wld::ChunkMesh chunkMesh;
+    chunkMesh.init(ctx, blockRegistry);
+    chunkMesh.generateMesh(chunk);
+
     glm::mat4 model(1.0f);
+
+    gfx::Texture texture;
+    texture.init(ctx, "blocks.png");
+
+    VkDescriptorSet cobblestone = pipeline.createDescriptorSet(texture);
 
     while (window.isOpen()) {
         window.update();
 
         f32 dt = window.getDeltaTime();
         
-        f32 speed = 2.5f * dt;
+        f32 speed = 10.0f * dt;
+
+        if (window.isKeyPressed(core::Key::ESCAPE)) {
+            break;
+        }
 
         if (window.isKeyPressed(core::Key::W)) {
             cam.moveForward(speed);
@@ -67,6 +114,9 @@ int main()
             cam.moveDown(speed);
         }
 
+        auto mouseRel = window.getMouseRel();
+        cam.rotate(mouseRel.x, mouseRel.y);
+
         cam.update();
 
         if (!ctx.beginFrame()) {
@@ -79,14 +129,18 @@ int main()
         glm::mat4 mvp = proj * view * model;
 
         pipeline.bind();
+        pipeline.bindDescriptorSet(cobblestone);
 
         pipeline.push(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4), &mvp);
 
-        vkCmdDraw(ctx.getCommandBuffer(), 3, 1, 0, 0);
+        chunkMesh.draw();
 
         ctx.endFrame();
     }
 
+    chunkMesh.destroy();
+    
+    texture.destroy();
     pipeline.destroy();
 
     ctx.destroy();

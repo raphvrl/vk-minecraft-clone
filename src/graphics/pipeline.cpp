@@ -34,6 +34,32 @@ Pipeline::Builder &Pipeline::Builder::addPushConstant(
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setVertexInput(
+    const VkVertexInputBindingDescription *bindingDescription,
+    const VkVertexInputAttributeDescription *attributeDescriptions,
+    u32 attributeCount
+)
+{
+    m_bindingDescription = *bindingDescription;
+
+    m_attributeDescriptions.clear();
+    m_attributeDescriptions.resize(attributeCount);
+
+    for (u32 i = 0; i < attributeCount; i++) {
+        m_attributeDescriptions[i] = attributeDescriptions[i];
+    }
+
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::addDescriptorBinding(
+    const DescriptorLayout &layout
+)
+{
+    m_descriptorLayouts.push_back(layout);
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -72,6 +98,10 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &m_bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(m_attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = m_attributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -132,15 +162,85 @@ Pipeline Pipeline::Builder::build()
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+    VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.minDepthBounds = 0.0f;
+    depthStencil.maxDepthBounds = 1.0f;
+    depthStencil.stencilTestEnable = VK_FALSE;
+    depthStencil.front = {};
+    depthStencil.back = {};
+
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+    bindings.reserve(m_descriptorLayouts.size());
+
+    for (const auto &layout : m_descriptorLayouts) {
+        VkDescriptorSetLayoutBinding binding = {};
+        binding.binding = layout.binding;
+        binding.descriptorType = layout.type;
+        binding.descriptorCount = layout.count;
+        binding.stageFlags = layout.stage;
+        binding.pImmutableSamplers = nullptr;
+
+        bindings.push_back(binding);
+    }
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = static_cast<u32>(bindings.size());
+    layoutInfo.pBindings = bindings.data();
+
+    VkDescriptorSetLayout descriptorLayout;
+    VkResult res = vkCreateDescriptorSetLayout(
+        m_ctx.getDevice(),
+        &layoutInfo,
+        nullptr,
+        &descriptorLayout
+    );
+
+    VulkanCtx::check(res, "Failed to create descriptor set layout!");
+
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    poolSizes.reserve(m_descriptorLayouts.size());
+
+    for (const auto &layout : m_descriptorLayouts) {
+        VkDescriptorPoolSize poolSize = {};
+        poolSize.type = layout.type;
+        poolSize.descriptorCount = layout.count;
+
+        poolSizes.push_back(poolSize);
+    }
+
+    VkDescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<u32>(poolSizes.size());
+    poolInfo.pPoolSizes = poolSizes.data();
+    poolInfo.maxSets = 1;
+
+    VkDescriptorPool descriptorPool;
+    res = vkCreateDescriptorPool(
+        m_ctx.getDevice(),
+        &poolInfo,
+        nullptr,
+        &descriptorPool
+    );
+
+    VulkanCtx::check(res, "Failed to create descriptor pool!");
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.pushConstantRangeCount =  static_cast<u32>(
         m_pushConstants.size()
     );
     pipelineLayoutInfo.pPushConstantRanges = m_pushConstants.data();
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorLayout;
 
     VkPipelineLayout pipelineLayout;
-    VkResult res = vkCreatePipelineLayout(
+    res = vkCreatePipelineLayout(
         m_ctx.getDevice(),
         &pipelineLayoutInfo,
         nullptr,
@@ -162,8 +262,8 @@ Pipeline Pipeline::Builder::build()
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.renderPass = m_ctx.getRenderPass();
     pipelineInfo.pDynamicState = &dynamicState;
+    pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.subpass = 0;
-
 
     VkPipeline pipeline;
     res = vkCreateGraphicsPipelines(
@@ -184,6 +284,8 @@ Pipeline Pipeline::Builder::build()
     PipelineObj.m_ctx = &m_ctx;
     PipelineObj.m_handle = pipeline;
     PipelineObj.m_layout = pipelineLayout;
+    PipelineObj.m_descriptor = descriptorLayout;
+    PipelineObj.m_descriptorPool = descriptorPool;
 
     return PipelineObj;
 }
@@ -232,8 +334,68 @@ void Pipeline::destroy()
 {
     vkDeviceWaitIdle(m_ctx->getDevice());
 
+    vkDestroyDescriptorPool(m_ctx->getDevice(), m_descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(m_ctx->getDevice(), m_descriptor, nullptr);
     vkDestroyPipeline(m_ctx->getDevice(), m_handle, nullptr);
     vkDestroyPipelineLayout(m_ctx->getDevice(), m_layout, nullptr);
+}
+
+VkDescriptorSet Pipeline::createDescriptorSet(Texture &texture)
+{
+    VkDescriptorSetLayout layouts[] = {m_descriptor};
+
+    VkDescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = m_descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = layouts;
+
+    VkDescriptorSet descriptorSet;
+    VkResult res = vkAllocateDescriptorSets(
+        m_ctx->getDevice(),
+        &allocInfo,
+        &descriptorSet
+    );
+
+    VulkanCtx::check(res, "Failed to allocate descriptor set!");
+
+    VkDescriptorImageInfo imageInfo = {};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = texture.getImageView();
+    imageInfo.sampler = texture.getSampler();
+
+    VkWriteDescriptorSet descriptorWrite = {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(
+        m_ctx->getDevice(),
+        1,
+        &descriptorWrite,
+        0,
+        nullptr
+    );
+
+    return descriptorSet;
+}
+
+void Pipeline::bindDescriptorSet(VkDescriptorSet set)
+{
+    vkCmdBindDescriptorSets(
+        m_ctx->getCommandBuffer(),
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        m_layout,
+        0,
+        1,
+        &set,
+        0,
+        nullptr
+    );
 }
 
 void Pipeline::bind()

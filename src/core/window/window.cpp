@@ -36,6 +36,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
 
     glfwSetKeyCallback(m_handle, keyCallback);
     glfwSetMouseButtonCallback(m_handle, mouseButtonCallback);
+    glfwSetCursorPosCallback(m_handle, mousePosCallback);
 }
 
 void Window::destroy()
@@ -46,17 +47,22 @@ void Window::destroy()
 
 void Window::update()
 {
+    m_mouseRel = glm::vec2(0.0f);
+
     glfwPollEvents();
-
-    double x, y;
-    glfwGetCursorPos(m_handle, &x, &y);
-
-    m_mouseRel = glm::vec2(x, y) - m_mousePos;
-    m_mousePos = glm::vec2(x, y);
 
     f32 currentFrame = static_cast<f32>(glfwGetTime());
     m_deltaTime = currentFrame - m_lastFrame;
     m_lastFrame = currentFrame;
+}
+
+void Window::setCursorVisible(bool visible)
+{
+    glfwSetInputMode(
+        m_handle,
+        GLFW_CURSOR,
+        visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED
+    );
 }
 
 void Window::keyCallback(
@@ -95,6 +101,27 @@ void Window::mouseButtonCallback(
     } else if (action == GLFW_RELEASE) {
         win->m_mouseButtons[button] = false;
     }
+}
+
+void Window::mousePosCallback(
+    GLFWwindow *window,
+    double x,
+    double y
+)
+{
+    Window *win = static_cast<Window *>(glfwGetWindowUserPointer(window));
+
+    if (win->m_firstMouse) {
+        win->m_mousePos = glm::vec2(x, y);
+        win->m_firstMouse = false;
+    }
+
+    win->m_mouseRel = glm::vec2(
+        x - win->m_mousePos.x,
+        win->m_mousePos.y - y
+    );
+
+    win->m_mousePos = glm::vec2(x, y);
 }
 
 } // namespace core

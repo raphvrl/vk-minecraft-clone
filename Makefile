@@ -61,6 +61,10 @@ TOMPLUSPLUS_INC = $(TOMPLUSPLUS_DIR)/include
 
 CXXFLAGS += -I$(TOMPLUSPLUS_INC)
 
+STB_DIR = $(LIB_DIR)/stb
+
+CXXFLAGS += -I$(STB_DIR)
+
 VULKAN_INC = $(VULKAN_SDK)/Include
 VULKAN_LIB = $(VULKAN_SDK)/Lib
 
@@ -72,8 +76,8 @@ CXXFLAGS += -I$(VMA_INC)
 CXXFLAGS += -I$(VULKAN_INC)
 LDFLAGS += -L$(VULKAN_LIB) -lvulkan-1
 
-SHADERS_DIR = shaders
-SHADERS_BIN = $(BIN_DIR)/shaders
+SHADERS_DIR = $(SRC_DIR)/shaders
+SHADERS_BIN = assets/shaders
 
 SHADER_SRC = $(shell find $(SHADERS_DIR) -name "*.vert") \
 			 $(shell find $(SHADERS_DIR) -name "*.frag")
@@ -89,7 +93,7 @@ endif
 
 LDFLAGS += -static-libgcc -static-libstdc++ -static
 
-all: glfw libconfig shaders $(TARGET)
+all: glfw shaders $(TARGET)
 
 $(TARGET): $(OBJ)
 	@$(PRINT) "Linking $@"

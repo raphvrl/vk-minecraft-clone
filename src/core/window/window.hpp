@@ -121,6 +121,10 @@ public:
 
     void update();
 
+    void close() { glfwSetWindowShouldClose(m_handle, GLFW_TRUE); }
+
+    void setCursorVisible(bool visible);
+
     bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
 
     bool isKeyPressed(Key k) const { return m_keys[static_cast<int>(k)]; }
@@ -152,6 +156,7 @@ private:
     
     glm::vec2 m_mousePos;
     glm::vec2 m_mouseRel;
+    bool m_firstMouse = true;
 
     static void keyCallback(
         GLFWwindow *window,
@@ -166,6 +171,12 @@ private:
         int button,
         int action,
         int mods
+    );
+
+    static void mousePosCallback(
+        GLFWwindow *window,
+        double x,
+        double y
     );
 };
 

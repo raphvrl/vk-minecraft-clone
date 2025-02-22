@@ -32,6 +32,42 @@ public:
     bool beginFrame();
     void endFrame();
 
+    // allocator
+    void createBuffer(
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VmaMemoryUsage memoryUsage,
+        VkBuffer &buffer,
+        VmaAllocation &allocation
+    );
+
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    void createImage(
+        u32 width,
+        u32 height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VmaMemoryUsage memoryUsage,
+        VkImage &image,
+        VmaAllocation &allocation
+    );
+
+    void transitionImageLayout(
+        VkImage image,
+        VkFormat format,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout
+    );
+
+    void copyBufferToImage(
+        VkBuffer buffer,
+        VkImage image,
+        u32 width,
+        u32 height
+    );
+
     // getters
     VkInstance getInstance() { return m_instance; }
     VkDevice getDevice() { return m_device; }
@@ -46,8 +82,13 @@ public:
     VkRenderPass getRenderPass() { return m_renderPass; }
     std::vector<VkFramebuffer> getFramebuffers() { return m_framebuffers; }
     VkCommandPool getCommandPool() { return m_commandPool; }
-    VkCommandBuffer getCommandBuffer() { return m_commandBuffers[m_imageIndex]; }
-    VkCommandBuffer getCommandBuffer(u32 index) { return m_commandBuffers[index]; }
+    VkCommandBuffer getCommandBuffer() {
+        return m_commandBuffers[m_imageIndex];
+    }
+    VkCommandBuffer getCommandBuffer(u32 index) {
+        return m_commandBuffers[index];
+    }
+    VmaAllocator getAllocator() { return m_allocator; }
 
     // utils
     static void check(VkResult res, const std::string &msg);
@@ -77,11 +118,16 @@ private:
     VkDevice m_device;
     VkQueue m_graphicsQueue;
     VkQueue m_presentQueue;
+    VmaAllocator m_allocator;
     VkSwapchainKHR m_swapChain;
     std::vector<VkImage> m_images;
     VkFormat m_swapChainImageFormat;
     VkExtent2D m_swapChainExtent;
     std::vector<VkImageView> m_imageViews;
+    VkImage m_depthImage;
+    VmaAllocation m_depthImageAllocation;
+    VkImageView m_depthImageView;
+    VkFormat m_depthFormat;
     VkRenderPass m_renderPass;
     std::vector<VkFramebuffer> m_framebuffers;
     VkCommandPool m_commandPool;
@@ -89,7 +135,6 @@ private:
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
-    VmaAllocator m_allocator;
 
     // build
     void createInstance();
@@ -97,14 +142,15 @@ private:
     void createSurface();
     void pickPhysicalDevice();
     void createLogicalDevice();
+    void createAllocator();
     void createSwapChain();
     void createImageViews();
+    void createDepthResources();
     void createRenderPass();
     void createFramebuffers();
     void createCommandPool();
     void createCommandBuffers();
     void createSyncObjects();
-    void createAllocator();
 
     // instance
     std::vector<const char *> getRequiredExtensions();
@@ -154,7 +200,19 @@ private:
         const std::vector<VkPresentModeKHR> &availablePresentModes
     );
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+
+    // depth
+    VkFormat findDepthFormat();
+    VkFormat findSupportedFormat(
+        const std::vector<VkFormat> &candidates,
+        VkImageTiling tiling,
+        VkFormatFeatureFlags features
+    );
     
+    // allocator
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
     // variables
     const u32 FRAME_MAX_FRAMES_IN_FLIGHT = 2;
     u32 m_currentFrame = 0;
@@ -163,6 +221,7 @@ private:
     // utils
     void recreateSwapChain();
     void cleanupSwapChain();
+    bool hasStencilComponent(VkFormat format);
 };
 
 } // namespace gfx
