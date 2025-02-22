@@ -1,6 +1,8 @@
 #include "core/window/window.hpp"
 #include "utils/drawer/box_drawer.hpp"
 #include "utils/console/console.hpp"
+#include "graphics/vulkan/vulkan_ctx.hpp"
+#include "graphics/vulkan/pipeline.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -20,10 +22,31 @@ int main()
 
     window.init(800, 600, "Vulkan");
 
+    gfx::VulkanCtx ctx;
+    ctx.init(window);
+
+    gfx::Pipeline pipeline = gfx::Pipeline::Builder(ctx)
+        .setShader(gfx::ShaderType::VERTEX, "bin/shaders/default.vert.spv")
+        .setShader(gfx::ShaderType::FRAGMENT, "bin/shaders/default.frag.spv")
+        .build();
+
     while (window.isOpen()) {
         window.update();
+
+        if (!ctx.beginFrame()) {
+            continue;
+        }
+
+        pipeline.bind();
+
+        vkCmdDraw(ctx.getCommandBuffer(), 3, 1, 0, 0);
+
+        ctx.endFrame();
     }
 
+    pipeline.destroy();
+
+    ctx.destroy();
     window.destroy();
 
     return 0;

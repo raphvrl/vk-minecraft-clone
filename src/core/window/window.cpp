@@ -13,7 +13,10 @@ void Window::init(u32 width, u32 height, const std::string &title)
         throw std::runtime_error("Failed to initialize GLFW");
     }
 
-    m_window = glfwCreateWindow(
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    m_handle = glfwCreateWindow(
         static_cast<int>(m_width),
         static_cast<int>(m_height),
         m_title.c_str(),
@@ -21,10 +24,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
         nullptr
     );
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-    if (!m_window) {
+    if (!m_handle) {
         glfwTerminate();
         throw std::runtime_error("Failed to create window");
     }
@@ -32,7 +32,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
 
 void Window::destroy()
 {
-    glfwDestroyWindow(m_window);
+    glfwDestroyWindow(m_handle);
     glfwTerminate();
 }
 

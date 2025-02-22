@@ -27,13 +27,15 @@ public:
 
     void update();
 
-    bool isOpen() const { return !glfwWindowShouldClose(m_window); }
+    bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
+
+    GLFWwindow *get() const { return m_handle; }
 
     u32 getWidth() const { return m_width; }
     u32 getHeight() const { return m_height; }
 
 private:
-    GLFWwindow *m_window;
+    GLFWwindow *m_handle;
     u32 m_width;
     u32 m_height;
     std::string m_title;

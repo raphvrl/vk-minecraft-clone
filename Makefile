@@ -59,6 +59,11 @@ CXXFLAGS += -I$(GLM_DIR)
 VULKAN_INC = $(VULKAN_SDK)/Include
 VULKAN_LIB = $(VULKAN_SDK)/Lib
 
+VMA_DIR = $(LIB_DIR)/vma
+VMA_INC = $(VMA_DIR)/include
+
+CXXFLAGS += -I$(VMA_INC)
+
 CXXFLAGS += -I$(VULKAN_INC)
 LDFLAGS += -L$(VULKAN_LIB) -lvulkan-1
 
