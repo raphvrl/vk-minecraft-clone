@@ -14,6 +14,36 @@
 #include <locale.h>
 #endif
 
+bool checkVulkanRuntime()
+{
+    VkApplicationInfo appInfo{};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+
+    VkInstanceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+
+    VkInstance instance;
+    VkResult res = vkCreateInstance(&createInfo, nullptr, &instance);
+
+    if (res != VK_SUCCESS) {
+        const char* msg = 
+            "Vulkan runtime not found!\n"
+            "Please download and install from:\n"
+            "https://vulkan.lunarg.com/sdk/home";
+#ifdef _WIN32
+        MessageBoxA(nullptr, msg, "Error", MB_ICONERROR | MB_OK);
+#else
+        printf("%s\n", msg);
+#endif
+        return false;
+    }
+
+    vkDestroyInstance(instance, nullptr);
+    return true;
+}
+
 int main()
 {
     #ifdef _WIN32
@@ -21,6 +51,10 @@ int main()
     #else
         setlocale(LC_ALL, ".UTF-8");
     #endif
+
+    if (!checkVulkanRuntime()) {
+        return 1;
+    }
 
     core::Window window;
     
