@@ -20,14 +20,14 @@ int main()
 
     core::Window window;
 
-    window.init(800, 600, "Vulkan");
+    window.init(1280, 720, "Vulkan");
 
     gfx::VulkanCtx ctx;
     ctx.init(window);
 
     gfx::Pipeline pipeline = gfx::Pipeline::Builder(ctx)
-        .setShader(gfx::ShaderType::VERTEX, "bin/shaders/default.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "bin/shaders/default.frag.spv")
+        .setShader(gfx::ShaderType::VERTEX, "default.vert.spv")
+        .setShader(gfx::ShaderType::FRAGMENT, "default.frag.spv")
         .build();
 
     while (window.isOpen()) {

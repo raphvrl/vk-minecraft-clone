@@ -169,7 +169,9 @@ Pipeline Pipeline::Builder::build()
 
 std::vector<char> Pipeline::Builder::readFile(const std::string &path)
 {
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
+    std::string fullPath = std::string(SHADER_PATH) + path;
+
+    std::ifstream file(fullPath, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file: " + path);

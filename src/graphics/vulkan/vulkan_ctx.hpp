@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include <string>
 #include <vector>
@@ -88,6 +89,7 @@ private:
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
+    VmaAllocator m_allocator;
 
     // build
     void createInstance();
@@ -102,6 +104,7 @@ private:
     void createCommandPool();
     void createCommandBuffers();
     void createSyncObjects();
+    void createAllocator();
 
     // instance
     std::vector<const char *> getRequiredExtensions();
@@ -156,6 +159,10 @@ private:
     const u32 FRAME_MAX_FRAMES_IN_FLIGHT = 2;
     u32 m_currentFrame = 0;
     u32 m_imageIndex = 0;
+
+    // utils
+    void recreateSwapChain();
+    void cleanupSwapChain();
 };
 
 } // namespace gfx

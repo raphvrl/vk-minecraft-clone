@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <fstream>
 #include <stdexcept>
 
@@ -9,6 +10,8 @@
 
 namespace gfx
 {
+
+constexpr std::string_view SHADER_PATH = "bin/shaders/";
 
 enum class ShaderType
 {

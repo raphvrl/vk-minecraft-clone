@@ -33,10 +33,15 @@ void VulkanCtx::init(core::Window &window)
     createCommandPool();
     createCommandBuffers();
     createSyncObjects();
+    createAllocator();
 }
 
 void VulkanCtx::destroy()
 {
+    vkDeviceWaitIdle(m_device);
+
+    vmaDestroyAllocator(m_allocator);
+
     for (size_t i = 0; i < FRAME_MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(m_device, m_renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(m_device, m_imageAvailableSemaphores[i], nullptr);
@@ -95,6 +100,7 @@ bool VulkanCtx::beginFrame()
     );
 
     if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreateSwapChain();
         return false;
     } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swap chain image");
@@ -196,12 +202,55 @@ void VulkanCtx::endFrame()
     res = vkQueuePresentKHR(m_presentQueue, &presentInfo);
 
     if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
+        recreateSwapChain();
         return;
     } else if (res != VK_SUCCESS) {
         throw std::runtime_error("Failed to present swap chain image");
     }
 
     m_currentFrame = (m_currentFrame + 1) % FRAME_MAX_FRAMES_IN_FLIGHT;
+}
+
+void VulkanCtx::check(VkResult res, const std::string &msg)
+{
+    switch (res) {
+    case VK_SUCCESS:
+        return;
+    case VK_NOT_READY:
+        throw std::runtime_error(msg + ": Device not ready");
+    case VK_TIMEOUT:
+        throw std::runtime_error(msg + ": Operation timed out");
+    case VK_EVENT_SET:
+        throw std::runtime_error(msg + ": Event set");
+    case VK_EVENT_RESET:
+        throw std::runtime_error(msg + ": Event reset");
+    case VK_INCOMPLETE:
+        throw std::runtime_error(msg + ": Operation incomplete");
+    case VK_ERROR_OUT_OF_HOST_MEMORY:
+        throw std::runtime_error(msg + ": Out of host memory");
+    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+        throw std::runtime_error(msg + ": Out of device memory");
+    case VK_ERROR_INITIALIZATION_FAILED:
+        throw std::runtime_error(msg + ": Initialization failed");
+    case VK_ERROR_DEVICE_LOST:
+        throw std::runtime_error(msg + ": Device lost");
+    case VK_ERROR_MEMORY_MAP_FAILED:
+        throw std::runtime_error(msg + ": Memory map failed");
+    case VK_ERROR_LAYER_NOT_PRESENT:
+        throw std::runtime_error(msg + ": Layer not present");
+    case VK_ERROR_EXTENSION_NOT_PRESENT:
+        throw std::runtime_error(msg + ": Extension not present");
+    case VK_ERROR_FEATURE_NOT_PRESENT:
+        throw std::runtime_error(msg + ": Feature not present");
+    case VK_ERROR_INCOMPATIBLE_DRIVER:
+        throw std::runtime_error(msg + ": Incompatible driver");
+    case VK_ERROR_TOO_MANY_OBJECTS:
+        throw std::runtime_error(msg + ": Too many objects");
+    case VK_ERROR_FORMAT_NOT_SUPPORTED:
+        throw std::runtime_error(msg + ": Format not supported");
+    default:
+        throw std::runtime_error(msg + ": Unknown error");
+    }
 }
 
 void VulkanCtx::createInstance()
@@ -637,6 +686,18 @@ void VulkanCtx::createSyncObjects()
     }
 }
 
+void VulkanCtx::createAllocator()
+{
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = m_physicalDevice;
+    allocatorInfo.device = m_device;
+    allocatorInfo.instance = m_instance;
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+    
+    VkResult res = vmaCreateAllocator(&allocatorInfo, &m_allocator);
+    check(res, "Failed to create allocator");
+}
+
 std::vector<const char *> VulkanCtx::getRequiredExtensions()
 {
     u32 glfwExtensionCount = 0;
@@ -939,46 +1000,47 @@ VkExtent2D VulkanCtx::chooseSwapExtent(
     }
 }
 
-void VulkanCtx::check(VkResult res, const std::string &msg)
+void VulkanCtx::recreateSwapChain()
 {
-    switch (res) {
-    case VK_SUCCESS:
-        return;
-    case VK_NOT_READY:
-        throw std::runtime_error(msg + ": Device not ready");
-    case VK_TIMEOUT:
-        throw std::runtime_error(msg + ": Operation timed out");
-    case VK_EVENT_SET:
-        throw std::runtime_error(msg + ": Event set");
-    case VK_EVENT_RESET:
-        throw std::runtime_error(msg + ": Event reset");
-    case VK_INCOMPLETE:
-        throw std::runtime_error(msg + ": Operation incomplete");
-    case VK_ERROR_OUT_OF_HOST_MEMORY:
-        throw std::runtime_error(msg + ": Out of host memory");
-    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-        throw std::runtime_error(msg + ": Out of device memory");
-    case VK_ERROR_INITIALIZATION_FAILED:
-        throw std::runtime_error(msg + ": Initialization failed");
-    case VK_ERROR_DEVICE_LOST:
-        throw std::runtime_error(msg + ": Device lost");
-    case VK_ERROR_MEMORY_MAP_FAILED:
-        throw std::runtime_error(msg + ": Memory map failed");
-    case VK_ERROR_LAYER_NOT_PRESENT:
-        throw std::runtime_error(msg + ": Layer not present");
-    case VK_ERROR_EXTENSION_NOT_PRESENT:
-        throw std::runtime_error(msg + ": Extension not present");
-    case VK_ERROR_FEATURE_NOT_PRESENT:
-        throw std::runtime_error(msg + ": Feature not present");
-    case VK_ERROR_INCOMPATIBLE_DRIVER:
-        throw std::runtime_error(msg + ": Incompatible driver");
-    case VK_ERROR_TOO_MANY_OBJECTS:
-        throw std::runtime_error(msg + ": Too many objects");
-    case VK_ERROR_FORMAT_NOT_SUPPORTED:
-        throw std::runtime_error(msg + ": Format not supported");
-    default:
-        throw std::runtime_error(msg + ": Unknown error");
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(m_window->get(), &width, &height);
+
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(m_window->get(), &width, &height);
+        glfwWaitEvents();
     }
+
+    vkDeviceWaitIdle(m_device);
+
+    cleanupSwapChain();
+
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createFramebuffers();
+    createCommandBuffers();
+}
+
+void VulkanCtx::cleanupSwapChain()
+{
+    for (auto framebuffer : m_framebuffers) {
+        vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+    }
+
+    vkFreeCommandBuffers(
+        m_device,
+        m_commandPool,
+        static_cast<u32>(m_commandBuffers.size()),
+        m_commandBuffers.data()
+    );
+
+    vkDestroyRenderPass(m_device, m_renderPass, nullptr);
+
+    for (auto imageView : m_imageViews) {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
 }
     
 } // namespace gfx
