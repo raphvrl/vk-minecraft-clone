@@ -12,11 +12,14 @@ A Minecraft-like game built with Vulkan.
 
 1. Install the Vulkan SDK
 2. Install MSYS2 and open MSYS2 MinGW 64-bit
-
-4. Build the project:
+3. Build the project:
 ```bash
 git submodule update --init --recursive
 make all
+```
+4. Run the game:
+```bash
+./app.exe
 ```
 
 ## Features
@@ -24,8 +27,8 @@ make all
 - [x] Vulkan initialization
 - [x] Window management with GLFW
 - [x] GLSL shader support
-- [x] Console utilities
-- [x] First triangle rendering
+- [x] Infinite world generation with chunk system
+- [x] Block face culling (including between chunks)
 - [ ] More coming soon...
 
 ## Development
