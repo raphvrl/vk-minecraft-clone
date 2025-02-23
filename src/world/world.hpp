@@ -1,7 +1,6 @@
 #pragma once
 
-#define FASTNOISELITE_H
-#include <FastNoiseLite.h>
+#include <FastNoise/FastNoise.h>
 
 #include <unordered_map>
 #include <memory>
@@ -66,9 +65,9 @@ private:
     gfx::Texture m_texture;
     VkDescriptorSet m_blockSet;
 
-    FastNoiseLite m_noise;
-    FastNoiseLite m_mountainNoise;
-    FastNoiseLite m_detailNoise;
+    FastNoise::SmartNode<> m_noise;
+    FastNoise::SmartNode<> m_mountainNoise;
+    FastNoise::SmartNode<> m_detailNoise;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 

@@ -33,6 +33,18 @@ void World::init(gfx::VulkanCtx &ctx)
     m_texture.init(*m_ctx, "blocks.png");
     m_blockSet = m_pipeline.createDescriptorSet(m_texture);
 
+    auto fnSimplex = FastNoise::New<FastNoise::Perlin>();
+    fnSimplex->SetSource(FastNoise::New<FastNoise::Seed>(42));
+    m_noise = fnSimplex;
+
+    auto fnMountain = FastNoise::New<FastNoise::Perlin>();
+    fnMountain->SetSource(FastNoise::New<FastNoise::Seed>(42));
+    m_mountainNoise = fnMountain;
+
+    auto fnDetail = FastNoise::New<FastNoise::Perlin>();
+    fnDetail->SetSource(FastNoise::New<FastNoise::Seed>(42));
+    m_detailNoise = fnDetail;
+
     update({0.0f, 0.0f, 0.0f});
 }
 
@@ -220,7 +232,72 @@ bool World::isChunkLoaded(const ChunkPos &pos)
 
 void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
 {
-    
+    constexpr i32 SEA_LEVEL = 64;
+    constexpr i32 DIRT_DEPTH = 4;
+    constexpr f32 HEIGHT_SCALE = 32.0f;
+
+    std::vector<f32> noiseOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
+    std::vector<f32> mountainOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
+    std::vector<f32> detailOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
+
+    f32 worldX = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
+    f32 worldZ = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
+
+    m_noise->GenUniformGrid2D(
+        noiseOutput.data(),
+        pos.x * Chunk::CHUNK_SIZE,
+        pos.z * Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        0.01f,
+        42
+    );
+
+    m_mountainNoise->GenUniformGrid2D(
+        mountainOutput.data(),
+        pos.x * Chunk::CHUNK_SIZE,
+        pos.z * Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        0.02f,
+        42
+    );
+
+    m_detailNoise->GenUniformGrid2D(
+        detailOutput.data(),
+        pos.x * Chunk::CHUNK_SIZE,
+        pos.z * Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        Chunk::CHUNK_SIZE,
+        0.05f,
+        42
+    );
+
+    for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
+        for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
+            f32 baseHeight = noiseOutput[x + z * Chunk::CHUNK_SIZE];
+            f32 mountainHeight = mountainOutput[x + z * Chunk::CHUNK_SIZE] * 0.5f;
+            f32 detailHeight = detailOutput[x + z * Chunk::CHUNK_SIZE] * 0.25f;
+
+            f32 totalHeight = baseHeight + mountainHeight + detailHeight;
+            i32 height = static_cast<i32>(SEA_LEVEL + totalHeight * HEIGHT_SCALE);
+            height = std::clamp(height, 1, Chunk::CHUNK_HEIGHT - 1);
+
+            for (i32 y = 0; y < height; y++) {
+                if (y == 0) {
+                    chunk.setBlock(x, y, z, BlockType::BEDROCK);
+                } else if (y > height) {
+                    chunk.setBlock(x, y, z, BlockType::AIR);
+                } else if (y == height) {
+                    chunk.setBlock(x, y, z, BlockType::GRASS);
+                } else if (y > height - DIRT_DEPTH) {
+                    chunk.setBlock(x, y, z, BlockType::DIRT);
+                } else {
+                    chunk.setBlock(x, y, z, BlockType::STONE);
+                }
+            }
+        }
+    }
 }
 
 } // namespace wld

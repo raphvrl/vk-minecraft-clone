@@ -65,7 +65,19 @@ STB_DIR = $(LIB_DIR)/stb
 
 CXXFLAGS += -I$(STB_DIR)
 
-FASTNOISE_DIR = $(LIB_DIR)/fastNoise/Cpp
+FASTNOISE_DIR = $(LIB_DIR)/fastnoise
+FASTNOISE_BIN = $(BIN_DIR)/lib/fastnoise
+FASTNOISE_LIB = $(FASTNOISE_BIN)/lib
+FASTNOISE_STAMP = $(FASTNOISE_BIN)/.stamp
+FASTNOISE_INC = $(FASTNOISE_DIR)/include
+
+FASTNOISE_FLAGS = -DBUILD_SHARED_LIBS=OFF \
+				  -DFASTNOISE2_TESTS=OFF \
+				  -DFASTNOISE2_NOISETOOL=OFF
+
+
+CXXFLAGS += -I$(FASTNOISE_INC)
+LDFLAGS += -L$(FASTNOISE_LIB) -lFasrNoise
 
 CXXFLAGS += -I$(FASTNOISE_DIR)
 
@@ -111,7 +123,7 @@ ifeq ($(OS), Windows_NT)
 	endif
 endif
 
-all: glfw shaders $(TARGET)
+all: glfw fastnoise shaders $(TARGET)
 
 release:
 	@$(MAKE) MODE=release all
@@ -159,6 +171,18 @@ clean-glfw:
 	@$(PRINT) "Cleaning GLFW"
 	@$(RM) $(GLFW_BIN)
 
+fastnoise: $(FASTNOISE_STAMP)
+
+$(FASTNOISE_STAMP):
+	@$(PRINT) "Building FastNoise"
+	@$(CMAKE) -S $(FASTNOISE_DIR) -B $(FASTNOISE_BIN) $(FASTNOISE_FLAGS)
+	@$(MAKE) -C $(FASTNOISE_BIN)
+	@$(TOUCH) $(FASTNOISE_STAMP)
+
+clean-fastnoise:
+	@$(PRINT) "Cleaning FastNoise"
+	@$(RM) $(FASTNOISE_BIN)
+
 clean:
 	@$(PRINT) "Cleaning"
 	@$(RM) $(OBJ) $(DEP) $(TARGET)
@@ -169,4 +193,4 @@ clean-all:
 
 re: clean all
 
-.PHONY: all release clean clean-all re glfw clean-glfw shaders
+.PHONY: all release clean re clean-all glfw clean-glfw fastnoise clean-fastnoise
