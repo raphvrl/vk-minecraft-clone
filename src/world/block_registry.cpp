@@ -25,17 +25,17 @@ void BlockRegistry::load(const std::string &path)
                     } else if (face == "sides") {
                         texInfo.sides({x, y});
                     } else if (face == "north") {
-                        texInfo.north = {x, y};
+                        texInfo.set(Face::NORTH, {x, y});
                     } else if (face == "south") {
-                        texInfo.south = {x, y};
+                        texInfo.set(Face::SOUTH, {x, y});
                     } else if (face == "east") {
-                        texInfo.east = {x, y};
+                        texInfo.set(Face::EAST, {x, y});
                     } else if (face == "west") {
-                        texInfo.west = {x, y};
+                        texInfo.set(Face::WEST, {x, y});
                     } else if (face == "top") {
-                        texInfo.top = {x, y};
+                        texInfo.set(Face::TOP, {x, y});
                     } else if (face == "bottom") {
-                        texInfo.bottom = {x, y};
+                        texInfo.set(Face::BOTTOM, {x, y});
                     }
                 }
             }

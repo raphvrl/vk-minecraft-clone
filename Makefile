@@ -93,7 +93,24 @@ endif
 
 LDFLAGS += -static-libgcc -static-libstdc++ -static
 
+MODE ?= debug
+
+ifeq ($(MODE), debug)
+	CXXFLAGS += -g -O0 -DDEBUG
+else
+	CXXFLAGS += -O3 -DNDEBUG
+endif
+
+ifeq ($(OS), Windows_NT)
+	ifeq ($(MODE), release)
+		LDFLAGS += -mwindows
+	endif
+endif
+
 all: glfw shaders $(TARGET)
+
+release:
+	@$(MAKE) MODE=release all
 
 $(TARGET): $(OBJ)
 	@$(PRINT) "Linking $@"
@@ -145,3 +162,7 @@ clean:
 clean-all:
 	@$(PRINT) "Cleaning all"
 	@$(RM) $(BIN_DIR)
+
+re: clean all
+
+.PHONY: all release clean clean-all re glfw clean-glfw shaders

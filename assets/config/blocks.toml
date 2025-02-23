@@ -10,9 +10,9 @@ tile_size = 16
 	[blocks.grass]
 	id = 2
 	textures.top = { x = 1, y = 0 }
-	textures.bottom = { x = 1, y = 0 }
-	textures.sides = { x = 1, y = 0 }
+	textures.bottom = { x = 2, y = 0 }
+	textures.sides = { x = 3, y = 0 }
 
 	[blocks.dirt]
 	id = 3
-	textures.all = { x = 1, y = 0 }
+	textures.all = { x = 2, y = 0 }

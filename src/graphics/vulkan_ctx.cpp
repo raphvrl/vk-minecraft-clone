@@ -269,7 +269,8 @@ void VulkanCtx::createImage(
     VkImageUsageFlags usage,
     VmaMemoryUsage memoryUsage,
     VkImage &image,
-    VmaAllocation &allocation
+    VmaAllocation &allocation,
+    u32 mipLevels
 )
 {
     VkImageCreateInfo imageInfo = {};
@@ -278,7 +279,7 @@ void VulkanCtx::createImage(
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
+    imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
     imageInfo.format = format;
     imageInfo.tiling = tiling;
@@ -306,7 +307,8 @@ void VulkanCtx::transitionImageLayout(
     VkImage image,
     VkFormat format,
     VkImageLayout oldLayout,
-    VkImageLayout newLayout
+    VkImageLayout newLayout,
+    u32 mipLevels
 )
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -330,7 +332,7 @@ void VulkanCtx::transitionImageLayout(
     }
 
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
@@ -359,6 +361,20 @@ void VulkanCtx::transitionImageLayout(
 
         sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
+        newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+        newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     } else {
         throw std::invalid_argument("unsupported layout transition");
     }

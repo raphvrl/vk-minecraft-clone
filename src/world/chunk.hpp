@@ -3,18 +3,10 @@
 #include <array>
 
 #include "core/types.hpp"
+#include "world/block.hpp"
 
 namespace wld
 {
-
-enum class BlockType
-{
-    AIR,
-    STONE = 1,
-    GRASS = 2,
-    DIRT = 3,
-    COBBLESTONE = 4
-};
 
 class Chunk
 {

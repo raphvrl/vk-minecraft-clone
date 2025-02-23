@@ -5,7 +5,7 @@ namespace core
 
 Camera::Camera()
 {
-    m_pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    m_pos = glm::vec3(0.0f, 10.0f, 0.0f);
     m_front = glm::vec3(0.0f, 0.0f, -1.0f);
     m_up = glm::vec3(0.0f, 1.0f, 0.0f);
     m_right = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -16,7 +16,7 @@ Camera::Camera()
     m_fov = 45.0f;
     m_aspect = 1280.0f / 720.0f;
     m_near = 0.1f;
-    m_far = 100.0f;
+    m_far = 1000.0f;
 
     m_view = glm::lookAt(m_pos, m_pos + m_front, m_up);
     m_proj = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);

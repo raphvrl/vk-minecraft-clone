@@ -33,9 +33,15 @@ private:
     VkImageView m_imageView;
     VkSampler m_sampler;
 
+    u32 m_width;
+    u32 m_height;
+    u32 m_mipLevels;
+
     void createImage(const std::string &path);
     void createImageView();
     void createSampler();
+
+    void generateMipmaps();
 };
 
 } // namespace gfx

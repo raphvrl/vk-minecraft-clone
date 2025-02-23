@@ -4,12 +4,16 @@
 #include <toml++/toml.hpp>
 
 #include "graphics/vulkan_ctx.hpp"
-#include "chunk.hpp"
 
 namespace wld
 {
 
+// forward declarations
 class BlockRegistry;
+class World;
+class Chunk;
+
+enum class BlockType;
 
 enum class Face
 {
@@ -67,7 +71,11 @@ public:
     void init(gfx::VulkanCtx &ctx, const BlockRegistry &blockRegistry);
     void destroy();
 
-    void generateMesh(const Chunk &chunk);
+    void generateMesh(
+        const Chunk &chunk,
+        const World &world,
+        const glm::vec2 &chunkPos
+    );
 
     void draw();
 

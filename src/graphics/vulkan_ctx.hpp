@@ -51,14 +51,16 @@ public:
         VkImageUsageFlags usage,
         VmaMemoryUsage memoryUsage,
         VkImage &image,
-        VmaAllocation &allocation
+        VmaAllocation &allocation,
+        u32 mipLevels = 1
     );
 
     void transitionImageLayout(
         VkImage image,
         VkFormat format,
         VkImageLayout oldLayout,
-        VkImageLayout newLayout
+        VkImageLayout newLayout,
+        u32 mipLevels = 1
     );
 
     void copyBufferToImage(
@@ -67,6 +69,9 @@ public:
         u32 width,
         u32 height
     );
+
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
     // getters
     VkInstance getInstance() { return m_instance; }
@@ -208,10 +213,6 @@ private:
         VkImageTiling tiling,
         VkFormatFeatureFlags features
     );
-    
-    // allocator
-    VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
     // variables
     const u32 FRAME_MAX_FRAMES_IN_FLIGHT = 2;

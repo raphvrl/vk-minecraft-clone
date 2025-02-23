@@ -14,6 +14,8 @@ void Texture::init(VulkanCtx &ctx, const std::string &path)
 
 void Texture::destroy()
 {
+    vkDeviceWaitIdle(m_ctx->getDevice());
+
     vkDestroySampler(m_ctx->getDevice(), m_sampler, nullptr);
     vkDestroyImageView(m_ctx->getDevice(), m_imageView, nullptr);
     vmaDestroyImage(m_ctx->getAllocator(), m_image, m_imageAllocation);

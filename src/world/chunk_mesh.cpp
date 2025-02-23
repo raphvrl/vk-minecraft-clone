@@ -1,5 +1,6 @@
 #include "chunk_mesh.hpp"
 #include "block_registry.hpp"
+#include "world.hpp"
 
 namespace wld
 {
@@ -27,10 +28,17 @@ void ChunkMesh::destroy()
     );
 }
 
-void ChunkMesh::generateMesh(const Chunk &chunk)
+void ChunkMesh::generateMesh(
+    const Chunk &chunk,
+    const World &world,
+    const glm::vec2 &chunkPos
+)
 {
     m_vertices.clear();
-    m_vertices.clear();
+    m_indices.clear();
+
+    i32 chunkWorldX = static_cast<i32>(chunkPos.x) * Chunk::CHUNK_SIZE;
+    i32 chunkWorldZ = static_cast<i32>(chunkPos.y) * Chunk::CHUNK_SIZE;
 
     for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
         for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
@@ -42,31 +50,29 @@ void ChunkMesh::generateMesh(const Chunk &chunk)
 
                 glm::vec3 pos(x, y, z);
 
-                if (chunk.getBlock(x, y + 1, z) == BlockType::AIR) {
+                i32 worldX = chunkWorldX + x;
+                i32 worldZ = chunkWorldZ + z;
+
+                if (world.getBlock(worldX, y + 1, worldZ) == BlockType::AIR) {
                     addFace(pos, FACE_TOP, getUVs(block, Face::TOP), block);
                 }
-
-                if (chunk.getBlock(x, y - 1, z) == BlockType::AIR) {
+                if (world.getBlock(worldX, y - 1, worldZ) == BlockType::AIR) {
                     addFace(pos, FACE_BOTTOM, getUVs(block, Face::BOTTOM), block);
                 }
-
-                if (chunk.getBlock(x, y, z + 1) == BlockType::AIR) {
+                if (world.getBlock(worldX, y, worldZ + 1) == BlockType::AIR) {
                     addFace(pos, FACE_NORTH, getUVs(block, Face::NORTH), block);
                 }
-
-                if (chunk.getBlock(x, y, z - 1) == BlockType::AIR) {
+                if (world.getBlock(worldX, y, worldZ - 1) == BlockType::AIR) {
                     addFace(pos, FACE_SOUTH, getUVs(block, Face::SOUTH), block);
                 }
-
-                if (chunk.getBlock(x + 1, y, z) == BlockType::AIR) {
+                if (world.getBlock(worldX + 1, y, worldZ) == BlockType::AIR) {
                     addFace(pos, FACE_EAST, getUVs(block, Face::EAST), block);
                 }
-
-                if (chunk.getBlock(x - 1, y, z) == BlockType::AIR) {
+                if (world.getBlock(worldX - 1, y, worldZ) == BlockType::AIR) {
                     addFace(pos, FACE_WEST, getUVs(block, Face::WEST), block);
                 }
             }
-        }       
+        }
     }
 
     createVertexBuffer();
@@ -179,45 +185,45 @@ void ChunkMesh::createIndexBuffer()
 }
 
 const std::array<glm::vec3, 4> ChunkMesh::FACE_NORTH = {
-    glm::vec3(0.0f, 0.0f, 1.0f),
     glm::vec3(1.0f, 0.0f, 1.0f),
-    glm::vec3(1.0f, 1.0f, 1.0f),
-    glm::vec3(0.0f, 1.0f, 1.0f)
+    glm::vec3(0.0f, 0.0f, 1.0f),
+    glm::vec3(0.0f, 1.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 1.0f)
 };
 
 const std::array<glm::vec3, 4> ChunkMesh::FACE_SOUTH = {
-    glm::vec3(1.0f, 0.0f, 0.0f),
     glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(1.0f, 0.0f, 0.0f),
+    glm::vec3(1.0f, 1.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+};
+
+const std::array<glm::vec3, 4> ChunkMesh::FACE_EAST = {
+    glm::vec3(1.0f, 0.0f, 0.0f),
+    glm::vec3(1.0f, 0.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 0.0f)
+};
+
+const std::array<glm::vec3, 4> ChunkMesh::FACE_WEST = {
+    glm::vec3(0.0f, 0.0f, 1.0f),
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 1.0f)
+};
+
+const std::array<glm::vec3, 4> ChunkMesh::FACE_TOP = {
+    glm::vec3(1.0f, 1.0f, 1.0f),
+    glm::vec3(0.0f, 1.0f, 1.0f),
     glm::vec3(0.0f, 1.0f, 0.0f),
     glm::vec3(1.0f, 1.0f, 0.0f)
 };
 
-const std::array<glm::vec3, 4> ChunkMesh::FACE_EAST = {
-    glm::vec3(1.0f, 0.0f, 1.0f),
+const std::array<glm::vec3, 4> ChunkMesh::FACE_BOTTOM = {
     glm::vec3(1.0f, 0.0f, 0.0f),
-    glm::vec3(1.0f, 1.0f, 0.0f),
-    glm::vec3(1.0f, 1.0f, 1.0f)
-};
-
-const std::array<glm::vec3, 4> ChunkMesh::FACE_WEST = {
     glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3(0.0f, 0.0f, 1.0f),
-    glm::vec3(0.0f, 1.0f, 1.0f),
-    glm::vec3(0.0f, 1.0f, 0.0f)
-};
-
-const std::array<glm::vec3, 4> ChunkMesh::FACE_TOP = {
-    glm::vec3(0.0f, 1.0f, 1.0f),
-    glm::vec3(1.0f, 1.0f, 1.0f),
-    glm::vec3(1.0f, 1.0f, 0.0f),
-    glm::vec3(0.0f, 1.0f, 0.0f)
-};
-
-const std::array<glm::vec3, 4> ChunkMesh::FACE_BOTTOM = {
-    glm::vec3(0.0f, 0.0f, 1.0f),
-    glm::vec3(1.0f, 0.0f, 1.0f),
-    glm::vec3(1.0f, 0.0f, 0.0f),
-    glm::vec3(0.0f, 0.0f, 0.0f)
+    glm::vec3(1.0f, 0.0f, 1.0f)
 };
 
 void ChunkMesh::addFace(
@@ -260,7 +266,7 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(BlockType block, Face face)
         glm::vec2(x, y),
         glm::vec2(x + tileSize, y),
         glm::vec2(x + tileSize, y + tileSize),
-        glm::vec2(x, y + + tileSize)
+        glm::vec2(x, y + tileSize)
     };
 }
 

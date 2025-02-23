@@ -19,6 +19,8 @@ public:
     static void warn(const std::string &msg);
     static void error(const std::string &msg);
 
+    static void setWinLog(bool enable) { m_winLog = enable; }
+
 private:
     enum class Level
     {
@@ -28,6 +30,10 @@ private:
     };
 
     static void log(const std::string &msg, Level level);
+    static void consoleLog(const std::string &msg, Level level);
+    static void winLog(const std::string &msg, Level level);
+
+    static bool m_winLog;
 
 };
 

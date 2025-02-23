@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <glm/glm.hpp>
@@ -10,44 +11,40 @@
 namespace wld
 {
 
+enum class BlockType
+{
+    AIR,
+    STONE = 1,
+    GRASS = 2,
+    DIRT = 3,
+    COBBLESTONE = 4
+};
+
 struct TextureInfo
 {
-    glm::uvec2 north;
-    glm::uvec2 south;
-    glm::uvec2 east;
-    glm::uvec2 west;
-    glm::uvec2 top;
-    glm::uvec2 bottom;
+    std::array<glm::uvec2, 6> faces;
 
     void fill(const glm::uvec2 &uv)
     {
-        north = south = east = west = top = bottom = uv;
+        faces.fill(uv);
     }
 
     void sides(const glm::uvec2 &uv)
     {
-        north = south = east = west = uv;
+        faces[static_cast<u32>(Face::NORTH)] = uv;
+        faces[static_cast<u32>(Face::SOUTH)] = uv;
+        faces[static_cast<u32>(Face::EAST)] = uv;
+        faces[static_cast<u32>(Face::WEST)] = uv;
+    }
+
+    void set(Face face, const glm::uvec2 &uv)
+    {
+        faces[static_cast<u32>(face)] = uv;
     }
 
     glm::uvec2 getUV(Face face) const
     {
-        switch (face)
-        {
-        case Face::NORTH:
-            return north;
-        case Face::SOUTH:
-            return south;
-        case Face::EAST:
-            return east;
-        case Face::WEST:
-            return west;
-        case Face::TOP:
-            return top;
-        case Face::BOTTOM:
-            return bottom;
-        default:
-            return {0, 0};
-        }
+        return faces[static_cast<u32>(face)];
     }
 };
 
