@@ -17,7 +17,8 @@ enum class BlockType
     STONE = 1,
     GRASS = 2,
     DIRT = 3,
-    COBBLESTONE = 4
+    COBBLESTONE = 4,
+    BEDROCK = 5,
 };
 
 struct TextureInfo

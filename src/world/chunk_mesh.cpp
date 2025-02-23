@@ -259,8 +259,8 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(BlockType block, Face face)
     TextureInfo texInfo = m_blockRegistry->getBlock(block).getTextureInfo();
     glm::uvec2 uv = texInfo.getUV(face);
 
-    f32 x = uv.x * tileSize;
-    f32 y = 1.0f - (uv.y / tileSize) - tileSize;
+    f32 x = (uv.x * tileSize);
+    f32 y = (1.0f - (uv.y + 1) * tileSize);
 
     return {
         glm::vec2(x, y),

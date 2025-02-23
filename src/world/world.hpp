@@ -1,8 +1,12 @@
 #pragma once
 
+#define FASTNOISELITE_H
+#include <FastNoiseLite.h>
+
 #include <unordered_map>
 #include <memory>
 #include <unordered_set>
+#include <algorithm>
 
 #include "chunk.hpp"
 #include "chunk_mesh.hpp"
@@ -62,6 +66,10 @@ private:
     gfx::Texture m_texture;
     VkDescriptorSet m_blockSet;
 
+    FastNoiseLite m_noise;
+    FastNoiseLite m_mountainNoise;
+    FastNoiseLite m_detailNoise;
+
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 
         ChunkPosHash>;
@@ -72,6 +80,6 @@ private:
     ChunkPos m_playerChunkPos;
     ChunkMap m_chunks;
     ChunkMeshMap m_meshes;
-};;
+};
 
 } // namespace wld

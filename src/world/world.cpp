@@ -61,7 +61,7 @@ void World::update(const glm::vec3 &playerPos)
     }
 
     std::unordered_set<ChunkPos, ChunkPosHash> chunksNeeded;
-    std::vector<ChunkPos> chunksToLoad;
+    std::vector<std::pair<ChunkPos, f32>> chunksToLoad;
     std::vector<ChunkPos> chunksToUnload;
 
     for (i32 x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -75,11 +75,17 @@ void World::update(const glm::vec3 &playerPos)
             if (dist <= RENDER_DISTANCE) {
                 chunksNeeded.insert(pos);
                 if (!isChunkLoaded(pos)) {
-                    chunksToLoad.push_back(pos);
+                    chunksToLoad.push_back({pos, dist});
                 }
             }
         }
     }
+
+    std::sort(chunksToLoad.begin(), chunksToLoad.end(), 
+        [](const auto &a, const auto &b) {
+            return a.second < b.second;
+        }
+    );
 
     for (const auto &[pos, _] : m_chunks) {
         if (chunksNeeded.find(pos) == chunksNeeded.end()) {
@@ -96,14 +102,11 @@ void World::update(const glm::vec3 &playerPos)
         static_cast<usize>(CHUNKS_PER_FRAME)
     );
 
-    for (usize i = 0; i < chunkToLoadThisFrame; i++) {
-        loadChunks(chunksToLoad[i]);
-    }
-
     std::vector<ChunkPos> meshesToUpdate;
 
     for (usize i = 0; i < chunkToLoadThisFrame; i++) {
-        const auto &pos = chunksToLoad[i];
+        const auto &pos = chunksToLoad[i].first;
+        loadChunks(pos);
         meshesToUpdate.push_back(pos);
 
         for (i32 dx = -1; dx <= 1; dx++) {
@@ -215,24 +218,9 @@ bool World::isChunkLoaded(const ChunkPos &pos)
     return m_chunks.find(pos) != m_chunks.end();
 }
 
-void World::generateChunk(Chunk &chunk, const ChunkPos &pos) {
-    UNUSED(pos);
-
-    for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
-        for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
-                if (y == 0) {
-                    chunk.setBlock(x, y, z, BlockType::STONE);
-                } else if (y == 1) {
-                    chunk.setBlock(x, y, z, BlockType::DIRT);
-                } else if (y == 2) {
-                    chunk.setBlock(x, y, z, BlockType::GRASS);
-                } else {
-                    chunk.setBlock(x, y, z, BlockType::AIR);
-                }
-            }
-        }
-    }
+void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
+{
+    
 }
 
 } // namespace wld
