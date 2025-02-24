@@ -2,13 +2,26 @@
 
 A Minecraft-like game built with Vulkan.
 
-## Requirements
+## Installation
+
+### Option 1: Prebuilt Release (Recommended)
+
+A prebuilt version of the game is available through GitHub Actions:
+
+1. Go to the "Actions" tab of this repository
+2. Select the latest successful "Build" workflow
+3. Download the "build" artifact
+4. Launch `app.exe` from the extracted `build.zip` file to play the game
+
+### Option 2: Building from Source
+
+#### Prerequisites
 
 - Windows 10/11
 - [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
 - MinGW-w64 C++ compiler (through MSYS2)
 
-## Setup & Build
+#### Build Steps
 
 1. Install the Vulkan SDK
 2. Install MSYS2 and open MSYS2 MinGW 64-bit
@@ -21,6 +34,7 @@ make all
 ```bash
 ./app.exe
 ```
+
 ## Features
 
 - [x] Vulkan initialization
