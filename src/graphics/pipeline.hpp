@@ -56,6 +56,7 @@ public:
         Builder &addDescriptorBinding(const DescriptorLayout &layout);
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
+        Builder &setCullMode(VkCullModeFlags mode);
 
         Pipeline build();
 
@@ -73,6 +74,8 @@ public:
 
         bool m_depthTest = true;
         bool m_depthWrite = true;
+
+        VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
 
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);

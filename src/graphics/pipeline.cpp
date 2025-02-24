@@ -74,6 +74,12 @@ Pipeline::Builder &Pipeline::Builder::setDepthWrite(bool enable)
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setCullMode(VkCullModeFlags mode)
+{
+    m_cullMode = mode;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -155,7 +161,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = m_cullMode;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 

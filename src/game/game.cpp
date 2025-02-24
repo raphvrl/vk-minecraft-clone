@@ -87,7 +87,7 @@ void Game::render()
         return;
     }
 
-    m_sky.render();
+    m_sky.render(m_camera);
     m_world.render(m_camera);
 
     m_ctx.endFrame();
