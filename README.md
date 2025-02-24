@@ -21,7 +21,6 @@ make all
 ```bash
 ./app.exe
 ```
-
 ## Features
 
 - [x] Vulkan initialization
@@ -29,6 +28,7 @@ make all
 - [x] GLSL shader support
 - [x] Infinite world generation with chunk system
 - [x] Block face culling (including between chunks)
+- [x] Perlin noise terrain generation for Minecraft-like world
 - [ ] More coming soon...
 
 ## Development

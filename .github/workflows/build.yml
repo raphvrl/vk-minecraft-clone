@@ -1,0 +1,46 @@
+name: build
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: |
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-cmake
+
+      - name: Install Vulkan SDK
+        run: |
+          $vulkanSDK = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
+          Invoke-WebRequest -Uri $vulkanSDK -OutFile vulkan-sdk.exe
+          Start-Process -FilePath "vulkan-sdk.exe" -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+        shell: pwsh
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          make release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: vulkan-minecraft-release
+          path: |
+            app.exe
+            assets/
