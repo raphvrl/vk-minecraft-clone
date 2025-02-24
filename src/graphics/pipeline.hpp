@@ -15,19 +15,23 @@ namespace gfx
 
 static constexpr std::string_view SHADER_PATH = "assets/shaders/";
 
-enum class ShaderType
-{
-    VERTEX,
-    FRAGMENT,
-    GEOMETRY
-};
-
 struct DescriptorLayout
 {
     u32 binding;
     VkDescriptorType type;
     u32 count;
     VkShaderStageFlags stage;
+};
+
+struct DescriptorData
+{
+    VkDescriptorType type;
+    u32 binding;
+    VkShaderStageFlags stage;
+    union {
+        Texture *texture;
+        UniformBuffer *ubo;
+    };
 };
 
 class Pipeline
@@ -40,8 +44,12 @@ public:
     public:
         Builder(VulkanCtx &ctx);
 
-        Builder &setShader(ShaderType type, const std::string &path);
-        Builder &addPushConstant(ShaderType type, u32 offset, u32 size);
+        Builder &setShader(VkShaderStageFlags stage, const std::string &path);
+        Builder &addPushConstant(
+            VkShaderStageFlags stage,
+            u32 offset,
+            u32 size
+        );
         Builder &setVertexInput(
             const VkVertexInputBindingDescription *bindingDescription,
             const VkVertexInputAttributeDescription *attributeDescriptions,
@@ -79,13 +87,23 @@ public:
 
     void destroy();
 
-    VkDescriptorSet createDescriptorSet(Texture &texture);
-    VkDescriptorSet createDescriptorSet(UniformBuffer &ubo);
+    VkDescriptorSet createDescriptorSet(
+        const std::vector<DescriptorData> &descriptors
+    );
 
     void bindDescriptorSet(VkDescriptorSet set);
+    void bindDescriptorSets(
+        const std::vector<VkDescriptorSet> &sets,
+        u32 offset = 0
+    );
 
     void bind();
-    void push(ShaderType type, u32 offset, u32 size, const void *data);
+    void push(
+        VkShaderStageFlags stage,
+        u32 offset,
+        u32 size,
+        const void *data
+    );
 
 private:
     friend class Builder;

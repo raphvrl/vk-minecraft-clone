@@ -26,7 +26,7 @@ void UniformBuffer::init(VulkanCtx &ctx, VkDeviceSize size)
         nullptr
     );
 
-    m_ctx->check(res, "Failed to create uniform buffer");
+    VulkanCtx::check(res, "Failed to create uniform buffer");
 }
 
 void UniformBuffer::destroy()

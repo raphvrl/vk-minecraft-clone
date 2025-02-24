@@ -29,7 +29,7 @@ public:
 
     void rotate(f32 xoffset, f32 yoffset);
 
-    glm::vec3 getPos() { return m_pos; }
+    glm::vec3 getPos() const { return m_pos; }
 
     glm::mat4 getView() const { return m_view; }
     glm::mat4 getProj() const { return m_proj; }

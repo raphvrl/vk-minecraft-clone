@@ -35,6 +35,8 @@ private:
     VkImageView m_imageView;
     VkSampler m_sampler;
 
+    VkFormat m_format = VK_FORMAT_R8G8B8A8_UNORM;
+
     u32 m_width;
     u32 m_height;
     u32 m_mipLevels;

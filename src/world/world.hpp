@@ -63,20 +63,16 @@ private:
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
 
-    struct PushConstant {
-        glm::mat4 model;
-        glm::mat4 viewProj;
-    };
-
     struct UniformBufferObject {
-        glm::mat4 viewProj;
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 proj;
+        alignas(16) glm::vec3 camPos;
     };
 
     gfx::Pipeline m_pipeline;
     gfx::Texture m_texture;
     gfx::UniformBuffer m_ubo;
-    VkDescriptorSet m_blockSet;
-    VkDescriptorSet m_uniformSet;
+    VkDescriptorSet m_descriptorSet;
 
 
     FastNoiseLite m_noise; 

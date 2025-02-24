@@ -8,10 +8,10 @@ void Sky::init(gfx::VulkanCtx &ctx)
     m_ctx = &ctx;
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(gfx::ShaderType::VERTEX, "sky.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "sky.frag.spv")
+        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "sky.vert.spv")
+        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "sky.frag.spv")
         .addPushConstant(
-            gfx::ShaderType::VERTEX,
+            VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(glm::mat4)
         )
@@ -36,7 +36,7 @@ void Sky::render(const core::Camera &camera)
     glm::mat4 viewProj = camera.getProj() * view;
 
     m_pipeline.push(
-        gfx::ShaderType::VERTEX,
+        VK_SHADER_STAGE_VERTEX_BIT,
         0,
         sizeof(glm::mat4),
         &viewProj

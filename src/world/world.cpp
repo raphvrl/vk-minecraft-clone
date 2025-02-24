@@ -14,8 +14,8 @@ void World::init(gfx::VulkanCtx &ctx)
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(gfx::ShaderType::VERTEX, "chunk.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "chunk.frag.spv")
+        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
+        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
         .setVertexInput(
             &binding,
             attributes.data(),
@@ -34,18 +34,31 @@ void World::init(gfx::VulkanCtx &ctx)
             .stage = VK_SHADER_STAGE_FRAGMENT_BIT
         })
         .addPushConstant(
-            gfx::ShaderType::VERTEX,
+            VK_SHADER_STAGE_VERTEX_BIT,
             0,
-            sizeof(PushConstant)
+            sizeof(glm::mat4)
         )
         .build();
 
     m_texture.init(*m_ctx, "blocks.png");
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
 
-    m_uniformSet = m_pipeline.createDescriptorSet(m_ubo);
-    m_blockSet = m_pipeline.createDescriptorSet(m_texture);
-    
+    std::vector<gfx::DescriptorData> descriptors = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .binding = 0,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .ubo = &m_ubo
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .binding = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .texture = &m_texture
+        }
+    };
+
+    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
 
     m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     m_noise.SetSeed(42);
@@ -184,11 +197,13 @@ void World::update(const glm::vec3 &playerPos)
 void World::render(const core::Camera &camera)
 {
     m_pipeline.bind();
-    m_pipeline.bindDescriptorSet(m_uniformSet);
-    m_pipeline.bindDescriptorSet(m_blockSet);
+
+    m_pipeline.bindDescriptorSet(m_descriptorSet);
 
     UniformBufferObject uniformBuffer = {
-        .viewProj = camera.getProj() * camera.getView(),
+        .view = camera.getView(),
+        .proj = camera.getProj(),
+        .camPos = camera.getPos()
     };
 
     m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
@@ -199,13 +214,13 @@ void World::render(const core::Camera &camera)
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
-        
-        PushConstant pushConstant = {
-            .model = model,
-            .viewProj = camera.getProj() * camera.getView()
-        };
 
-        m_pipeline.push(gfx::ShaderType::VERTEX, 0, sizeof(PushConstant), &pushConstant);
+        m_pipeline.push(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(model),
+            &model
+        );
 
         mesh->draw();
     }
