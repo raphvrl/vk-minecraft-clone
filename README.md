@@ -6,12 +6,10 @@ A Minecraft Clone built with Vulkan.
 
 ### Option 1: Prebuilt Release (Recommended)
 
-A prebuilt version of the game is available through GitHub Actions:
-
-1. Go to the "Actions" tab of this repository
-2. Select the latest successful "Build" workflow
-3. Download the "build" artifact
-4. Launch `app.exe` from the extracted `build.zip` file to play the game
+1. Go to the [Actions tab](https://github.com/raphvrl/vk-minecraft-clone/actions/workflows/build.yml)
+2. Click on the most recent successful "Build" action
+3. Scroll down and download the `build.zip` file under "Artifacts"
+4. Extract the zip file and run `app.exe` to play the game
 
 ### Option 2: Building from Source
 
