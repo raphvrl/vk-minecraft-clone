@@ -17,7 +17,7 @@ void main()
     float factor = heightFactor + (1.0 - horizontalDist) * 0.3;
     factor = clamp(factor, 0.0, 1.0);
     
-    factor = smoothstep(0.0, 0.15, factor);
+    factor = smoothstep(0.0, 0.1, factor);
 
     vec3 color = mix(horizonColor, skyColor, factor);
     outColor = vec4(color, 1.0);
