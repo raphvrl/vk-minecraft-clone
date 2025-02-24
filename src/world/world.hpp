@@ -15,6 +15,7 @@
 #include "graphics/vulkan_ctx.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
+#include "graphics/uniform_buffer.hpp"
 
 namespace wld
 {
@@ -62,9 +63,17 @@ private:
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
 
+    struct PushConstant {
+        glm::mat4 model;
+        glm::mat4 viewProj;
+    };
+
     gfx::Pipeline m_pipeline;
     gfx::Texture m_texture;
+    gfx::UniformBuffer m_ubo;
     VkDescriptorSet m_blockSet;
+    VkDescriptorSet m_uniformSet;
+
 
     FastNoiseLite m_noise; 
     FastNoiseLite m_mountainNoise;

@@ -16,22 +16,28 @@ void World::init(gfx::VulkanCtx &ctx)
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
         .setShader(gfx::ShaderType::VERTEX, "chunk.vert.spv")
         .setShader(gfx::ShaderType::FRAGMENT, "chunk.frag.spv")
-        .addPushConstant(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4))
         .setVertexInput(
             &binding,
             attributes.data(),
             attributes.size()
         )
         .addDescriptorBinding({
-            .binding = 0,
+            .binding = 1,
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .count = 1,
             .stage = VK_SHADER_STAGE_FRAGMENT_BIT
         })
+        .addPushConstant(
+            gfx::ShaderType::VERTEX,
+            0,
+            sizeof(PushConstant)
+        )
         .build();
 
     m_texture.init(*m_ctx, "blocks.png");
+
     m_blockSet = m_pipeline.createDescriptorSet(m_texture);
+    
 
     m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     m_noise.SetSeed(42);
@@ -168,11 +174,7 @@ void World::update(const glm::vec3 &playerPos)
 
 void World::render(const core::Camera &camera)
 {
-    glm::mat4 view = camera.getView();
-    glm::mat4 proj = camera.getProj();
-
     m_pipeline.bind();
-
     m_pipeline.bindDescriptorSet(m_blockSet);
 
     for (const auto &[pos, mesh] : m_meshes) {
@@ -181,9 +183,13 @@ void World::render(const core::Camera &camera)
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
+        
+        PushConstant pushConstant = {
+            .model = model,
+            .viewProj = camera.getProj() * camera.getView()
+        };
 
-        glm::mat4 mvp = proj * view * model;
-        m_pipeline.push(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4), &mvp);
+        m_pipeline.push(gfx::ShaderType::VERTEX, 0, sizeof(PushConstant), &pushConstant);
 
         mesh->draw();
     }

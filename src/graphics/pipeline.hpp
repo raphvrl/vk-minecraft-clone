@@ -8,6 +8,7 @@
 
 #include "vulkan_ctx.hpp"
 #include "texture.hpp"
+#include "uniform_buffer.hpp"
 
 namespace gfx
 {
@@ -27,13 +28,6 @@ struct DescriptorLayout
     VkDescriptorType type;
     u32 count;
     VkShaderStageFlags stage;
-};
-
-struct UniformBuffer
-{
-    VkBuffer buffer;
-    VmaAllocation allocation;
-    VkDeviceSize size;
 };
 
 class Pipeline
@@ -86,6 +80,8 @@ public:
     void destroy();
 
     VkDescriptorSet createDescriptorSet(Texture &texture);
+    VkDescriptorSet createDescriptorSet(UniformBuffer &ubo);
+
     void bindDescriptorSet(VkDescriptorSet set);
 
     void bind();
@@ -98,7 +94,7 @@ private:
 
     VkPipeline m_handle;
     VkPipelineLayout m_layout;
-    VkDescriptorSetLayout m_descriptor;
+    VkDescriptorSetLayout m_descriptorLayout;
     VkDescriptorPool m_descriptorPool;
 };
     

@@ -206,20 +206,19 @@ Pipeline Pipeline::Builder::build()
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     bindings.reserve(m_descriptorLayouts.size());
 
-    for (const auto &layout : m_descriptorLayouts) {
+    for (const auto& layout : m_descriptorLayouts) {
         VkDescriptorSetLayoutBinding binding = {};
         binding.binding = layout.binding;
         binding.descriptorType = layout.type;
         binding.descriptorCount = layout.count;
         binding.stageFlags = layout.stage;
         binding.pImmutableSamplers = nullptr;
-
         bindings.push_back(binding);
     }
-
+    
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<u32>(bindings.size());
+    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
 
     VkDescriptorSetLayout descriptorLayout;
@@ -229,8 +228,7 @@ Pipeline Pipeline::Builder::build()
         nullptr,
         &descriptorLayout
     );
-
-    VulkanCtx::check(res, "Failed to create descriptor set layout!");
+    VulkanCtx::check(res, "Failed to create descriptor layout!");
 
     std::vector<VkDescriptorPoolSize> poolSizes;
     poolSizes.reserve(m_descriptorLayouts.size());
@@ -238,16 +236,17 @@ Pipeline Pipeline::Builder::build()
     for (const auto &layout : m_descriptorLayouts) {
         VkDescriptorPoolSize poolSize = {};
         poolSize.type = layout.type;
-        poolSize.descriptorCount = layout.count;
+        poolSize.descriptorCount = 1000;
 
         poolSizes.push_back(poolSize);
     }
 
     VkDescriptorPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<u32>(poolSizes.size());
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = 1;
+    poolInfo.maxSets = 1000;
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     VkDescriptorPool descriptorPool;
     res = vkCreateDescriptorPool(
@@ -261,12 +260,10 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pushConstantRangeCount =  static_cast<u32>(
-        m_pushConstants.size()
-    );
-    pipelineLayoutInfo.pPushConstantRanges = m_pushConstants.data();
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(m_pushConstants.size());
+    pipelineLayoutInfo.pPushConstantRanges = m_pushConstants.data();
 
     VkPipelineLayout pipelineLayout;
     res = vkCreatePipelineLayout(
@@ -309,14 +306,14 @@ Pipeline Pipeline::Builder::build()
     vkDestroyShaderModule(m_ctx.getDevice(), vertexModule, nullptr);
     vkDestroyShaderModule(m_ctx.getDevice(), fragmentModule, nullptr);
 
-    Pipeline PipelineObj;
-    PipelineObj.m_ctx = &m_ctx;
-    PipelineObj.m_handle = pipeline;
-    PipelineObj.m_layout = pipelineLayout;
-    PipelineObj.m_descriptor = descriptorLayout;
-    PipelineObj.m_descriptorPool = descriptorPool;
+    Pipeline pipelineObj;
+    pipelineObj.m_ctx = &m_ctx;
+    pipelineObj.m_handle = pipeline;
+    pipelineObj.m_layout = pipelineLayout;
+    pipelineObj.m_descriptorLayout = descriptorLayout;
+    pipelineObj.m_descriptorPool = descriptorPool;
 
-    return PipelineObj;
+    return pipelineObj;
 }
 
 std::vector<char> Pipeline::Builder::readFile(const std::string &path)
@@ -364,14 +361,14 @@ void Pipeline::destroy()
     vkDeviceWaitIdle(m_ctx->getDevice());
 
     vkDestroyDescriptorPool(m_ctx->getDevice(), m_descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(m_ctx->getDevice(), m_descriptor, nullptr);
+    vkDestroyDescriptorSetLayout(m_ctx->getDevice(), m_descriptorLayout, nullptr);
     vkDestroyPipeline(m_ctx->getDevice(), m_handle, nullptr);
     vkDestroyPipelineLayout(m_ctx->getDevice(), m_layout, nullptr);
 }
 
 VkDescriptorSet Pipeline::createDescriptorSet(Texture &texture)
 {
-    VkDescriptorSetLayout layouts[] = {m_descriptor};
+    VkDescriptorSetLayout layouts[] = {m_descriptorLayout};
 
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -396,11 +393,55 @@ VkDescriptorSet Pipeline::createDescriptorSet(Texture &texture)
     VkWriteDescriptorSet descriptorWrite = {};
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSet;
-    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstBinding = 1;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(
+        m_ctx->getDevice(),
+        1,
+        &descriptorWrite,
+        0,
+        nullptr
+    );
+
+    return descriptorSet;
+}
+
+VkDescriptorSet Pipeline::createDescriptorSet(UniformBuffer &ubo)
+{
+    VkDescriptorSetLayout layouts[] = {m_descriptorLayout};
+
+    VkDescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = m_descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = layouts;
+
+    VkDescriptorSet descriptorSet;
+    VkResult res = vkAllocateDescriptorSets(
+        m_ctx->getDevice(),
+        &allocInfo,
+        &descriptorSet
+    );
+
+    VulkanCtx::check(res, "Failed to allocate descriptor set!");
+
+    VkDescriptorBufferInfo bufferInfo = {};
+    bufferInfo.buffer = ubo.getHandle();
+    bufferInfo.offset = 0;
+    bufferInfo.range = ubo.getSize();
+
+    VkWriteDescriptorSet descriptorWrite = {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
 
     vkUpdateDescriptorSets(
         m_ctx->getDevice(),
