@@ -39,7 +39,7 @@ void Game::run()
 
 void Game::handleInput()
 {
-    f32 speed = 10.0f * m_window.getDeltaTime();
+    f32 speed = 25.0f * m_window.getDeltaTime();
 
     if (m_window.isKeyPressed(core::Key::ESCAPE)) {
         m_running = false;

@@ -92,6 +92,11 @@ void Logger::winLog(const std::string &msg, Level level)
 
 }
 
+#ifdef NDEBUG
+bool Logger::m_winLog = true;
+#else
 bool Logger::m_winLog = false;
+#endif
+
 
 } // namespace core
