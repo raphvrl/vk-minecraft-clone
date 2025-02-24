@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      CMAKE_GENERATOR: "MSYS Makefiles"
 
     steps:
       - uses: actions/checkout@v4
@@ -22,8 +24,8 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-make
             mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-toolchain
+            base-devel
+            msys2-devel
 
       - name: Install Vulkan SDK
         run: |
@@ -32,15 +34,22 @@ jobs:
           Start-Process -FilePath "vulkan-sdk.exe" -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
         shell: pwsh
 
-      - name: Build
+      - name: Configure CMake
         shell: msys2 {0}
         run: |
-          mingw32-make release
+          mkdir -p build
+          cd build
+          cmake -G "MSYS Makefiles" ..
+
+      - name: Build
+        shell: msys2 {0}
+        working-directory: build
+        run: make release
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vulkan-minecraft-release
           path: |
-            app.exe
+            build/app.exe
             assets/
