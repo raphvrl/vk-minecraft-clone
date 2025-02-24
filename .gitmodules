@@ -13,3 +13,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
+[submodule "lib/fastnoise"]
+	path = lib/fastnoise
+	url = https://github.com/Auburn/FastNoiseLite.git

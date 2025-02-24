@@ -16,3 +16,11 @@ tile_size = 16
 	[blocks.dirt]
 	id = 3
 	textures.all = { x = 2, y = 0 }
+
+	[blocks.cobblestone]
+	id = 4
+	textures.all = { x = 4, y = 0 }
+
+	[blocks.bedrock]
+	id = 5
+	textures.all = { x = 0, y = 1 }

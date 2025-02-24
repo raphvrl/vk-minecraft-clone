@@ -11,11 +11,14 @@ void Game::init()
     m_ctx.init(m_window);
 
     m_world.init(m_ctx);
+    m_sky.init(m_ctx);
+
     m_running = true;
 }
 
 void Game::destroy()
 {
+    m_sky.destroy();
     m_world.destroy();
     m_ctx.destroy();
     m_window.destroy();
@@ -84,6 +87,7 @@ void Game::render()
         return;
     }
 
+    m_sky.render(m_camera);
     m_world.render(m_camera);
 
     m_ctx.endFrame();

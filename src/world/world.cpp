@@ -14,8 +14,8 @@ void World::init(gfx::VulkanCtx &ctx)
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(gfx::ShaderType::VERTEX, "default.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "default.frag.spv")
+        .setShader(gfx::ShaderType::VERTEX, "chunk.vert.spv")
+        .setShader(gfx::ShaderType::FRAGMENT, "chunk.frag.spv")
         .addPushConstant(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4))
         .setVertexInput(
             &binding,
@@ -32,6 +32,22 @@ void World::init(gfx::VulkanCtx &ctx)
 
     m_texture.init(*m_ctx, "blocks.png");
     m_blockSet = m_pipeline.createDescriptorSet(m_texture);
+
+    m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_noise.SetSeed(42);
+    m_noise.SetFrequency(0.02f);
+    m_noise.SetFractalOctaves(1);
+
+    m_mountainNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_mountainNoise.SetSeed(42);
+    m_mountainNoise.SetFrequency(0.015f);
+
+    m_detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_detailNoise.SetSeed(42);
+    m_detailNoise.SetFrequency(0.08f);
+
+    m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
+    m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
     update({0.0f, 0.0f, 0.0f});
 }
@@ -61,7 +77,7 @@ void World::update(const glm::vec3 &playerPos)
     }
 
     std::unordered_set<ChunkPos, ChunkPosHash> chunksNeeded;
-    std::vector<ChunkPos> chunksToLoad;
+    std::vector<std::pair<ChunkPos, f32>> chunksToLoad;
     std::vector<ChunkPos> chunksToUnload;
 
     for (i32 x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -75,11 +91,17 @@ void World::update(const glm::vec3 &playerPos)
             if (dist <= RENDER_DISTANCE) {
                 chunksNeeded.insert(pos);
                 if (!isChunkLoaded(pos)) {
-                    chunksToLoad.push_back(pos);
+                    chunksToLoad.push_back({pos, dist});
                 }
             }
         }
     }
+
+    std::sort(chunksToLoad.begin(), chunksToLoad.end(), 
+        [](const auto &a, const auto &b) {
+            return a.second < b.second;
+        }
+    );
 
     for (const auto &[pos, _] : m_chunks) {
         if (chunksNeeded.find(pos) == chunksNeeded.end()) {
@@ -96,14 +118,11 @@ void World::update(const glm::vec3 &playerPos)
         static_cast<usize>(CHUNKS_PER_FRAME)
     );
 
-    for (usize i = 0; i < chunkToLoadThisFrame; i++) {
-        loadChunks(chunksToLoad[i]);
-    }
-
     std::vector<ChunkPos> meshesToUpdate;
 
     for (usize i = 0; i < chunkToLoadThisFrame; i++) {
-        const auto &pos = chunksToLoad[i];
+        const auto &pos = chunksToLoad[i].first;
+        loadChunks(pos);
         meshesToUpdate.push_back(pos);
 
         for (i32 dx = -1; dx <= 1; dx++) {
@@ -129,7 +148,15 @@ void World::update(const glm::vec3 &playerPos)
 
             auto mesh = std::make_unique<ChunkMesh>();
             mesh->init(*m_ctx, m_blockRegistry);
-            mesh->generateMesh(*chunk->second, *this, {pos.x, pos.z});
+
+            std::array<const Chunk *, 4> neighbors = {
+                getChunk({pos.x - 1, pos.z}),
+                getChunk({pos.x + 1, pos.z}),
+                getChunk({pos.x, pos.z - 1}),
+                getChunk({pos.x, pos.z + 1})
+            };
+
+            mesh->generateMesh(*chunk->second, neighbors);
             m_meshes[pos] = std::move(mesh);
         }
     }
@@ -215,24 +242,59 @@ bool World::isChunkLoaded(const ChunkPos &pos)
     return m_chunks.find(pos) != m_chunks.end();
 }
 
-void World::generateChunk(Chunk &chunk, const ChunkPos &pos) {
-    UNUSED(pos);
+void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
+{
+    constexpr i32 SEA_LEVEL = 64;
+    constexpr i32 DIRT_DEPTH = 4;
+    constexpr f32 HEIGHT_SCALE = 8.0f;
+    constexpr f32 MOUNTAIN_SCALE = 16.0f;
+    constexpr f32 MOUNTAIN_THRESHOLD = 0.4f;
 
-    for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
+    for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
         for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
+            f32 worldX = static_cast<f32>(
+                pos.x * static_cast<f32>(Chunk::CHUNK_SIZE) + x
+            );
+            f32 worldZ = static_cast<f32>(
+                pos.z * static_cast<f32>(Chunk::CHUNK_SIZE) + z
+            );
+
+            f32 baseNoise = m_noise.GetNoise(worldX, worldZ);
+            f32 mountainNoise = m_mountainNoise.GetNoise(worldX, worldZ);
+            mountainNoise = (mountainNoise > MOUNTAIN_THRESHOLD) ? 
+                (mountainNoise - MOUNTAIN_THRESHOLD) * MOUNTAIN_SCALE : 0.0f;
+
+            f32 detailNoise = m_detailNoise.GetNoise(worldX, worldZ) * 0.05f;
+
+            f32 totalHeight = baseNoise + (mountainNoise * 0.3f) + detailNoise;
+
+            i32 height = static_cast<i32>(SEA_LEVEL + totalHeight * HEIGHT_SCALE);
+            height = glm::clamp(height, SEA_LEVEL - 2, Chunk::CHUNK_HEIGHT - 1);
+
+            for (i32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
                 if (y == 0) {
-                    chunk.setBlock(x, y, z, BlockType::STONE);
-                } else if (y == 1) {
-                    chunk.setBlock(x, y, z, BlockType::DIRT);
-                } else if (y == 2) {
-                    chunk.setBlock(x, y, z, BlockType::GRASS);
-                } else {
+                    chunk.setBlock(x, y, z, BlockType::BEDROCK);
+                } else if (y > height) {
                     chunk.setBlock(x, y, z, BlockType::AIR);
+                } else if (y == height) {
+                    chunk.setBlock(x, y, z, BlockType::GRASS);
+                } else if (y > height - DIRT_DEPTH) {
+                    chunk.setBlock(x, y, z, BlockType::DIRT);
+                } else {
+                    chunk.setBlock(x, y, z, BlockType::STONE);
                 }
             }
         }
     }
+}
+
+const Chunk *World::getChunk(const ChunkPos &pos) const
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        return it->second.get();
+    }
+
+    return nullptr;
 }
 
 } // namespace wld

@@ -26,6 +26,8 @@ public:
     VkSampler getSampler() const { return m_sampler; }
 
 private:
+    static constexpr u32 MIN_MIP_SIZE = 16;
+
     VulkanCtx *m_ctx = nullptr;
 
     VkImage m_image;

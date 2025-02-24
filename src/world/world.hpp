@@ -1,8 +1,11 @@
 #pragma once
 
+#include <FastNoiseLite.h>
+
 #include <unordered_map>
 #include <memory>
 #include <unordered_set>
+#include <algorithm>
 
 #include "chunk.hpp"
 #include "chunk_mesh.hpp"
@@ -51,9 +54,10 @@ private:
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
     void generateChunk(Chunk &chunk, const ChunkPos &pos);
+    const Chunk *getChunk(const ChunkPos &pos) const;
 
     static constexpr int RENDER_DISTANCE = 8;
-    static constexpr int CHUNKS_PER_FRAME = 2;
+    static constexpr int CHUNKS_PER_FRAME = 1;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
@@ -61,6 +65,10 @@ private:
     gfx::Pipeline m_pipeline;
     gfx::Texture m_texture;
     VkDescriptorSet m_blockSet;
+
+    FastNoiseLite m_noise; 
+    FastNoiseLite m_mountainNoise;
+    FastNoiseLite m_detailNoise;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 
@@ -72,6 +80,6 @@ private:
     ChunkPos m_playerChunkPos;
     ChunkMap m_chunks;
     ChunkMeshMap m_meshes;
-};;
+};
 
 } // namespace wld

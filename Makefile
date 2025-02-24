@@ -65,6 +65,11 @@ STB_DIR = $(LIB_DIR)/stb
 
 CXXFLAGS += -I$(STB_DIR)
 
+FASTNOISE_DIR = $(LIB_DIR)/fastnoise
+FASTNOISE_INC = $(FASTNOISE_DIR)/Cpp
+
+CXXFLAGS += -I$(FASTNOISE_INC)
+
 VULKAN_INC = $(VULKAN_SDK)/Include
 VULKAN_LIB = $(VULKAN_SDK)/Lib
 
@@ -107,7 +112,7 @@ ifeq ($(OS), Windows_NT)
 	endif
 endif
 
-all: glfw shaders $(TARGET)
+all: glfw fastnoise shaders $(TARGET)
 
 release:
 	@$(MAKE) MODE=release all
@@ -165,4 +170,4 @@ clean-all:
 
 re: clean all
 
-.PHONY: all release clean clean-all re glfw clean-glfw shaders
+.PHONY: all release clean re clean-all glfw clean-glfw fastnoise clean-fastnoise
