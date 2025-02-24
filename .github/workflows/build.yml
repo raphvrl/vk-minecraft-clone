@@ -48,4 +48,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: vulkan-minecraft-windows
-        path: app.exe
+        path: |
+          app.exe
+          assets/**
