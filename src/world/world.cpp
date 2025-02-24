@@ -46,6 +46,9 @@ void World::init(gfx::VulkanCtx &ctx)
     m_detailNoise.SetSeed(42);
     m_detailNoise.SetFrequency(0.08f);
 
+    m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
+    m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
+
     update({0.0f, 0.0f, 0.0f});
 }
 
