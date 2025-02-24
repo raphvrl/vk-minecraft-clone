@@ -33,7 +33,7 @@ jobs:
       - name: Build
         shell: msys2 {0}
         run: |
-          make release
+          mingw32-make release
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
