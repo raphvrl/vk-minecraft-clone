@@ -11,9 +11,7 @@ A prebuilt version of the game is available through GitHub Actions:
 1. Go to the "Actions" tab of this repository
 2. Select the latest successful "Build" workflow
 3. Download the "build" artifact
-4. Extract the archive which contains:
-   - `app.exe` - The game executable
-   - `assets/` - Required game resources
+4. Launch `app.exe` from the extracted `build.zip` file to play the game
 
 ### Option 2: Building from Source
 
