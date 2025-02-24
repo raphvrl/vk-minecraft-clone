@@ -34,7 +34,6 @@ make all
 ```bash
 ./app.exe
 ```
-
 ## Features
 
 - [x] Vulkan initialization
@@ -43,6 +42,7 @@ make all
 - [x] Infinite world generation with chunk system
 - [x] Block face culling (including between chunks)
 - [x] Perlin noise terrain generation for Minecraft Clone
+- [x] Skybox implementation
 - [ ] More coming soon...
 
 ## Development
