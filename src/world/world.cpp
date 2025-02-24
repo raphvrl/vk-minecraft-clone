@@ -22,6 +22,12 @@ void World::init(gfx::VulkanCtx &ctx)
             attributes.size()
         )
         .addDescriptorBinding({
+            .binding = 0,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT
+        })
+        .addDescriptorBinding({
             .binding = 1,
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .count = 1,
@@ -35,7 +41,9 @@ void World::init(gfx::VulkanCtx &ctx)
         .build();
 
     m_texture.init(*m_ctx, "blocks.png");
+    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
 
+    m_uniformSet = m_pipeline.createDescriptorSet(m_ubo);
     m_blockSet = m_pipeline.createDescriptorSet(m_texture);
     
 
@@ -60,6 +68,7 @@ void World::init(gfx::VulkanCtx &ctx)
 
 void World::destroy()
 {
+    m_ubo.destroy();
     m_texture.destroy();
     m_pipeline.destroy();
 
@@ -175,7 +184,14 @@ void World::update(const glm::vec3 &playerPos)
 void World::render(const core::Camera &camera)
 {
     m_pipeline.bind();
+    m_pipeline.bindDescriptorSet(m_uniformSet);
     m_pipeline.bindDescriptorSet(m_blockSet);
+
+    UniformBufferObject uniformBuffer = {
+        .viewProj = camera.getProj() * camera.getView(),
+    };
+
+    m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);

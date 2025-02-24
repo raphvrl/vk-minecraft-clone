@@ -5,6 +5,11 @@ layout (location = 1) in vec2 inUV;
 
 layout (location = 0) out vec2 fragUV;
 
+layout(set = 0, binding = 0) uniform UniformBufferObject
+{
+    mat4 viewProj;
+} ubo;
+
 layout(push_constant) uniform PushConstantObject
 {
     mat4 model;
