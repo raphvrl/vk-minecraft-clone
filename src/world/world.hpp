@@ -1,6 +1,6 @@
 #pragma once
 
-#include <FastNoise/FastNoise.h>
+#include <FastNoiseLite.h>
 
 #include <unordered_map>
 #include <memory>
@@ -54,9 +54,10 @@ private:
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
     void generateChunk(Chunk &chunk, const ChunkPos &pos);
+    const Chunk *getChunk(const ChunkPos &pos) const;
 
     static constexpr int RENDER_DISTANCE = 8;
-    static constexpr int CHUNKS_PER_FRAME = 2;
+    static constexpr int CHUNKS_PER_FRAME = 1;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
@@ -65,9 +66,9 @@ private:
     gfx::Texture m_texture;
     VkDescriptorSet m_blockSet;
 
-    FastNoise::SmartNode<> m_noise;
-    FastNoise::SmartNode<> m_mountainNoise;
-    FastNoise::SmartNode<> m_detailNoise;
+    FastNoiseLite m_noise; 
+    FastNoiseLite m_mountainNoise;
+    FastNoiseLite m_detailNoise;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 

@@ -6,6 +6,7 @@
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
 #include "world/world.hpp"
+#include "world/sky.hpp"
 
 namespace game
 {
@@ -29,6 +30,7 @@ private:
     gfx::VulkanCtx m_ctx;
 
     wld::World m_world;
+    wld::Sky m_sky;
 
     bool m_running;
 };

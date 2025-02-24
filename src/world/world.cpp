@@ -14,8 +14,8 @@ void World::init(gfx::VulkanCtx &ctx)
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(gfx::ShaderType::VERTEX, "default.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "default.frag.spv")
+        .setShader(gfx::ShaderType::VERTEX, "chunk.vert.spv")
+        .setShader(gfx::ShaderType::FRAGMENT, "chunk.frag.spv")
         .addPushConstant(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4))
         .setVertexInput(
             &binding,
@@ -33,17 +33,18 @@ void World::init(gfx::VulkanCtx &ctx)
     m_texture.init(*m_ctx, "blocks.png");
     m_blockSet = m_pipeline.createDescriptorSet(m_texture);
 
-    auto fnSimplex = FastNoise::New<FastNoise::Perlin>();
-    fnSimplex->SetSource(FastNoise::New<FastNoise::Seed>(42));
-    m_noise = fnSimplex;
+    m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_noise.SetSeed(42);
+    m_noise.SetFrequency(0.02f);
+    m_noise.SetFractalOctaves(1);
 
-    auto fnMountain = FastNoise::New<FastNoise::Perlin>();
-    fnMountain->SetSource(FastNoise::New<FastNoise::Seed>(42));
-    m_mountainNoise = fnMountain;
+    m_mountainNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_mountainNoise.SetSeed(42);
+    m_mountainNoise.SetFrequency(0.015f);
 
-    auto fnDetail = FastNoise::New<FastNoise::Perlin>();
-    fnDetail->SetSource(FastNoise::New<FastNoise::Seed>(42));
-    m_detailNoise = fnDetail;
+    m_detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_detailNoise.SetSeed(42);
+    m_detailNoise.SetFrequency(0.08f);
 
     update({0.0f, 0.0f, 0.0f});
 }
@@ -144,7 +145,15 @@ void World::update(const glm::vec3 &playerPos)
 
             auto mesh = std::make_unique<ChunkMesh>();
             mesh->init(*m_ctx, m_blockRegistry);
-            mesh->generateMesh(*chunk->second, *this, {pos.x, pos.z});
+
+            std::array<const Chunk *, 4> neighbors = {
+                getChunk({pos.x - 1, pos.z}),
+                getChunk({pos.x + 1, pos.z}),
+                getChunk({pos.x, pos.z - 1}),
+                getChunk({pos.x, pos.z + 1})
+            };
+
+            mesh->generateMesh(*chunk->second, neighbors);
             m_meshes[pos] = std::move(mesh);
         }
     }
@@ -234,56 +243,32 @@ void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
 {
     constexpr i32 SEA_LEVEL = 64;
     constexpr i32 DIRT_DEPTH = 4;
-    constexpr f32 HEIGHT_SCALE = 32.0f;
-
-    std::vector<f32> noiseOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
-    std::vector<f32> mountainOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
-    std::vector<f32> detailOutput(Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE);
-
-    f32 worldX = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
-    f32 worldZ = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
-
-    m_noise->GenUniformGrid2D(
-        noiseOutput.data(),
-        pos.x * Chunk::CHUNK_SIZE,
-        pos.z * Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        0.01f,
-        42
-    );
-
-    m_mountainNoise->GenUniformGrid2D(
-        mountainOutput.data(),
-        pos.x * Chunk::CHUNK_SIZE,
-        pos.z * Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        0.02f,
-        42
-    );
-
-    m_detailNoise->GenUniformGrid2D(
-        detailOutput.data(),
-        pos.x * Chunk::CHUNK_SIZE,
-        pos.z * Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        Chunk::CHUNK_SIZE,
-        0.05f,
-        42
-    );
+    constexpr f32 HEIGHT_SCALE = 8.0f;
+    constexpr f32 MOUNTAIN_SCALE = 16.0f;
+    constexpr f32 MOUNTAIN_THRESHOLD = 0.4f;
 
     for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
         for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            f32 baseHeight = noiseOutput[x + z * Chunk::CHUNK_SIZE];
-            f32 mountainHeight = mountainOutput[x + z * Chunk::CHUNK_SIZE] * 0.5f;
-            f32 detailHeight = detailOutput[x + z * Chunk::CHUNK_SIZE] * 0.25f;
+            f32 worldX = static_cast<f32>(
+                pos.x * static_cast<f32>(Chunk::CHUNK_SIZE) + x
+            );
+            f32 worldZ = static_cast<f32>(
+                pos.z * static_cast<f32>(Chunk::CHUNK_SIZE) + z
+            );
 
-            f32 totalHeight = baseHeight + mountainHeight + detailHeight;
+            f32 baseNoise = m_noise.GetNoise(worldX, worldZ);
+            f32 mountainNoise = m_mountainNoise.GetNoise(worldX, worldZ);
+            mountainNoise = (mountainNoise > MOUNTAIN_THRESHOLD) ? 
+                (mountainNoise - MOUNTAIN_THRESHOLD) * MOUNTAIN_SCALE : 0.0f;
+
+            f32 detailNoise = m_detailNoise.GetNoise(worldX, worldZ) * 0.05f;
+
+            f32 totalHeight = baseNoise + (mountainNoise * 0.3f) + detailNoise;
+
             i32 height = static_cast<i32>(SEA_LEVEL + totalHeight * HEIGHT_SCALE);
-            height = std::clamp(height, 1, Chunk::CHUNK_HEIGHT - 1);
+            height = glm::clamp(height, SEA_LEVEL - 2, Chunk::CHUNK_HEIGHT - 1);
 
-            for (i32 y = 0; y < height; y++) {
+            for (i32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
                 if (y == 0) {
                     chunk.setBlock(x, y, z, BlockType::BEDROCK);
                 } else if (y > height) {
@@ -298,6 +283,15 @@ void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
             }
         }
     }
+}
+
+const Chunk *World::getChunk(const ChunkPos &pos) const
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        return it->second.get();
+    }
+
+    return nullptr;
 }
 
 } // namespace wld

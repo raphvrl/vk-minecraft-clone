@@ -12,6 +12,7 @@ namespace wld
 class BlockRegistry;
 class World;
 class Chunk;
+struct ChunkPos;
 
 enum class BlockType;
 
@@ -73,8 +74,7 @@ public:
 
     void generateMesh(
         const Chunk &chunk,
-        const World &world,
-        const glm::vec2 &chunkPos
+        std::array<const Chunk *, 4> &neighbors
     );
 
     void draw();
@@ -111,6 +111,14 @@ private:
     );
 
     std::array<glm::vec2, 4> getUVs(BlockType block, Face face);
+
+    bool isFaceVisible(
+        const Chunk &chunk,
+        std::array<const Chunk *, 4> neighbors,
+        i32 x,
+        i32 y,
+        i32 z
+    );
 };
 
 } // namespace wld

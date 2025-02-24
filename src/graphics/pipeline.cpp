@@ -40,6 +40,8 @@ Pipeline::Builder &Pipeline::Builder::setVertexInput(
     u32 attributeCount
 )
 {
+    m_hasVertexInput = true;
+
     m_bindingDescription = *bindingDescription;
 
     m_attributeDescriptions.clear();
@@ -57,6 +59,18 @@ Pipeline::Builder &Pipeline::Builder::addDescriptorBinding(
 )
 {
     m_descriptorLayouts.push_back(layout);
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setDepthTest(bool enable)
+{
+    m_depthTest = enable;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setDepthWrite(bool enable)
+{
+    m_depthWrite = enable;
     return *this;
 }
 
@@ -98,10 +112,19 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &m_bindingDescription;
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(m_attributeDescriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = m_attributeDescriptions.data();
+
+    if (m_hasVertexInput) {
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = &m_bindingDescription;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<u32>(m_attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = m_attributeDescriptions.data();
+    } else {
+        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.vertexAttributeDescriptionCount = 0;
+        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    }
+    
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -164,8 +187,8 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineDepthStencilStateCreateInfo depthStencil = {};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthTestEnable = m_depthTest ? VK_TRUE : VK_FALSE;
+    depthStencil.depthWriteEnable = m_depthWrite ? VK_TRUE : VK_FALSE;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f;

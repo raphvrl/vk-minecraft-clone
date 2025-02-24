@@ -54,6 +54,8 @@ public:
             u32 attributeCount  
         );
         Builder &addDescriptorBinding(const DescriptorLayout &layout);
+        Builder &setDepthTest(bool enable);
+        Builder &setDepthWrite(bool enable);
 
         Pipeline build();
 
@@ -63,10 +65,14 @@ public:
         std::map<int, std::string> m_shaderPaths;
         std::vector<VkPushConstantRange> m_pushConstants;
 
+        bool m_hasVertexInput = false;
         VkVertexInputBindingDescription m_bindingDescription = {};
         std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 
         std::vector<DescriptorLayout> m_descriptorLayouts;
+
+        bool m_depthTest = true;
+        bool m_depthWrite = true;
 
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);

@@ -30,15 +30,11 @@ void ChunkMesh::destroy()
 
 void ChunkMesh::generateMesh(
     const Chunk &chunk,
-    const World &world,
-    const glm::vec2 &chunkPos
+    std::array<const Chunk *, 4> &neighbors
 )
 {
     m_vertices.clear();
     m_indices.clear();
-
-    i32 chunkWorldX = static_cast<i32>(chunkPos.x) * Chunk::CHUNK_SIZE;
-    i32 chunkWorldZ = static_cast<i32>(chunkPos.y) * Chunk::CHUNK_SIZE;
 
     for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
         for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
@@ -50,26 +46,28 @@ void ChunkMesh::generateMesh(
 
                 glm::vec3 pos(x, y, z);
 
-                i32 worldX = chunkWorldX + x;
-                i32 worldZ = chunkWorldZ + z;
+                if (isFaceVisible(chunk, neighbors, x - 1, y, z)) {
+                    addFace(pos, FACE_WEST, getUVs(block, Face::WEST), block);
+                }
 
-                if (world.getBlock(worldX, y + 1, worldZ) == BlockType::AIR) {
-                    addFace(pos, FACE_TOP, getUVs(block, Face::TOP), block);
-                }
-                if (world.getBlock(worldX, y - 1, worldZ) == BlockType::AIR) {
-                    addFace(pos, FACE_BOTTOM, getUVs(block, Face::BOTTOM), block);
-                }
-                if (world.getBlock(worldX, y, worldZ + 1) == BlockType::AIR) {
-                    addFace(pos, FACE_NORTH, getUVs(block, Face::NORTH), block);
-                }
-                if (world.getBlock(worldX, y, worldZ - 1) == BlockType::AIR) {
-                    addFace(pos, FACE_SOUTH, getUVs(block, Face::SOUTH), block);
-                }
-                if (world.getBlock(worldX + 1, y, worldZ) == BlockType::AIR) {
+                if (isFaceVisible(chunk, neighbors, x + 1, y, z)) {
                     addFace(pos, FACE_EAST, getUVs(block, Face::EAST), block);
                 }
-                if (world.getBlock(worldX - 1, y, worldZ) == BlockType::AIR) {
-                    addFace(pos, FACE_WEST, getUVs(block, Face::WEST), block);
+
+                if (isFaceVisible(chunk, neighbors, x, y - 1, z)) {
+                    addFace(pos, FACE_BOTTOM, getUVs(block, Face::BOTTOM), block);
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y + 1, z)) {
+                    addFace(pos, FACE_TOP, getUVs(block, Face::TOP), block);
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y, z + 1)) {
+                    addFace(pos, FACE_NORTH, getUVs(block, Face::NORTH), block);
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y, z - 1)) {
+                    addFace(pos, FACE_SOUTH, getUVs(block, Face::SOUTH), block);
                 }
             }
         }
@@ -268,6 +266,57 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(BlockType block, Face face)
         glm::vec2(x + tileSize, y + tileSize),
         glm::vec2(x, y + tileSize)
     };
+}
+
+bool ChunkMesh::isFaceVisible(
+    const Chunk &chunk,
+    std::array<const Chunk *, 4> neighbors,
+    i32 x,
+    i32 y,
+    i32 z
+)
+{
+    if (x < 0) {
+        if (neighbors[0] == nullptr) {
+            return true;
+        }
+
+        return neighbors[0]->getBlock(
+            Chunk::CHUNK_SIZE - 1, y, z
+        ) == BlockType::AIR;
+    }
+
+    if (x >= Chunk::CHUNK_SIZE) {
+        if (neighbors[1] == nullptr) {
+            return true;
+        }
+
+        return neighbors[1]->getBlock(
+            0, y, z
+        ) == BlockType::AIR;
+    }
+
+    if (z < 0) {
+        if (neighbors[2] == nullptr) {
+            return true;
+        }
+
+        return neighbors[2]->getBlock(
+            x, y, Chunk::CHUNK_SIZE - 1
+        ) == BlockType::AIR;
+    }
+
+    if (z >= Chunk::CHUNK_SIZE) {
+        if (neighbors[3] == nullptr) {
+            return true;
+        }
+
+        return neighbors[3]->getBlock(
+            x, y, 0
+        ) == BlockType::AIR;
+    }
+
+    return chunk.getBlock(x, y, z) == BlockType::AIR;
 }
 
 } // namespace wld
