@@ -334,25 +334,27 @@ const Chunk *World::getChunk(const ChunkPos &pos) const
     return nullptr;
 }
 
-void World::updateChunkMesh(const ChunkPos &pos, Chunk *chunk)
+void World::updateChunkMesh(const ChunkPos &pos)
 {
-    if (auto mesh = m_meshes.find(pos); mesh != m_meshes.end()) {
-        std::array<const Chunk *, 4> neighbors = {
-            getChunk({pos.x - 1, pos.z}),
-            getChunk({pos.x + 1, pos.z}),
-            getChunk({pos.x, pos.z - 1}),
-            getChunk({pos.x, pos.z + 1})
-        };
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        if (auto mesh = m_meshes.find(pos); mesh != m_meshes.end()) {
+            std::array<const Chunk *, 4> neighbors = {
+                getChunk({pos.x - 1, pos.z}),
+                getChunk({pos.x + 1, pos.z}),
+                getChunk({pos.x, pos.z - 1}),
+                getChunk({pos.x, pos.z + 1})
+            };
 
-        mesh->second->update(*chunk, neighbors);
+            mesh->second->update(*it->second, neighbors);
+        }
     }
 }
 
 void World::placeBlock(const glm::ivec3 &pos, BlockType type)
 {
     ChunkPos chunkPos = {
-        pos.x / Chunk::CHUNK_SIZE,
-        pos.z / Chunk::CHUNK_SIZE
+        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
+        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
     };
 
     if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
@@ -364,24 +366,24 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
 
         it->second->setBlock(localPos, type);
 
-        updateChunkMesh(chunkPos, it->second.get());
+        updateChunkMesh(chunkPos);
 
         if (localPos.x == 0) 
-            updateChunkMesh({chunkPos.x - 1, chunkPos.z}, it->second.get());
+            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
         if (localPos.x == 15)
-            updateChunkMesh({chunkPos.x + 1, chunkPos.z}, it->second.get());
+            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
         if (localPos.z == 0)
-            updateChunkMesh({chunkPos.x, chunkPos.z - 1}, it->second.get());
+            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
         if (localPos.z == 15)
-            updateChunkMesh({chunkPos.x, chunkPos.z + 1}, it->second.get());
+            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
     }
 }
 
 void World::deleteBlock(const glm::ivec3 &pos)
 {
     ChunkPos chunkPos = {
-        pos.x / Chunk::CHUNK_SIZE,
-        pos.z / Chunk::CHUNK_SIZE
+        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
+        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
     };
 
     if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
@@ -393,16 +395,16 @@ void World::deleteBlock(const glm::ivec3 &pos)
 
         it->second->setBlock(localPos, BlockType::AIR);
 
-        updateChunkMesh(chunkPos, it->second.get());
+        updateChunkMesh(chunkPos);
     
         if (localPos.x == 0)
-            updateChunkMesh({chunkPos.x - 1, chunkPos.z}, it->second.get());
+            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
         if (localPos.x == 15) 
-            updateChunkMesh({chunkPos.x + 1, chunkPos.z},  it->second.get());
+            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
         if (localPos.z == 0)
-            updateChunkMesh({chunkPos.x, chunkPos.z - 1}, it->second.get());
+            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
         if (localPos.z == 15)
-            updateChunkMesh({chunkPos.x, chunkPos.z + 1}, it->second.get());
+            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
     }
 }
 

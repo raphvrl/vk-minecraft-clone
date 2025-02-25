@@ -71,7 +71,7 @@ private:
     void generateChunk(Chunk &chunk, const ChunkPos &pos);
     const Chunk *getChunk(const ChunkPos &pos) const;
 
-    void updateChunkMesh(const ChunkPos &pos, Chunk *chunk);
+    void updateChunkMesh(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 1;
