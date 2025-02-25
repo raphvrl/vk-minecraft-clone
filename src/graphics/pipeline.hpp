@@ -8,18 +8,12 @@
 
 #include "vulkan_ctx.hpp"
 #include "texture.hpp"
+#include "uniform_buffer.hpp"
 
 namespace gfx
 {
 
 static constexpr std::string_view SHADER_PATH = "assets/shaders/";
-
-enum class ShaderType
-{
-    VERTEX,
-    FRAGMENT,
-    GEOMETRY
-};
 
 struct DescriptorLayout
 {
@@ -29,11 +23,15 @@ struct DescriptorLayout
     VkShaderStageFlags stage;
 };
 
-struct UniformBuffer
+struct DescriptorData
 {
-    VkBuffer buffer;
-    VmaAllocation allocation;
-    VkDeviceSize size;
+    VkDescriptorType type;
+    u32 binding;
+    VkShaderStageFlags stage;
+    union {
+        Texture *texture;
+        UniformBuffer *ubo;
+    };
 };
 
 class Pipeline
@@ -46,8 +44,12 @@ public:
     public:
         Builder(VulkanCtx &ctx);
 
-        Builder &setShader(ShaderType type, const std::string &path);
-        Builder &addPushConstant(ShaderType type, u32 offset, u32 size);
+        Builder &setShader(VkShaderStageFlags stage, const std::string &path);
+        Builder &addPushConstant(
+            VkShaderStageFlags stage,
+            u32 offset,
+            u32 size
+        );
         Builder &setVertexInput(
             const VkVertexInputBindingDescription *bindingDescription,
             const VkVertexInputAttributeDescription *attributeDescriptions,
@@ -57,6 +59,8 @@ public:
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
         Builder &setCullMode(VkCullModeFlags mode);
+        Builder &setTopology(VkPrimitiveTopology topology);
+        Builder &setLineWidth(f32 width);
 
         Pipeline build();
 
@@ -77,6 +81,10 @@ public:
 
         VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
 
+        VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+        f32 m_lineWidth = 1.0f;
+
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);
     };
@@ -85,11 +93,23 @@ public:
 
     void destroy();
 
-    VkDescriptorSet createDescriptorSet(Texture &texture);
+    VkDescriptorSet createDescriptorSet(
+        const std::vector<DescriptorData> &descriptors
+    );
+
     void bindDescriptorSet(VkDescriptorSet set);
+    void bindDescriptorSets(
+        const std::vector<VkDescriptorSet> &sets,
+        u32 offset = 0
+    );
 
     void bind();
-    void push(ShaderType type, u32 offset, u32 size, const void *data);
+    void push(
+        VkShaderStageFlags stage,
+        u32 offset,
+        u32 size,
+        const void *data
+    );
 
 private:
     friend class Builder;
@@ -98,8 +118,10 @@ private:
 
     VkPipeline m_handle;
     VkPipelineLayout m_layout;
-    VkDescriptorSetLayout m_descriptor;
+    VkDescriptorSetLayout m_descriptorLayout;
     VkDescriptorPool m_descriptorPool;
+
+    f32 m_lineWidth;
 };
     
 } // namespace gfx

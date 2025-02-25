@@ -14,9 +14,8 @@ void World::init(gfx::VulkanCtx &ctx)
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(gfx::ShaderType::VERTEX, "chunk.vert.spv")
-        .setShader(gfx::ShaderType::FRAGMENT, "chunk.frag.spv")
-        .addPushConstant(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4))
+        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
+        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
         .setVertexInput(
             &binding,
             attributes.data(),
@@ -24,14 +23,42 @@ void World::init(gfx::VulkanCtx &ctx)
         )
         .addDescriptorBinding({
             .binding = 0,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT
+        })
+        .addDescriptorBinding({
+            .binding = 1,
             .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .count = 1,
             .stage = VK_SHADER_STAGE_FRAGMENT_BIT
         })
+        .addPushConstant(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(glm::mat4)
+        )
         .build();
 
     m_texture.init(*m_ctx, "blocks.png");
-    m_blockSet = m_pipeline.createDescriptorSet(m_texture);
+    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
+
+    std::vector<gfx::DescriptorData> descriptors = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .binding = 0,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .ubo = &m_ubo
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .binding = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .texture = &m_texture
+        }
+    };
+
+    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
 
     m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     m_noise.SetSeed(42);
@@ -54,6 +81,7 @@ void World::init(gfx::VulkanCtx &ctx)
 
 void World::destroy()
 {
+    m_ubo.destroy();
     m_texture.destroy();
     m_pipeline.destroy();
 
@@ -156,7 +184,7 @@ void World::update(const glm::vec3 &playerPos)
                 getChunk({pos.x, pos.z + 1})
             };
 
-            mesh->generateMesh(*chunk->second, neighbors);
+            mesh->generate(*chunk->second, neighbors);
             m_meshes[pos] = std::move(mesh);
         }
     }
@@ -168,12 +196,17 @@ void World::update(const glm::vec3 &playerPos)
 
 void World::render(const core::Camera &camera)
 {
-    glm::mat4 view = camera.getView();
-    glm::mat4 proj = camera.getProj();
-
     m_pipeline.bind();
 
-    m_pipeline.bindDescriptorSet(m_blockSet);
+    m_pipeline.bindDescriptorSet(m_descriptorSet);
+
+    UniformBufferObject uniformBuffer = {
+        .view = camera.getView(),
+        .proj = camera.getProj(),
+        .camPos = camera.getPos()
+    };
+
+    m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
@@ -182,8 +215,12 @@ void World::render(const core::Camera &camera)
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
 
-        glm::mat4 mvp = proj * view * model;
-        m_pipeline.push(gfx::ShaderType::VERTEX, 0, sizeof(glm::mat4), &mvp);
+        m_pipeline.push(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(model),
+            &model
+        );
 
         mesh->draw();
     }
@@ -217,6 +254,139 @@ BlockType World::getBlock(int x, int y, int z) const
     }
 
     return it->second->getBlock(localX, y, localZ);
+}
+
+void World::placeBlock(const glm::ivec3 &pos, BlockType type)
+{
+    ChunkPos chunkPos = {
+        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
+        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
+    };
+
+    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
+        glm::ivec3 localPos = {
+            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
+            pos.y,
+            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
+        };
+
+        it->second->setBlock(localPos, type);
+
+        updateChunkMesh(chunkPos);
+
+        if (localPos.x == 0) 
+            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
+        if (localPos.x == 15)
+            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
+        if (localPos.z == 0)
+            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
+        if (localPos.z == 15)
+            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
+    }
+}
+
+void World::deleteBlock(const glm::ivec3 &pos)
+{
+    ChunkPos chunkPos = {
+        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
+        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
+    };
+
+    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
+        glm::ivec3 localPos = {
+            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
+            pos.y,
+            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
+        };
+
+        it->second->setBlock(localPos, BlockType::AIR);
+
+        updateChunkMesh(chunkPos);
+    
+        if (localPos.x == 0)
+            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
+        if (localPos.x == 15) 
+            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
+        if (localPos.z == 0)
+            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
+        if (localPos.z == 15)
+            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
+    }
+}
+
+bool World::raycast(
+    const Ray &ray,
+    f32 maxDistance,
+    RaycastResult &result
+)
+{
+    glm::vec3 pos = ray.origin;
+    glm::vec3 step = glm::sign(ray.direction);
+    glm::vec3 tDelta = glm::abs(1.0f / ray.direction);
+    glm::vec3 tMax;
+    glm::ivec3 blockPos = glm::floor(pos);
+
+    for (i32 i = 0; i < 3; i++) {
+        if (step[i] > 0) {
+            tMax[i] = ((blockPos[i] + 1) - pos[i]) * tDelta[i];
+        } else {
+            tMax[i] = (pos[i] - blockPos[i]) * tDelta[i];
+        }
+    }
+
+    Face hitFace;
+    f32 dist = 0.0f;
+
+    while (dist < maxDistance) {
+        if (tMax.x < tMax.y && tMax.x < tMax.z) {
+            blockPos.x += step.x;
+            dist = tMax.x;
+            tMax.x += tDelta.x;
+            hitFace = (step.x > 0) ? Face::WEST : Face::EAST;
+        } else if (tMax.y < tMax.z) {
+            blockPos.y += step.y;
+            dist = tMax.y;
+            tMax.y += tDelta.y;
+            hitFace = (step.y > 0) ? Face::BOTTOM : Face::TOP;
+        } else {
+            blockPos.z += step.z;
+            dist = tMax.z;
+            tMax.z += tDelta.z;
+            hitFace = (step.z > 0) ? Face::NORTH : Face::SOUTH;
+        }
+
+        BlockType type = getBlock(blockPos);
+        if (type != BlockType::AIR) {
+            result.pos = blockPos;
+            result.face = hitFace;
+
+            result.normal = blockPos;
+            switch (hitFace) {
+            case Face::NORTH:
+                result.normal.z--;
+                break;
+            case Face::SOUTH:
+                result.normal.z++;
+                break;
+            case Face::EAST:
+                result.normal.x++;
+                break;
+            case Face::WEST:
+                result.normal.x--;
+                break;
+            case Face::TOP:
+                result.normal.y++;
+                break;
+            case Face::BOTTOM:
+                result.normal.y--;
+                break;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void World::loadChunks(const ChunkPos &pos)
@@ -295,6 +465,22 @@ const Chunk *World::getChunk(const ChunkPos &pos) const
     }
 
     return nullptr;
+}
+
+void World::updateChunkMesh(const ChunkPos &pos)
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        if (auto mesh = m_meshes.find(pos); mesh != m_meshes.end()) {
+            std::array<const Chunk *, 4> neighbors = {
+                getChunk({pos.x - 1, pos.z}),
+                getChunk({pos.x + 1, pos.z}),
+                getChunk({pos.x, pos.z - 1}),
+                getChunk({pos.x, pos.z + 1})
+            };
+
+            mesh->second->update(*it->second, neighbors);
+        }
+    }
 }
 
 } // namespace wld

@@ -15,9 +15,23 @@
 #include "graphics/vulkan_ctx.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
+#include "graphics/uniform_buffer.hpp"
 
 namespace wld
 {
+
+struct Ray
+{
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
+
+struct RaycastResult
+{
+    glm::ivec3 pos;
+    glm::ivec3 normal;
+    Face face;
+};
 
 class World {
 public:
@@ -28,6 +42,14 @@ public:
     void render(const core::Camera &camera);
 
     BlockType getBlock(int x, int y, int z) const;
+    BlockType getBlock(const glm::ivec3 &pos) const {
+        return getBlock(pos.x, pos.y, pos.z);
+    }
+    
+    void placeBlock(const glm::ivec3 &pos, BlockType type);
+    void deleteBlock(const glm::ivec3 &pos);
+
+    bool raycast(const Ray &ray, f32 maxDistance, RaycastResult &result);
 
 private:
     struct ChunkPos {
@@ -56,15 +78,26 @@ private:
     void generateChunk(Chunk &chunk, const ChunkPos &pos);
     const Chunk *getChunk(const ChunkPos &pos) const;
 
+    void updateChunkMesh(const ChunkPos &pos);
+
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 1;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
 
+    struct UniformBufferObject
+    {
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 proj;
+        alignas(16) glm::vec3 camPos;
+    };
+
     gfx::Pipeline m_pipeline;
     gfx::Texture m_texture;
-    VkDescriptorSet m_blockSet;
+    gfx::UniformBuffer m_ubo;
+    VkDescriptorSet m_descriptorSet;
+
 
     FastNoiseLite m_noise; 
     FastNoiseLite m_mountainNoise;

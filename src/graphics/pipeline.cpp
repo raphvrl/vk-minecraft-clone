@@ -9,24 +9,22 @@ Pipeline::Builder::Builder(VulkanCtx &ctx)
 }
 
 Pipeline::Builder &Pipeline::Builder::setShader(
-    ShaderType type,
+    VkShaderStageFlags stage,
     const std::string &path
 )
 {
-    m_shaderPaths[static_cast<int>(type)] = path;
+    m_shaderPaths[static_cast<i32>(stage)] = path;
     return *this;
 }
 
 Pipeline::Builder &Pipeline::Builder::addPushConstant(
-    ShaderType type,
+    VkShaderStageFlags stage,
     u32 offset,
     u32 size
 )
 {
     VkPushConstantRange pushConstantRange = {};
-    pushConstantRange.stageFlags = type == ShaderType::VERTEX
-        ? VK_SHADER_STAGE_VERTEX_BIT
-        : VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.stageFlags = stage;
     pushConstantRange.offset = offset;
     pushConstantRange.size = size;
 
@@ -80,16 +78,28 @@ Pipeline::Builder &Pipeline::Builder::setCullMode(VkCullModeFlags mode)
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setTopology(VkPrimitiveTopology topology)
+{
+    m_topology = topology;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setLineWidth(f32 width)
+{
+    m_lineWidth = width;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
-        m_shaderPaths[static_cast<int>(ShaderType::VERTEX)]
+        m_shaderPaths[static_cast<i32>(VK_SHADER_STAGE_VERTEX_BIT)]
     );
 
     VkShaderModule vertexModule = createShaderModule(vertexCode);
     
     auto fragmentCode = readFile(
-        m_shaderPaths[static_cast<int>(ShaderType::FRAGMENT)]
+        m_shaderPaths[static_cast<i32>(VK_SHADER_STAGE_FRAGMENT_BIT)]
     );
 
     VkShaderModule fragmentModule = createShaderModule(fragmentCode);
@@ -108,12 +118,13 @@ Pipeline Pipeline::Builder::build()
 
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_LINE_WIDTH
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState = {};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 2;
+    dynamicState.dynamicStateCount = 3;
     dynamicState.pDynamicStates = dynamicStates;
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -134,7 +145,8 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology = m_topology;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkViewport viewport = {};
     viewport.x = 0.0f;
@@ -160,7 +172,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
+    rasterizer.lineWidth = m_lineWidth;
     rasterizer.cullMode = m_cullMode;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
@@ -176,9 +188,9 @@ Pipeline Pipeline::Builder::build()
         VK_COLOR_COMPONENT_G_BIT | 
         VK_COLOR_COMPONENT_B_BIT | 
         VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -206,17 +218,16 @@ Pipeline Pipeline::Builder::build()
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     bindings.reserve(m_descriptorLayouts.size());
 
-    for (const auto &layout : m_descriptorLayouts) {
+    for (const auto& layout : m_descriptorLayouts) {
         VkDescriptorSetLayoutBinding binding = {};
         binding.binding = layout.binding;
         binding.descriptorType = layout.type;
         binding.descriptorCount = layout.count;
         binding.stageFlags = layout.stage;
         binding.pImmutableSamplers = nullptr;
-
         bindings.push_back(binding);
     }
-
+    
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<u32>(bindings.size());
@@ -229,8 +240,7 @@ Pipeline Pipeline::Builder::build()
         nullptr,
         &descriptorLayout
     );
-
-    VulkanCtx::check(res, "Failed to create descriptor set layout!");
+    VulkanCtx::check(res, "Failed to create descriptor layout!");
 
     std::vector<VkDescriptorPoolSize> poolSizes;
     poolSizes.reserve(m_descriptorLayouts.size());
@@ -238,8 +248,7 @@ Pipeline Pipeline::Builder::build()
     for (const auto &layout : m_descriptorLayouts) {
         VkDescriptorPoolSize poolSize = {};
         poolSize.type = layout.type;
-        poolSize.descriptorCount = layout.count;
-
+        poolSize.descriptorCount = 1000;
         poolSizes.push_back(poolSize);
     }
 
@@ -247,7 +256,8 @@ Pipeline Pipeline::Builder::build()
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<u32>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = 1;
+    poolInfo.maxSets = 1000;
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     VkDescriptorPool descriptorPool;
     res = vkCreateDescriptorPool(
@@ -256,17 +266,16 @@ Pipeline Pipeline::Builder::build()
         nullptr,
         &descriptorPool
     );
-
     VulkanCtx::check(res, "Failed to create descriptor pool!");
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pushConstantRangeCount =  static_cast<u32>(
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = static_cast<u32>(
         m_pushConstants.size()
     );
     pipelineLayoutInfo.pPushConstantRanges = m_pushConstants.data();
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorLayout;
 
     VkPipelineLayout pipelineLayout;
     res = vkCreatePipelineLayout(
@@ -309,14 +318,16 @@ Pipeline Pipeline::Builder::build()
     vkDestroyShaderModule(m_ctx.getDevice(), vertexModule, nullptr);
     vkDestroyShaderModule(m_ctx.getDevice(), fragmentModule, nullptr);
 
-    Pipeline PipelineObj;
-    PipelineObj.m_ctx = &m_ctx;
-    PipelineObj.m_handle = pipeline;
-    PipelineObj.m_layout = pipelineLayout;
-    PipelineObj.m_descriptor = descriptorLayout;
-    PipelineObj.m_descriptorPool = descriptorPool;
+    Pipeline pipelineObj;
+    pipelineObj.m_ctx = &m_ctx;
+    pipelineObj.m_handle = pipeline;
+    pipelineObj.m_layout = pipelineLayout;
+    pipelineObj.m_descriptorLayout = descriptorLayout;
+    pipelineObj.m_descriptorPool = descriptorPool;
 
-    return PipelineObj;
+    pipelineObj.m_lineWidth = m_lineWidth;
+
+    return pipelineObj;
 }
 
 std::vector<char> Pipeline::Builder::readFile(const std::string &path)
@@ -364,14 +375,16 @@ void Pipeline::destroy()
     vkDeviceWaitIdle(m_ctx->getDevice());
 
     vkDestroyDescriptorPool(m_ctx->getDevice(), m_descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(m_ctx->getDevice(), m_descriptor, nullptr);
+    vkDestroyDescriptorSetLayout(m_ctx->getDevice(), m_descriptorLayout, nullptr);
     vkDestroyPipeline(m_ctx->getDevice(), m_handle, nullptr);
     vkDestroyPipelineLayout(m_ctx->getDevice(), m_layout, nullptr);
 }
 
-VkDescriptorSet Pipeline::createDescriptorSet(Texture &texture)
+VkDescriptorSet Pipeline::createDescriptorSet(
+    const std::vector<DescriptorData> &descriptors
+)
 {
-    VkDescriptorSetLayout layouts[] = {m_descriptor};
+    VkDescriptorSetLayout layouts[] = {m_descriptorLayout};
 
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -385,27 +398,47 @@ VkDescriptorSet Pipeline::createDescriptorSet(Texture &texture)
         &allocInfo,
         &descriptorSet
     );
-
     VulkanCtx::check(res, "Failed to allocate descriptor set!");
 
-    VkDescriptorImageInfo imageInfo = {};
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo.imageView = texture.getImageView();
-    imageInfo.sampler = texture.getSampler();
+    std::vector<VkWriteDescriptorSet> writes;
+    std::vector<VkDescriptorBufferInfo> bufferInfos;
+    std::vector<VkDescriptorImageInfo> imageInfos;
 
-    VkWriteDescriptorSet descriptorWrite = {};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = descriptorSet;
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = &imageInfo;
+    for (const auto &descriptor : descriptors) {
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = descriptorSet;
+        write.dstBinding = descriptor.binding;
+        write.descriptorType = descriptor.type;
+        write.descriptorCount = 1;
+
+        if (descriptor.type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = descriptor.ubo->getHandle();
+            bufferInfo.offset = 0;
+            bufferInfo.range = descriptor.ubo->getSize();
+
+            bufferInfos.push_back(bufferInfo);
+
+            write.pBufferInfo = &bufferInfos.back();
+        } else if (descriptor.type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+            VkDescriptorImageInfo imageInfo = {};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = descriptor.texture->getImageView();
+            imageInfo.sampler = descriptor.texture->getSampler();
+
+            imageInfos.push_back(imageInfo);
+
+            write.pImageInfo = &imageInfos.back();
+        }
+
+        writes.push_back(write);
+    }
 
     vkUpdateDescriptorSets(
         m_ctx->getDevice(),
-        1,
-        &descriptorWrite,
+        static_cast<u32>(writes.size()),
+        writes.data(),
         0,
         nullptr
     );
@@ -427,23 +460,47 @@ void Pipeline::bindDescriptorSet(VkDescriptorSet set)
     );
 }
 
+void Pipeline::bindDescriptorSets(
+    const std::vector<VkDescriptorSet> &sets,
+    u32 offset
+)
+{
+    vkCmdBindDescriptorSets(
+        m_ctx->getCommandBuffer(),
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        m_layout,
+        offset,
+        static_cast<u32>(sets.size()),
+        sets.data(),
+        0,
+        nullptr
+    );
+}
+
 void Pipeline::bind()
 {
+    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
+
+    vkCmdSetLineWidth(cmd, m_lineWidth);
+    
     vkCmdBindPipeline(
-        m_ctx->getCommandBuffer(),
+        cmd,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         m_handle
     );
 }
 
-void Pipeline::push(ShaderType type, u32 offset, u32 size, const void *data)
+void Pipeline::push(
+    VkShaderStageFlags stage,
+    u32 offset,
+    u32 size,
+    const void *data
+)
 {
     vkCmdPushConstants(
         m_ctx->getCommandBuffer(),
         m_layout,
-        type == ShaderType::VERTEX
-            ? VK_SHADER_STAGE_VERTEX_BIT
-            : VK_SHADER_STAGE_FRAGMENT_BIT,
+        stage,
         offset,
         size,
         data

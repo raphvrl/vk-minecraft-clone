@@ -72,10 +72,12 @@ public:
     void init(gfx::VulkanCtx &ctx, const BlockRegistry &blockRegistry);
     void destroy();
 
-    void generateMesh(
+    void generate(
         const Chunk &chunk,
         std::array<const Chunk *, 4> &neighbors
     );
+
+    void update(const Chunk &chunk, std::array<const Chunk *, 4> &neighbors);
 
     void draw();
 

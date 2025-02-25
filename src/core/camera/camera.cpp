@@ -47,22 +47,26 @@ void Camera::updateProj(f32 aspect)
 
 void Camera::moveForward(f32 speed)
 {
-    m_pos += m_front * speed;
+    glm::vec3 front = glm::normalize(glm::vec3(m_front.x, 0.0f, m_front.z));
+    m_pos += front * speed;
 }
 
 void Camera::moveBackward(f32 speed)
 {
-    m_pos -= m_front * speed;
+    glm::vec3 front = glm::normalize(glm::vec3(m_front.x, 0.0f, m_front.z));
+    m_pos -= front * speed;
 }
 
 void Camera::moveRight(f32 speed)
 {
-    m_pos += m_right * speed;
+    glm::vec3 right = glm::normalize(glm::vec3(m_right.x, 0.0f, m_right.z));
+    m_pos += right * speed;
 }
 
 void Camera::moveLeft(f32 speed)
 {
-    m_pos -= m_right * speed;
+    glm::vec3 right = glm::normalize(glm::vec3(m_right.x, 0.0f, m_right.z));
+    m_pos -= right * speed;
 }
 
 void Camera::moveUp(f32 speed)

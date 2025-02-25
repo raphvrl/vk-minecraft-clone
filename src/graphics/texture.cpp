@@ -69,7 +69,7 @@ void Texture::createImage(const std::string &path)
     m_ctx->createImage(
         texWidth,
         texHeight,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        m_format,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | 
         VK_IMAGE_USAGE_TRANSFER_DST_BIT |
@@ -82,7 +82,7 @@ void Texture::createImage(const std::string &path)
 
     m_ctx->transitionImageLayout(
         m_image,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        m_format,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         m_mipLevels
@@ -113,7 +113,7 @@ void Texture::createImageView()
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = m_image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    viewInfo.format = m_format;
     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = m_mipLevels;
@@ -127,7 +127,7 @@ void Texture::createImageView()
         &m_imageView
     );
 
-    m_ctx->check(res, "failed to create texture image view!");
+    VulkanCtx::check(res, "failed to create texture image view!");
 }
 
 void Texture::createSampler()
@@ -156,7 +156,7 @@ void Texture::createSampler()
         &m_sampler
     );
 
-    m_ctx->check(res, "failed to create texture sampler!");
+    VulkanCtx::check(res, "failed to create texture sampler!");
 }
 
 void Texture::generateMipmaps()
