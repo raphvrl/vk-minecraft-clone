@@ -57,6 +57,11 @@ private:
     void generateChunk(Chunk &chunk, const ChunkPos &pos);
     const Chunk *getChunk(const ChunkPos &pos) const;
 
+    void updateChunkMesh(const ChunkPos &pos);
+
+    void placeBlock(const glm::ivec3 &pos, BlockType type);
+    void deleteBlocks(const glm::ivec3 &pos);
+
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 1;
 

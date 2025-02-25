@@ -18,6 +18,9 @@ public:
     Chunk();
 
     void setBlock(int x, int y, int z, BlockType type);
+    void setBlock(glm::ivec3 pos, BlockType type) {
+        setBlock(pos.x, pos.y, pos.z, type);
+    }
     BlockType getBlock(int x, int y, int z) const;
     
 private:

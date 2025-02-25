@@ -334,4 +334,77 @@ const Chunk *World::getChunk(const ChunkPos &pos) const
     return nullptr;
 }
 
+void World::updateChunkMesh(const ChunkPos &pos)
+{
+    if (auto chunk = m_chunks.find(pos); chunk != m_chunks.end()) {
+        if (auto it = m_meshes.find(pos); it != m_meshes.end()) {
+            it->second->destroy();
+            m_meshes.erase(it);
+        }
+
+        auto mesh = std::make_unique<ChunkMesh>();
+        mesh->init(*m_ctx, m_blockRegistry);
+
+        std::array<const Chunk *, 4> neighbors = {
+            getChunk({pos.x - 1, pos.z}),
+            getChunk({pos.x + 1, pos.z}),
+            getChunk({pos.x, pos.z - 1}),
+            getChunk({pos.x, pos.z + 1})
+        };
+
+        mesh->generateMesh(*chunk->second, neighbors);
+        m_meshes[pos] = std::move(mesh);
+    }
+}
+
+void World::placeBlock(const glm::ivec3 &pos, BlockType type)
+{
+    ChunkPos chunkPos = {
+        pos.x / Chunk::CHUNK_SIZE,
+        pos.z / Chunk::CHUNK_SIZE
+    };
+
+    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
+        glm::ivec3 localPos = {
+            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
+            pos.y,
+            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
+        };
+
+        it->second->setBlock(localPos, type);
+
+        updateChunkMesh(chunkPos);
+
+        if (localPos.x == 0) updateChunkMesh({chunkPos.x - 1, chunkPos.z});
+        if (localPos.x == 15) updateChunkMesh({chunkPos.x + 1, chunkPos.z});
+        if (localPos.z == 0) updateChunkMesh({chunkPos.x, chunkPos.z - 1});
+        if (localPos.z == 15) updateChunkMesh({chunkPos.x, chunkPos.z + 1});
+    }
+}
+
+void World::deleteBlocks(const glm::ivec3 &pos)
+{
+    ChunkPos chunkPos = {
+        pos.x / Chunk::CHUNK_SIZE,
+        pos.z / Chunk::CHUNK_SIZE
+    };
+
+    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
+        glm::ivec3 localPos = {
+            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
+            pos.y,
+            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
+        };
+
+        it->second->setBlock(localPos, BlockType::AIR);
+
+        updateChunkMesh(chunkPos);
+    
+        if (localPos.x == 0) updateChunkMesh({chunkPos.x - 1, chunkPos.z});
+        if (localPos.x == 15) updateChunkMesh({chunkPos.x + 1, chunkPos.z});
+        if (localPos.z == 0) updateChunkMesh({chunkPos.x, chunkPos.z - 1});
+        if (localPos.z == 15) updateChunkMesh({chunkPos.x, chunkPos.z + 1});
+    }
+}
+
 } // namespace wld
