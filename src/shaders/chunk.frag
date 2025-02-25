@@ -8,10 +8,8 @@ layout(location = 2) in vec3 worldPos;
 
 layout(set = 0, binding = 1) uniform sampler2D tex; 
 
-void main()
+vec4 addFog(vec4 color, float dist)
 {
-    float dist = length(worldPos - camPos);
-
     float fogStart = 4.0 * 16.0;
     float fogEnd = 6.5 * 16.0;
     vec3 fogColor = vec3(0.62, 0.84, 1.0);
@@ -28,6 +26,15 @@ void main()
         fogFactor = 1.0;
     }
 
-    vec4 texColor = texture(tex, fragUV);
-    outColor = vec4(mix(texColor.rgb, fogColor, fogFactor), texColor.a);
+    return vec4(mix(color.rgb, fogColor, fogFactor), color.a);
+} 
+
+void main()
+{
+    float dist = length(worldPos - camPos);
+
+    vec4 color = texture(tex, fragUV);
+    color = addFog(color, dist);
+
+    outColor = color;
 }
