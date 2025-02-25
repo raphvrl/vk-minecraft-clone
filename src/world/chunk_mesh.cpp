@@ -28,7 +28,7 @@ void ChunkMesh::destroy()
     );
 }
 
-void ChunkMesh::generateMesh(
+void ChunkMesh::generate(
     const Chunk &chunk,
     std::array<const Chunk *, 4> &neighbors
 )
@@ -75,6 +75,28 @@ void ChunkMesh::generateMesh(
 
     createVertexBuffer();
     createIndexBuffer();
+}
+
+void ChunkMesh::update(
+    const Chunk &chunk,
+    std::array<const Chunk *, 4> &neighbors
+)
+{
+    vkDeviceWaitIdle(m_ctx->getDevice());
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_vertexBuffer,
+        m_vertexAllocation
+    );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_indexBuffer,
+        m_indexAllocation
+    );
+
+    generate(chunk, neighbors);
 }
 
 void ChunkMesh::draw()
