@@ -100,10 +100,10 @@ enum class Key {
     F25 = GLFW_KEY_F25
 };
 
-enum class mouseButton {
-    M_LEFT = GLFW_MOUSE_BUTTON_LEFT,
-    M_RIGHT = GLFW_MOUSE_BUTTON_RIGHT,
-    M_MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE
+enum class MouseButton {
+    LEFT = GLFW_MOUSE_BUTTON_LEFT,
+    RIGHT = GLFW_MOUSE_BUTTON_RIGHT,
+    MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE
 };
 
 class Window
@@ -128,7 +128,7 @@ public:
     bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
 
     bool isKeyPressed(Key k) const { return m_keys[static_cast<int>(k)]; }
-    bool isMouseButtonPressed(mouseButton b) const { 
+    bool isMouseButtonPressed(MouseButton b) const { 
         return m_mouseButtons[static_cast<int>(b)]; 
     }
 

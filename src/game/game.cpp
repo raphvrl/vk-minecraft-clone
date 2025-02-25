@@ -5,7 +5,7 @@ namespace game
 
 void Game::init()
 {
-    m_window.init(1280, 720, "Minecraft Clone");
+    m_window.init(1980, 1080, "Minecraft Clone");
     m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
@@ -67,6 +67,25 @@ void Game::handleInput()
 
     if (m_window.isKeyPressed(core::Key::LSHIFT)) {
         m_camera.moveDown(speed);
+    }
+
+    static usize cooldown = 0;
+    if (cooldown > 0) {
+        cooldown -= m_window.getDeltaTime();
+    }
+
+    if (m_window.isMouseButtonPressed(core::MouseButton::LEFT) && cooldown == 0) {
+
+        wld::Ray ray;
+        ray.origin = m_camera.getPos();
+        ray.direction = glm::normalize(m_camera.getFront());
+
+        glm::ivec3 hitBlock;
+        if (m_world.raycast(ray, 10.0f, hitBlock)) {
+            m_world.deleteBlock(hitBlock);
+        }
+
+        cooldown = 10;
     }
 
     auto mouseRel = m_window.getMouseRel();

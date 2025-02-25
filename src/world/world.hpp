@@ -20,6 +20,12 @@
 namespace wld
 {
 
+struct Ray
+{
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
+
 class World {
 public:
     void init(gfx::VulkanCtx &ctx);
@@ -29,6 +35,14 @@ public:
     void render(const core::Camera &camera);
 
     BlockType getBlock(int x, int y, int z) const;
+    BlockType getBlock(const glm::ivec3 &pos) const {
+        return getBlock(pos.x, pos.y, pos.z);
+    }
+    
+    void placeBlock(const glm::ivec3 &pos, BlockType type);
+    void deleteBlock(const glm::ivec3 &pos);
+
+    bool raycast(const Ray &ray, f32 maxDistance, glm::ivec3 &hitPos);
 
 private:
     struct ChunkPos {
@@ -58,9 +72,6 @@ private:
     const Chunk *getChunk(const ChunkPos &pos) const;
 
     void updateChunkMesh(const ChunkPos &pos, Chunk *chunk);
-
-    void placeBlock(const glm::ivec3 &pos, BlockType type);
-    void deleteBlock(const glm::ivec3 &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 1;

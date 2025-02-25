@@ -406,4 +406,23 @@ void World::deleteBlock(const glm::ivec3 &pos)
     }
 }
 
+bool World::raycast(const Ray &ray, f32 maxDistance, glm::ivec3 &hitPos)
+{
+    glm::vec3 currentPos = ray.origin;
+    glm::ivec3 blockPos = glm::floor(currentPos);
+
+    for (f32 t = 0.0f; t < maxDistance; t += 0.1f) {
+        BlockType block = getBlock(blockPos);
+        if (block != BlockType::AIR) {
+            hitPos = blockPos;
+            return true;
+        }
+
+        currentPos += ray.direction * 0.1f;
+        blockPos = glm::floor(currentPos);
+    }
+
+    return false;
+}
+
 } // namespace wld
