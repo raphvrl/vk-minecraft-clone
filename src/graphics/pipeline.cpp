@@ -78,6 +78,18 @@ Pipeline::Builder &Pipeline::Builder::setCullMode(VkCullModeFlags mode)
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setTopology(VkPrimitiveTopology topology)
+{
+    m_topology = topology;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setLineWidth(f32 width)
+{
+    m_lineWidth = width;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -106,12 +118,13 @@ Pipeline Pipeline::Builder::build()
 
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_LINE_WIDTH
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState = {};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 2;
+    dynamicState.dynamicStateCount = 3;
     dynamicState.pDynamicStates = dynamicStates;
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -132,7 +145,8 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology = m_topology;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkViewport viewport = {};
     viewport.x = 0.0f;
@@ -158,7 +172,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
+    rasterizer.lineWidth = m_lineWidth;
     rasterizer.cullMode = m_cullMode;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
@@ -174,9 +188,9 @@ Pipeline Pipeline::Builder::build()
         VK_COLOR_COMPONENT_G_BIT | 
         VK_COLOR_COMPONENT_B_BIT | 
         VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -310,6 +324,8 @@ Pipeline Pipeline::Builder::build()
     pipelineObj.m_layout = pipelineLayout;
     pipelineObj.m_descriptorLayout = descriptorLayout;
     pipelineObj.m_descriptorPool = descriptorPool;
+
+    pipelineObj.m_lineWidth = m_lineWidth;
 
     return pipelineObj;
 }
@@ -463,8 +479,12 @@ void Pipeline::bindDescriptorSets(
 
 void Pipeline::bind()
 {
+    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
+
+    vkCmdSetLineWidth(cmd, m_lineWidth);
+    
     vkCmdBindPipeline(
-        m_ctx->getCommandBuffer(),
+        cmd,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         m_handle
     );

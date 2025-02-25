@@ -59,6 +59,8 @@ public:
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
         Builder &setCullMode(VkCullModeFlags mode);
+        Builder &setTopology(VkPrimitiveTopology topology);
+        Builder &setLineWidth(f32 width);
 
         Pipeline build();
 
@@ -78,6 +80,10 @@ public:
         bool m_depthWrite = true;
 
         VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
+
+        VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+        f32 m_lineWidth = 1.0f;
 
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);
@@ -114,6 +120,8 @@ private:
     VkPipelineLayout m_layout;
     VkDescriptorSetLayout m_descriptorLayout;
     VkDescriptorPool m_descriptorPool;
+
+    f32 m_lineWidth;
 };
     
 } // namespace gfx

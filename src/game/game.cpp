@@ -5,19 +5,21 @@ namespace game
 
 void Game::init()
 {
-    m_window.init(1980, 1080, "Minecraft Clone");
+    m_window.init(1280, 720, "Minecraft Clone");
     m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
 
     m_world.init(m_ctx);
     m_sky.init(m_ctx);
+    m_outline.init(m_ctx, m_world);
 
     m_running = true;
 }
 
 void Game::destroy()
 {
+    m_outline.destroy();
     m_sky.destroy();
     m_world.destroy();
     m_ctx.destroy();
@@ -39,7 +41,8 @@ void Game::run()
 
 void Game::handleInput()
 {
-    f32 speed = 25.0f * m_window.getDeltaTime();
+    f32 dt = m_window.getDeltaTime();
+    f32 speed = 10.0f * dt;
 
     if (m_window.isKeyPressed(core::Key::ESCAPE)) {
         m_running = false;
@@ -69,23 +72,44 @@ void Game::handleInput()
         m_camera.moveDown(speed);
     }
 
-    static usize cooldown = 0;
-    if (cooldown > 0) {
-        cooldown -= m_window.getDeltaTime();
+    static usize left_couldown = 0;
+    if (left_couldown > 0) {
+        left_couldown -= dt;
     }
 
-    if (m_window.isMouseButtonPressed(core::MouseButton::LEFT) && cooldown == 0) {
-
+    if (
+        m_window.isMouseButtonPressed(core::MouseButton::LEFT) &&
+        left_couldown == 0
+    ) {
         wld::Ray ray;
         ray.origin = m_camera.getPos();
-        ray.direction = glm::normalize(m_camera.getFront());
+        ray.direction = m_camera.getFront();
 
-        glm::ivec3 hitBlock;
-        if (m_world.raycast(ray, 10.0f, hitBlock)) {
-            m_world.deleteBlock(hitBlock);
+        wld::RaycastResult result;
+        if (m_world.raycast(ray, 5.0f, result)) {
+            m_world.deleteBlock(result.pos);
+            left_couldown = 300;
         }
+    }
 
-        cooldown = 10;
+    static usize right_couldown = 0;
+    if (right_couldown > 0) {
+        right_couldown -= dt;
+    }
+
+    if (
+        m_window.isMouseButtonPressed(core::MouseButton::RIGHT) &&
+        right_couldown == 0
+    ) {
+        wld::Ray ray;
+        ray.origin = m_camera.getPos();
+        ray.direction = m_camera.getFront();
+
+        wld::RaycastResult result;
+        if (m_world.raycast(ray, 5.0f, result)) {
+            m_world.placeBlock(result.normal, wld::BlockType::STONE);
+            right_couldown = 300;
+        }
     }
 
     auto mouseRel = m_window.getMouseRel();
@@ -108,6 +132,7 @@ void Game::render()
 
     m_sky.render(m_camera);
     m_world.render(m_camera);
+    m_outline.render(m_camera);
 
     m_ctx.endFrame();
 }

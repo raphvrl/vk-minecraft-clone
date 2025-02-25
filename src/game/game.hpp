@@ -7,6 +7,7 @@
 #include "graphics/texture.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
+#include "world/outline.hpp"
 
 namespace game
 {
@@ -31,6 +32,7 @@ private:
 
     wld::World m_world;
     wld::Sky m_sky;
+    wld::Outline m_outline;
 
     bool m_running;
 };

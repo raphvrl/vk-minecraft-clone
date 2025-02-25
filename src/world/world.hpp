@@ -26,6 +26,13 @@ struct Ray
     glm::vec3 direction;
 };
 
+struct RaycastResult
+{
+    glm::ivec3 pos;
+    glm::ivec3 normal;
+    Face face;
+};
+
 class World {
 public:
     void init(gfx::VulkanCtx &ctx);
@@ -42,7 +49,7 @@ public:
     void placeBlock(const glm::ivec3 &pos, BlockType type);
     void deleteBlock(const glm::ivec3 &pos);
 
-    bool raycast(const Ray &ray, f32 maxDistance, glm::ivec3 &hitPos);
+    bool raycast(const Ray &ray, f32 maxDistance, RaycastResult &result);
 
 private:
     struct ChunkPos {
@@ -79,7 +86,8 @@ private:
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
 
-    struct UniformBufferObject {
+    struct UniformBufferObject
+    {
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 proj;
         alignas(16) glm::vec3 camPos;
