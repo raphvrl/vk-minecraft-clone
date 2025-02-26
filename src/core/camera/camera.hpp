@@ -17,17 +17,12 @@ public:
     Camera(const Camera &) = delete;
     Camera &operator=(const Camera &) = delete;
 
-    void update();
+    void updateView();
     void updateProj(f32 aspect);
 
-    void moveForward(f32 speed);
-    void moveBackward(f32 speed);
-    void moveRight(f32 speed);
-    void moveLeft(f32 speed);
-    void moveUp(f32 speed);
-    void moveDown(f32 speed);
-
     void rotate(f32 xoffset, f32 yoffset);
+
+    void setPos(const glm::vec3 &pos) { m_pos = pos; }
 
     glm::vec3 getPos() const { return m_pos; }
     glm::vec3 getFront() const { return m_front; }

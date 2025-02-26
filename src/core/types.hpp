@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -19,3 +20,6 @@ using usize = size_t;
 using isize = ptrdiff_t;
 
 #define UNUSED(x) (void)(x)
+
+using EntityID = u32;
+static constexpr EntityID ENTITY_NULL = std::numeric_limits<EntityID>::max();
