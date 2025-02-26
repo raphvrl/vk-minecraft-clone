@@ -9,6 +9,13 @@
 #include "world/sky.hpp"
 #include "world/outline.hpp"
 
+#include "ecs/ecs.hpp"
+#include "ecs/components/physics/transform.hpp"
+#include "ecs/components/physics/velocity.hpp"
+#include "ecs/components/player/player.hpp"
+#include "ecs/systems/physics/physics.hpp"
+#include "ecs/systems/player/player.hpp"
+
 namespace game
 {
 
@@ -33,6 +40,8 @@ private:
     wld::World m_world;
     wld::Sky m_sky;
     wld::Outline m_outline;
+
+    ecs::ECS m_ecs;
 
     bool m_running;
 };

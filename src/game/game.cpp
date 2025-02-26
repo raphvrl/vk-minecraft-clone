@@ -14,6 +14,19 @@ void Game::init()
     m_sky.init(m_ctx);
     m_outline.init(m_ctx, m_world);
 
+    EntityID playerEntity = m_ecs.creatEntity();
+    m_ecs.addComponent<cmp::Transform>(playerEntity, cmp::Transform())
+        ->position.y = 80.0f;
+    m_ecs.addComponent<cmp::Velocity>(playerEntity, cmp::Velocity());
+    m_ecs.addComponent<cmp::Player>(playerEntity, cmp::Player());
+
+    m_ecs.addSystem<sys::Physics>();
+    m_ecs.addSystem<sys::Player>(
+        m_window,
+        m_camera,
+        m_world
+    );
+
     m_running = true;
 }
 
@@ -41,87 +54,17 @@ void Game::run()
 
 void Game::handleInput()
 {
-    f32 dt = m_window.getDeltaTime();
-    f32 speed = 10.0f * dt;
-
     if (m_window.isKeyPressed(core::Key::ESCAPE)) {
         m_running = false;
     }
-
-    if (m_window.isKeyPressed(core::Key::W)) {
-        m_camera.moveForward(speed);
-    }
-
-    if (m_window.isKeyPressed(core::Key::S)) {
-        m_camera.moveBackward(speed);
-    }
-
-    if (m_window.isKeyPressed(core::Key::A)) {
-        m_camera.moveLeft(speed);
-    }
-
-    if (m_window.isKeyPressed(core::Key::D)) {
-        m_camera.moveRight(speed);
-    }
-
-    if (m_window.isKeyPressed(core::Key::SPACE)) {
-        m_camera.moveUp(speed);
-    }
-
-    if (m_window.isKeyPressed(core::Key::LSHIFT)) {
-        m_camera.moveDown(speed);
-    }
-
-    static usize left_couldown = 0;
-    if (left_couldown > 0) {
-        left_couldown -= dt;
-    }
-
-    if (
-        m_window.isMouseButtonPressed(core::MouseButton::LEFT) &&
-        left_couldown == 0
-    ) {
-        wld::Ray ray;
-        ray.origin = m_camera.getPos();
-        ray.direction = m_camera.getFront();
-
-        wld::RaycastResult result;
-        if (m_world.raycast(ray, 5.0f, result)) {
-            m_world.deleteBlock(result.pos);
-            left_couldown = 300;
-        }
-    }
-
-    static usize right_couldown = 0;
-    if (right_couldown > 0) {
-        right_couldown -= dt;
-    }
-
-    if (
-        m_window.isMouseButtonPressed(core::MouseButton::RIGHT) &&
-        right_couldown == 0
-    ) {
-        wld::Ray ray;
-        ray.origin = m_camera.getPos();
-        ray.direction = m_camera.getFront();
-
-        wld::RaycastResult result;
-        if (m_world.raycast(ray, 5.0f, result)) {
-            m_world.placeBlock(result.normal, wld::BlockType::STONE);
-            right_couldown = 300;
-        }
-    }
-
-    auto mouseRel = m_window.getMouseRel();
-    m_camera.rotate(mouseRel.x, mouseRel.y);
 }
 
 void Game::update(f32 dt)
 {
-    UNUSED(dt);
-
-    m_camera.update();
+    m_camera.updateView();
     m_world.update(m_camera.getPos());
+
+    m_ecs.update(dt);
 }
 
 void Game::render()

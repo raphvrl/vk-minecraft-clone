@@ -24,7 +24,7 @@ Camera::Camera()
     m_proj[1][1] *= -1;
 }
 
-void Camera::update()
+void Camera::updateView()
 {
     glm::vec3 front;
     front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
@@ -45,45 +45,8 @@ void Camera::updateProj(f32 aspect)
     m_proj[1][1] *= -1;
 }
 
-void Camera::moveForward(f32 speed)
-{
-    glm::vec3 front = glm::normalize(glm::vec3(m_front.x, 0.0f, m_front.z));
-    m_pos += front * speed;
-}
-
-void Camera::moveBackward(f32 speed)
-{
-    glm::vec3 front = glm::normalize(glm::vec3(m_front.x, 0.0f, m_front.z));
-    m_pos -= front * speed;
-}
-
-void Camera::moveRight(f32 speed)
-{
-    glm::vec3 right = glm::normalize(glm::vec3(m_right.x, 0.0f, m_right.z));
-    m_pos += right * speed;
-}
-
-void Camera::moveLeft(f32 speed)
-{
-    glm::vec3 right = glm::normalize(glm::vec3(m_right.x, 0.0f, m_right.z));
-    m_pos -= right * speed;
-}
-
-void Camera::moveUp(f32 speed)
-{
-    m_pos += m_up * speed;
-}
-
-void Camera::moveDown(f32 speed)
-{
-    m_pos -= m_up * speed;
-}
-
 void Camera::rotate(f32 xoffset, f32 yoffset)
 {
-    xoffset *= 0.1f;
-    yoffset *= 0.1f;
-
     m_yaw += xoffset;
     m_pitch += yoffset;
 
