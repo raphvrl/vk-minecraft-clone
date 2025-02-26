@@ -31,6 +31,8 @@ void UniformBuffer::init(VulkanCtx &ctx, VkDeviceSize size)
 
 void UniformBuffer::destroy()
 {
+    vkDeviceWaitIdle(m_ctx->getDevice());
+
     vmaDestroyBuffer(m_ctx->getAllocator(), m_buffer, m_allocation);
 }
 

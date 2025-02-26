@@ -41,8 +41,14 @@ make all
 - [x] Block face culling (including between chunks)
 - [x] Perlin noise terrain generation for Minecraft Clone
 - [x] Skybox implementation
+- [x] Collision detection and physics
+- [x] Entity Component System (ECS) architecture
 - [ ] More coming soon...
 
 ## Development
 
 This project is under active development. More features will be added as development progresses.
+
+## Credits
+
+The game textures are assets from Minecraft by Mojang. All Minecraft assets are property of Mojang AB. This project is not affiliated with Mojang AB.

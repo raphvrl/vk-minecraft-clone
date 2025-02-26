@@ -50,6 +50,7 @@ public:
     void deleteBlock(const glm::ivec3 &pos);
 
     bool raycast(const Ray &ray, f32 maxDistance, RaycastResult &result);
+    bool checkCollision(const glm::vec3 &min, const glm::vec3 &max);
 
 private:
     struct ChunkPos {

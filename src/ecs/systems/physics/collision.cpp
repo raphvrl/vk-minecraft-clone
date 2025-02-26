@@ -11,6 +11,8 @@ Collision::Collision(ecs::ECS *ecs, wld::World &world)
 
 void Collision::tick(f32 dt)
 {
+    UNUSED(dt);
+
     auto entities = m_ecs->view<
         cmp::Transform,
         cmp::Velocity,
@@ -21,8 +23,6 @@ void Collision::tick(f32 dt)
         auto *transform = m_ecs->getComponent<cmp::Transform>(entity);
         auto *velocity = m_ecs->getComponent<cmp::Velocity>(entity);
         auto *collider = m_ecs->getComponent<cmp::Collider>(entity);
-
-        velocity->position *= dt;
 
         if (collider->isGhost) {
             continue;
@@ -38,13 +38,17 @@ void Collision::resolveCollision(
     cmp::Collider *collider
 )
 {
+    if (glm::length(velocity->position) < 0.001f) {
+        return;
+    }
+
     glm::vec3 testPos = transform->position;
     testPos.x += velocity->position.x;
 
     glm::vec3 min = testPos + collider->offset - collider->size * 0.5f;
     glm::vec3 max = testPos + collider->offset + collider->size * 0.5f;
 
-    if (checkBlockCollision(min, max)) {
+    if (m_world.checkCollision(min, max)) {
         velocity->position.x = 0.0f;
     } else {
         transform->position.x = testPos.x;
@@ -56,7 +60,7 @@ void Collision::resolveCollision(
     min = testPos + collider->offset - collider->size * 0.5f;
     max = testPos + collider->offset + collider->size * 0.5f;
 
-    if (checkBlockCollision(min, max)) {
+    if (m_world.checkCollision(min, max)) {
         velocity->position.y = 0.0f;
     } else {
         transform->position.y = testPos.y;
@@ -68,26 +72,11 @@ void Collision::resolveCollision(
     min = testPos + collider->offset - collider->size * 0.5f;
     max = testPos + collider->offset + collider->size * 0.5f;
 
-    if (checkBlockCollision(min, max)) {
+    if (m_world.checkCollision(min, max)) {
         velocity->position.z = 0.0f; 
     } else {
         transform->position.z = testPos.z;
     }
-}
-
-bool Collision::checkBlockCollision(const glm::vec3 &min, const glm::vec3 &max) const
-{
-    for (int x = static_cast<int>(std::floor(min.x)); x <= static_cast<int>(std::floor(max.x)); ++x) {
-        for (int y = static_cast<int>(std::floor(min.y)); y <= static_cast<int>(std::floor(max.y)); ++y) {
-            for (int z = static_cast<int>(std::floor(min.z)); z <= static_cast<int>(std::floor(max.z)); ++z) {
-                if (m_world.getBlock(x, y, z) != wld::BlockType::AIR) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
 }
 
 } // namespace sys

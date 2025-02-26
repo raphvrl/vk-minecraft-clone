@@ -37,6 +37,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
     glfwSetKeyCallback(m_handle, keyCallback);
     glfwSetMouseButtonCallback(m_handle, mouseButtonCallback);
     glfwSetCursorPosCallback(m_handle, mousePosCallback);
+    glfwSetFramebufferSizeCallback(m_handle, resizeCallback);
 }
 
 void Window::destroy()
@@ -122,6 +123,20 @@ void Window::mousePosCallback(
     );
 
     win->m_mousePos = glm::vec2(x, y);
+}
+
+void Window::resizeCallback(
+    GLFWwindow *window,
+    int width,
+    int height
+)
+{
+    Window *win = static_cast<Window *>(glfwGetWindowUserPointer(window));
+
+    win->m_width = static_cast<u32>(width);
+    win->m_height = static_cast<u32>(height);
+
+    win->m_resized = true;
 }
 
 } // namespace core

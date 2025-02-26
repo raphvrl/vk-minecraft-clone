@@ -68,7 +68,7 @@ void Outline::drawOutline(const core::Camera &camera, const glm::ivec3 &pos)
     UniformBufferObject uniformBuffer = {
         .model = model,
         .view = camera.getView(),
-        .proj = camera.getProj()
+        .proj = camera.getProj(),
     };
 
     m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));

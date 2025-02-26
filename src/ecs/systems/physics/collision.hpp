@@ -26,8 +26,6 @@ private:
         cmp::Velocity *velocity,
         cmp::Collider *collider
     );
-
-    bool checkBlockCollision(const glm::vec3 &min, const glm::vec3 &max) const;
 };
 
 } // namespace sys

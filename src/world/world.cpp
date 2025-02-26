@@ -232,26 +232,22 @@ BlockType World::getBlock(int x, int y, int z) const
         return BlockType::AIR;
     }
 
-    ChunkPos chunkPos;
-    if (x < 0) {
-        chunkPos.x = (x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE;
-    } else {
-        chunkPos.x = x / Chunk::CHUNK_SIZE;
-    }
-    
-    if (z < 0) {
-        chunkPos.z = (z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE;
-    } else {
-        chunkPos.z = z / Chunk::CHUNK_SIZE;
-    }
-
-    int localX = x - (chunkPos.x * Chunk::CHUNK_SIZE);
-    int localZ = z - (chunkPos.z * Chunk::CHUNK_SIZE);
+    ChunkPos chunkPos = {
+        .x = (x < 0) ? 
+            (x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
+                x / Chunk::CHUNK_SIZE,
+        .z = (z < 0) ? 
+            (z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : 
+                z / Chunk::CHUNK_SIZE
+    };
 
     auto it = m_chunks.find(chunkPos);
     if (it == m_chunks.end()) {
         return BlockType::AIR;
     }
+
+    int localX = x - (chunkPos.x * Chunk::CHUNK_SIZE);
+    int localZ = z - (chunkPos.z * Chunk::CHUNK_SIZE);
 
     return it->second->getBlock(localX, y, localZ);
 }
@@ -389,6 +385,54 @@ bool World::raycast(
     return false;
 }
 
+bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
+{
+    i32 minX = static_cast<i32>(std::floor(min.x));
+    i32 minY = static_cast<i32>(std::floor(min.y));
+    i32 minZ = static_cast<i32>(std::floor(min.z));
+    i32 maxX = static_cast<i32>(std::floor(max.x));
+    i32 maxY = static_cast<i32>(std::floor(max.y));
+    i32 maxZ = static_cast<i32>(std::floor(max.z));
+
+    minY = std::max(minY, 0);
+    maxY = std::min(maxY, Chunk::CHUNK_HEIGHT - 1);
+
+    ChunkPos currentChunk = {0, 0};
+    const Chunk *chunk = nullptr;
+
+    for (int x = minX; x <= maxX; ++x) {
+        for (int z = minZ; z <= maxZ; ++z) {
+            ChunkPos chunkPos = {
+                (x < 0) ? (x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
+                    x / Chunk::CHUNK_SIZE,
+                (z < 0) ? (z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
+                    z / Chunk::CHUNK_SIZE
+            };
+
+            if (chunkPos.x != currentChunk.x || chunkPos.z != currentChunk.z) {
+                currentChunk = chunkPos;
+                chunk = getChunk(chunkPos);
+
+                if (!chunk) { continue; }
+            }
+
+            i32 localX = x - (chunkPos.x * Chunk::CHUNK_SIZE);
+            i32 localZ = z - (chunkPos.z * Chunk::CHUNK_SIZE);
+
+            for (i32 y = minY; y <= maxY; ++y) {
+                if (
+                    chunk &&
+                    chunk->getBlock(localX, y, localZ) != BlockType::AIR
+                ) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 void World::loadChunks(const ChunkPos &pos)
 {
     auto chunk = std::make_unique<Chunk>();
@@ -469,6 +513,13 @@ const Chunk *World::getChunk(const ChunkPos &pos) const
 
 void World::updateChunkMesh(const ChunkPos &pos)
 {
+    if (
+        std::abs(pos.x - m_playerChunkPos.x) > RENDER_DISTANCE ||
+        std::abs(pos.z - m_playerChunkPos.z) > RENDER_DISTANCE
+    ) {
+        return;
+    }
+
     if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
         if (auto mesh = m_meshes.find(pos); mesh != m_meshes.end()) {
             std::array<const Chunk *, 4> neighbors = {
