@@ -41,6 +41,8 @@ make all
 - [x] Block face culling (including between chunks)
 - [x] Perlin noise terrain generation for Minecraft Clone
 - [x] Skybox implementation
+- [x] Collision detection and physics
+- [x] Entity Component System (ECS) architecture
 - [ ] More coming soon...
 
 ## Development
