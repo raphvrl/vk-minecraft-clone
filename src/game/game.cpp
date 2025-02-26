@@ -5,7 +5,7 @@ namespace game
 
 void Game::init()
 {
-    m_window.init(1280, 720, "Minecraft Clone");
+    m_window.init(1920, 1080, "Minecraft Clone");
     m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
@@ -24,8 +24,8 @@ void Game::init()
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
     playerCollider->offset = glm::vec3(0.0f, 0.9f, 0.0f);
 
+    m_ecs.addSystem<sys::Physics>();
     m_ecs.addSystem<sys::Collision>(m_world);
-    // m_ecs.addSystem<sys::Physics>();
     m_ecs.addSystem<sys::Player>(
         m_window,
         m_camera,
@@ -67,6 +67,7 @@ void Game::handleInput()
 void Game::update(f32 dt)
 {
     m_camera.updateView();
+    m_camera.updateProj(m_window.getAspect());
     m_world.update(m_camera.getPos());
 
     m_ecs.update(dt);

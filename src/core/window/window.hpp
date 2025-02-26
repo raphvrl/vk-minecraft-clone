@@ -136,6 +136,7 @@ public:
 
     u32 getWidth() const { return m_width; }
     u32 getHeight() const { return m_height; }
+    f32 getAspect() const { return static_cast<f32>(m_width) / m_height; }
 
     f32 getDeltaTime() const { return m_deltaTime; }
 
@@ -158,6 +159,8 @@ private:
     glm::vec2 m_mouseRel;
     bool m_firstMouse = true;
 
+    bool m_resized = false;
+
     static void keyCallback(
         GLFWwindow *window,
         int key,
@@ -177,6 +180,12 @@ private:
         GLFWwindow *window,
         double x,
         double y
+    );
+
+    static void resizeCallback(
+        GLFWwindow *window,
+        int width,
+        int height
     );
 };
 

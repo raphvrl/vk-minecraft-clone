@@ -35,7 +35,10 @@ private:
 
     World *m_world;
 
-    void drawOutline(const core::Camera &camera, const glm::ivec3 &pos);
+    void drawOutline(
+        const core::Camera &camera,
+        const glm::ivec3 &pos
+    );
 };
 
 } // namespace wld
