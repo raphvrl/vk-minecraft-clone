@@ -1,34 +1,33 @@
 #version 450
 
-const float scale = 1.005;
-
+const float outlineOffset = 0.002;
 const vec3 positions[] = vec3[24](
-    vec3(0.0, 0.0, 0.0) * scale,
-    vec3(1.0, 0.0, 0.0) * scale,
-    vec3(1.0, 0.0, 0.0) * scale,
-    vec3(1.0, 1.0, 0.0) * scale,
-    vec3(1.0, 1.0, 0.0) * scale,
-    vec3(0.0, 1.0, 0.0) * scale,
-    vec3(0.0, 1.0, 0.0) * scale,
-    vec3(0.0, 0.0, 0.0) * scale,
+    vec3(-outlineOffset, -outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(-outlineOffset, -outlineOffset, -outlineOffset),
 
-    vec3(0.0, 0.0, 1.0) * scale,
-    vec3(1.0, 0.0, 1.0) * scale,
-    vec3(1.0, 0.0, 1.0) * scale,
-    vec3(1.0, 1.0, 1.0) * scale,
-    vec3(1.0, 1.0, 1.0) * scale,
-    vec3(0.0, 1.0, 1.0) * scale,
-    vec3(0.0, 1.0, 1.0) * scale,
-    vec3(0.0, 0.0, 1.0) * scale,
+    vec3(-outlineOffset, -outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset),
+    vec3(-outlineOffset, -outlineOffset, 1.0 + outlineOffset),
 
-    vec3(0.0, 0.0, 0.0) * scale,
-    vec3(0.0, 0.0, 1.0) * scale,
-    vec3(1.0, 0.0, 0.0) * scale,
-    vec3(1.0, 0.0, 1.0) * scale,
-    vec3(1.0, 1.0, 0.0) * scale,
-    vec3(1.0, 1.0, 1.0) * scale,
-    vec3(0.0, 1.0, 0.0) * scale,
-    vec3(0.0, 1.0, 1.0) * scale
+    vec3(-outlineOffset, -outlineOffset, -outlineOffset),
+    vec3(-outlineOffset, -outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, -outlineOffset, 1.0 + outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(1.0 + outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, -outlineOffset),
+    vec3(-outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset)
 );
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {

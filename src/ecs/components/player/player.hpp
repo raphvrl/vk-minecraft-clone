@@ -15,6 +15,8 @@ struct Player : public ecs::Component
     f32 placeCooldown = 0.0f;
 
     bool isFlying = true;
+
+    f32 eyeHeight = 1.8f;
 };
 
 } // namespace ecs

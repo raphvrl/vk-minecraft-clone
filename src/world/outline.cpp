@@ -17,6 +17,7 @@ void Outline::init(gfx::VulkanCtx &ctx, World &world)
             .stage = VK_SHADER_STAGE_VERTEX_BIT
         })
         .setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+        .setCullMode(VK_CULL_MODE_NONE)
         .setLineWidth(2.0f)
         .build();
 

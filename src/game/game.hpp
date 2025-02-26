@@ -12,8 +12,10 @@
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
 #include "ecs/components/physics/velocity.hpp"
+#include "ecs/components/physics/collider.hpp"
 #include "ecs/components/player/player.hpp"
 #include "ecs/systems/physics/physics.hpp"
+#include "ecs/systems/physics/collision.hpp"
 #include "ecs/systems/player/player.hpp"
 
 namespace game
