@@ -126,7 +126,9 @@ void Player::tick(f32 dt)
         player->placeCooldown -= dt;
     }
 
-    m_camera.setPos(transform->position);
+    glm::vec3 pos = transform->position;
+    pos.y += player->eyeHeight;
+    m_camera.setPos(pos);
 
     glm::vec2 mouse = m_window.getMouseRel();
     m_camera.rotate(

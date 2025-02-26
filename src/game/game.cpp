@@ -15,12 +15,17 @@ void Game::init()
     m_outline.init(m_ctx, m_world);
 
     EntityID playerEntity = m_ecs.creatEntity();
-    m_ecs.addComponent<cmp::Transform>(playerEntity, cmp::Transform())
+    m_ecs.addComponent<cmp::Transform>(playerEntity)
         ->position.y = 80.0f;
-    m_ecs.addComponent<cmp::Velocity>(playerEntity, cmp::Velocity());
-    m_ecs.addComponent<cmp::Player>(playerEntity, cmp::Player());
+    m_ecs.addComponent<cmp::Velocity>(playerEntity);
+    m_ecs.addComponent<cmp::Player>(playerEntity);
+    auto *playerCollider = m_ecs.addComponent<cmp::Collider>(playerEntity);
 
-    m_ecs.addSystem<sys::Physics>();
+    playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
+    playerCollider->offset = glm::vec3(0.0f, 0.9f, 0.0f);
+
+    m_ecs.addSystem<sys::Collision>(m_world);
+    // m_ecs.addSystem<sys::Physics>();
     m_ecs.addSystem<sys::Player>(
         m_window,
         m_camera,

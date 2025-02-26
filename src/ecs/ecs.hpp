@@ -26,22 +26,16 @@ public:
         m_components.erase(id);
     }
 
-    template <typename T, typename... Args>
-    T *addComponent(EntityID id, Args &&...args)
+    template <typename T>
+    T *addComponent(EntityID id)
     {
         auto &componentMap = m_components[id];
         auto typeIndex = std::type_index(typeid(T));
 
-        if (componentMap.find(typeIndex) != componentMap.end()) {
-            return nullptr;
-        }
-
-        auto component = std::make_unique<T>(std::forward<Args>(args)...);
-        T *componentPtr = component.get();
-
+        auto component = std::make_unique<T>();
         componentMap[typeIndex] = std::move(component);
 
-        return componentPtr;
+        return static_cast<T *>(componentMap[typeIndex].get());
     }
 
     template <typename T>
