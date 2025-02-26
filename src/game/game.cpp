@@ -13,6 +13,7 @@ void Game::init()
     m_world.init(m_ctx);
     m_sky.init(m_ctx);
     m_outline.init(m_ctx, m_world);
+    m_clouds.init(m_ctx);
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)
@@ -37,6 +38,7 @@ void Game::init()
 
 void Game::destroy()
 {
+    m_clouds.destroy();
     m_outline.destroy();
     m_sky.destroy();
     m_world.destroy();
@@ -69,6 +71,7 @@ void Game::update(f32 dt)
     m_camera.updateView();
     m_camera.updateProj(m_window.getAspect());
     m_world.update(m_camera.getPos());
+    m_clouds.update(dt);
 
     m_ecs.update(dt);
 }
@@ -82,6 +85,7 @@ void Game::render()
     m_sky.render(m_camera);
     m_world.render(m_camera);
     m_outline.render(m_camera);
+    m_clouds.render(m_camera);
 
     m_ctx.endFrame();
 }

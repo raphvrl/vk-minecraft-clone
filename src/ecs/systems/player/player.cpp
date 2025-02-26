@@ -111,7 +111,7 @@ void Player::tick(f32 dt)
         if (m_world.raycast(ray, 4.0f, result)) {
             m_world.placeBlock(
                 result.normal,
-                wld::BlockType::STONE
+                wld::BlockType::COBBLESTONE
             );
         }
 

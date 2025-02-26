@@ -8,6 +8,7 @@
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"
+#include "world/clouds.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
@@ -42,6 +43,7 @@ private:
     wld::World m_world;
     wld::Sky m_sky;
     wld::Outline m_outline;
+    wld::Clouds m_clouds;
 
     ecs::ECS m_ecs;
 

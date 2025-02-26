@@ -48,3 +48,7 @@ make all
 ## Development
 
 This project is under active development. More features will be added as development progresses.
+
+## Credits
+
+The game textures are assets from Minecraft by Mojang. All Minecraft assets are property of Mojang AB. This project is not affiliated with Mojang AB.
