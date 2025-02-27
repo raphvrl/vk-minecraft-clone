@@ -32,7 +32,7 @@ public:
 
 private:
     void handleInput();
-    void update(f32 dt);
+    void tick(f32 dt);
     void render();
 
     core::Window m_window;

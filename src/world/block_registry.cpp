@@ -7,6 +7,10 @@ void BlockRegistry::load(const std::string &path)
 {
     auto config = toml::parse_file(path);
 
+    auto atlas = config["atlas"];
+    i32 count = atlas["count"].value_or(0);
+    m_blocks.resize(count);
+
     auto blocks = config["blocks"];
     for (auto &&[blockKey, blockData] : *blocks.as_table()) {
         int id;
@@ -41,11 +45,15 @@ void BlockRegistry::load(const std::string &path)
             }
 
             id = blockTable->at("id").value_or(-1);
-            block.setName(std::string(blockKey.str()));
-            block.setTextureInfo(texInfo);
+            block.name = std::string(blockKey.str());
+            block.textures = texInfo;
 
-            m_blocks[static_cast<BlockType>(id)] = block;
+            if (blockTable->contains("transparency")) {
+                block.transparency = blockTable->get("transparency")->as_boolean();
+            }
         }
+
+        m_blocks[id] = block;
     }
 }
 

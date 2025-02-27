@@ -24,6 +24,7 @@ void Game::init()
 
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
     playerCollider->offset = glm::vec3(0.0f, 0.9f, 0.0f);
+    playerCollider->isGhost = false;
 
     m_ecs.addSystem<sys::Physics>();
     m_ecs.addSystem<sys::Collision>(m_world);
@@ -48,13 +49,44 @@ void Game::destroy()
 
 void Game::run()
 {
+    constexpr f64 MS_PER_TICK = 0.05;
+    f64 lastTime = m_window.getCurrentTime();
+    f64 accumulator = 0.0;
+
+    m_ecs.storePositions();
+    
     while (m_running) {
+        f64 currentTime = m_window.getCurrentTime();
+        f64 frameTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        if (frameTime > 0.25) {
+            frameTime = 0.25;
+        }
+
+        accumulator += frameTime;
+
         m_window.update();
-
-        f32 dt = m_window.getDeltaTime();
-
         handleInput();
-        update(dt);
+
+        while (accumulator >= MS_PER_TICK) {
+            m_ecs.storePositions();
+            tick(0.05f);
+            accumulator -= MS_PER_TICK;
+        }
+
+        f32 alpha = static_cast<f32>(accumulator / MS_PER_TICK);
+
+        m_ecs.interpolate(alpha);
+
+        auto playerSystem = m_ecs.getSystem<sys::Player>();
+        if (playerSystem) {
+            playerSystem->updateCamera();
+        }
+
+        m_camera.updateView();
+        m_camera.updateProj(m_window.getAspect());
+
         render();
     }
 }
@@ -66,10 +98,8 @@ void Game::handleInput()
     }
 }
 
-void Game::update(f32 dt)
+void Game::tick(f32 dt)
 {
-    m_camera.updateView();
-    m_camera.updateProj(m_window.getAspect());
     m_world.update(m_camera.getPos());
     m_clouds.update(dt);
 

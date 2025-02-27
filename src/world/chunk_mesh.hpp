@@ -34,6 +34,7 @@ public:
     {
         glm::vec3 pos;
         glm::vec2 uv;
+        u32 data;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -45,9 +46,9 @@ public:
             return bindingDescription;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
         {
-            std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
 
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
@@ -59,8 +60,19 @@ public:
             attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
             attributeDescriptions[1].offset = offsetof(Vertex, uv);
 
+            attributeDescriptions[2].binding = 0;
+            attributeDescriptions[2].location = 2;
+            attributeDescriptions[2].format = VK_FORMAT_R32_UINT;
+            attributeDescriptions[2].offset = offsetof(Vertex, data);
+
             return attributeDescriptions;
         }
+    };
+
+    struct MeshData
+    {
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
     };
 
     ChunkMesh() = default;
@@ -69,21 +81,20 @@ public:
     ChunkMesh(const ChunkMesh &) = delete;
     ChunkMesh &operator=(const ChunkMesh &) = delete;
 
-    void init(gfx::VulkanCtx &ctx, const BlockRegistry &blockRegistry);
+    void init(gfx::VulkanCtx &ctx);
     void destroy();
 
-    void generate(
-        const Chunk &chunk,
-        std::array<const Chunk *, 4> &neighbors
-    );
-
-    void update(const Chunk &chunk, std::array<const Chunk *, 4> &neighbors);
+    void generate(MeshData &meshData);
 
     void draw();
 
-private:
-    const BlockRegistry *m_blockRegistry;
+    static MeshData calculateMeshData(
+        const Chunk &chunk,
+        std::array<const Chunk *, 4> &neighbors,
+        const BlockRegistry &registryconst 
+    );
 
+private:
     // vulkan
     gfx::VulkanCtx *m_ctx;
     std::vector<Vertex> m_vertices;
@@ -105,21 +116,29 @@ private:
     static const std::array<glm::vec3, 4> FACE_TOP;
     static const std::array<glm::vec3, 4> FACE_BOTTOM;
 
-    void addFace(
+    static void addFace(
         const glm::vec3 &pos,
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
-        BlockType block
+        BlockType block,
+        std::vector<Vertex> &verticesData,
+        std::vector<u32> &indicesData
     );
 
-    std::array<glm::vec2, 4> getUVs(BlockType block, Face face);
+    static std::array<glm::vec2, 4> getUVs(
+        BlockType block,
+        Face face,
+        const BlockRegistry &registry
+    );
 
-    bool isFaceVisible(
+    static bool isFaceVisible(
         const Chunk &chunk,
         std::array<const Chunk *, 4> neighbors,
         i32 x,
         i32 y,
-        i32 z
+        i32 z,
+        BlockType block,
+        const BlockRegistry &registry
     );
 };
 

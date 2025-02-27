@@ -1,6 +1,7 @@
 [atlas]
 size = 256
 tile_size = 16
+count = 256
 
 [blocks]
 	[blocks.stone]
@@ -22,5 +23,14 @@ tile_size = 16
 	textures.all = { x = 4, y = 0 }
 
 	[blocks.bedrock]
-	id = 5
+	id = 7
 	textures.all = { x = 0, y = 1 }
+
+	[blocks.sand]
+	id = 12
+	textures.all = { x = 5, y = 0 }
+
+	[blocks.water]
+	id = 17
+	textures.all = { x = 0, y = 2 }
+	transparency = true

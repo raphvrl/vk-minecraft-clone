@@ -25,6 +25,8 @@ public:
 
     void tick(f32 dt) override;
 
+    void updateCamera();
+
 private:
     core::Window &m_window;
     core::Camera &m_camera;

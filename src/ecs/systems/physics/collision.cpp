@@ -25,6 +25,7 @@ void Collision::tick(f32 dt)
         auto *collider = m_ecs->getComponent<cmp::Collider>(entity);
 
         if (collider->isGhost) {
+            transform->position += velocity->position;
             continue;
         }
 

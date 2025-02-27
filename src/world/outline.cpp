@@ -51,7 +51,7 @@ void Outline::render(const core::Camera &camera)
 
     RaycastResult result;
 
-    if (m_world->raycast(ray, 5.0f, result)) {
+    if (m_world->raycast(ray, 4.0f, result)) {
         drawOutline(camera, result.pos);
     }
 }

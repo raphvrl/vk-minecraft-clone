@@ -125,8 +125,18 @@ void Player::tick(f32 dt)
     if (player->placeCooldown > 0.0f) {
         player->placeCooldown -= dt;
     }
+}
 
-    glm::vec3 pos = transform->position;
+void Player::updateCamera()
+{
+    if (m_playerEntity == ENTITY_NULL) return;
+
+    auto *player = m_ecs->getComponent<cmp::Player>(m_playerEntity);
+    auto *transform = m_ecs->getComponent<cmp::Transform>(m_playerEntity);
+
+    if (!player || !transform) return;
+
+    glm::vec3 pos = transform->renderPosition;
     pos.y += player->eyeHeight;
     m_camera.setPos(pos);
 

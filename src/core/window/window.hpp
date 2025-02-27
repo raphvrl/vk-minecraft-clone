@@ -138,6 +138,7 @@ public:
     u32 getHeight() const { return m_height; }
     f32 getAspect() const { return static_cast<f32>(m_width) / m_height; }
 
+    f32 getCurrentTime() const { return glfwGetTime(); }
     f32 getDeltaTime() const { return m_deltaTime; }
 
     glm::vec2 getMousePos() const { return m_mousePos; }
