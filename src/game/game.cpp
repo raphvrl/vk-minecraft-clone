@@ -3,6 +3,12 @@
 namespace game
 {
 
+Game::Game() :
+    m_playerSystem(&m_ecs, m_window, m_camera, m_world),
+    m_physicsSystem(&m_ecs, m_world)
+{
+}
+
 void Game::init()
 {
     m_window.init(1920, 1080, "Minecraft Clone");
@@ -24,15 +30,8 @@ void Game::init()
 
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
     playerCollider->offset = glm::vec3(0.0f, 0.9f, 0.0f);
+    playerCollider->groundOffset = 0.01f;
     playerCollider->isGhost = false;
-
-    m_ecs.addSystem<sys::Physics>();
-    m_ecs.addSystem<sys::Collision>(m_world);
-    m_ecs.addSystem<sys::Player>(
-        m_window,
-        m_camera,
-        m_world
-    );
 
     m_running = true;
 }
@@ -79,10 +78,7 @@ void Game::run()
 
         m_ecs.interpolate(alpha);
 
-        auto playerSystem = m_ecs.getSystem<sys::Player>();
-        if (playerSystem) {
-            playerSystem->updateCamera();
-        }
+        m_playerSystem.updateCamera();
 
         m_camera.updateView();
         m_camera.updateProj(m_window.getAspect());
@@ -103,7 +99,8 @@ void Game::tick(f32 dt)
     m_world.update(m_camera.getPos());
     m_clouds.update(dt);
 
-    m_ecs.update(dt);
+    m_playerSystem.tick(dt);
+    m_physicsSystem.tick(dt);
 }
 
 void Game::render()

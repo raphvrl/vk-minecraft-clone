@@ -377,7 +377,10 @@ bool World::raycast(
         }
 
         BlockType type = getBlock(blockPos);
-        if (type != BlockType::AIR) {
+        if (
+            type != BlockType::AIR &&
+            m_blockRegistry.getBlock(type).collision
+        ) {
             result.pos = blockPos;
             result.face = hitFace;
 

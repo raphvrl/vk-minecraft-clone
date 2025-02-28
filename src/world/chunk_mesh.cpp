@@ -353,9 +353,18 @@ void ChunkMesh::addFace(
         (u32(0) << 16) |
         (u32(0) << 24);
 
+    std::array<glm::vec3, 4> adjustedVerts = vertices;
+
+    if (block == BlockType::WATER) {
+        f32 heightScale = 0.875f;
+        for (int i = 0; i < 4; i++) {
+            adjustedVerts[i].y *= heightScale;
+        }
+    }
+
     for (usize i = 0; i < 4; i++) {
         Vertex vertex;
-        vertex.pos = pos + vertices[i];
+        vertex.pos = pos + adjustedVerts[i];
         vertex.uv = uvs[i];
         vertex.data = encodedData;
         verticesData->push_back(vertex);

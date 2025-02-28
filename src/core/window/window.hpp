@@ -128,6 +128,10 @@ public:
     bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
 
     bool isKeyPressed(Key k) const { return m_keys[static_cast<int>(k)]; }
+    bool isKeyJustPressed(Key k) const { 
+        return m_keys[static_cast<int>(k)] && !m_keysPrev[static_cast<int>(k)];
+    }
+
     bool isMouseButtonPressed(MouseButton b) const { 
         return m_mouseButtons[static_cast<int>(b)]; 
     }
@@ -154,6 +158,7 @@ private:
     f32 m_deltaTime;
 
     std::array<bool, GLFW_KEY_LAST + 1> m_keys;
+    std::array<bool, GLFW_KEY_LAST + 1> m_keysPrev;
     std::array<bool, GLFW_MOUSE_BUTTON_LAST + 1> m_mouseButtons;
     
     glm::vec2 m_mousePos;

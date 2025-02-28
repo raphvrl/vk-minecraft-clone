@@ -113,7 +113,7 @@ private:
 
     std::vector<MeshTask> m_meshTasks;
 
-    static constexpr int OPPERATIONS_PER_FRAME = 4;
+    static constexpr int OPPERATIONS_PER_FRAME = 6;
 
     bool isMeshPending(const ChunkPos &pos);
     void checkPendingMeshes(int &operationsThisFrame);

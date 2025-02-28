@@ -16,7 +16,6 @@
 #include "ecs/components/physics/collider.hpp"
 #include "ecs/components/player/player.hpp"
 #include "ecs/systems/physics/physics.hpp"
-#include "ecs/systems/physics/collision.hpp"
 #include "ecs/systems/player/player.hpp"
 
 namespace game
@@ -26,6 +25,8 @@ class Game
 {
 
 public:
+    Game();
+
     void init();
     void destroy();
     void run();
@@ -46,6 +47,9 @@ private:
     wld::Clouds m_clouds;
 
     ecs::ECS m_ecs;
+
+    sys::Player m_playerSystem;
+    sys::Physics m_physicsSystem;
 
     bool m_running;
 };
