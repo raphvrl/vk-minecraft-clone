@@ -138,9 +138,11 @@ private:
     };
 
     gfx::Pipeline m_pipeline;
+    gfx::Pipeline m_transparentPipeline;
     gfx::Texture m_texture;
     gfx::UniformBuffer m_ubo;
     VkDescriptorSet m_descriptorSet;
+    VkDescriptorSet m_transparentDescriptorSet;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 

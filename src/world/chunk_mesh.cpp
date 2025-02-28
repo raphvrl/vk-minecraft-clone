@@ -25,50 +25,78 @@ void ChunkMesh::destroy()
         m_indexBuffer,
         m_indexAllocation
     );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_vertexBufferTransparent,
+        m_vertexAllocationTransparent
+    );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_indexBufferTransparent,
+        m_indexAllocationTransparent
+    );
 }
 
 void ChunkMesh::generate(MeshData &meshData)
 {
-    if (meshData.vertices.empty() || meshData.indices.empty()) {
-        return;
-    }
-
     m_vertices = meshData.vertices;
     m_indices = meshData.indices;
 
-    createVertexBuffer();
-    createIndexBuffer();
-}
+    createVertexBuffer(m_vertexBuffer, m_vertexAllocation, m_vertices);
+    createIndexBuffer(m_indexBuffer, m_indexAllocation, m_indices);
 
-void ChunkMesh::draw()
-{
-    VkCommandBuffer commandBuffer = m_ctx->getCommandBuffer();
+    m_transparentVertices = meshData.transparentVertices;
+    m_transparentIndices = meshData.transparentIndices;
 
-    VkDeviceSize offsets[] = {0};
-
-    vkCmdBindVertexBuffers(
-        commandBuffer,
-        0,
-        1,
-        &m_vertexBuffer,
-        offsets
+    createVertexBuffer(
+        m_vertexBufferTransparent,
+        m_vertexAllocationTransparent,
+        m_transparentVertices
     );
 
+    createIndexBuffer(
+        m_indexBufferTransparent,
+        m_indexAllocationTransparent,
+        m_transparentIndices
+    );
+}
+
+void ChunkMesh::drawOpaque()
+{
+    if (m_vertices.empty()) {
+        return;
+    }
+
+    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
+    VkDeviceSize offsets[] = {0};
+
+    vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, offsets);
+    vkCmdBindIndexBuffer(cmd, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdDrawIndexed(cmd, m_indices.size(), 1, 0, 0, 0);
+}
+
+void ChunkMesh::drawTransparent()
+{
+    if (m_transparentVertices.empty()) {
+        return;
+    }
+
+    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
+    VkDeviceSize offsets[] = {0};
+
+    vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBufferTransparent, offsets);
+
     vkCmdBindIndexBuffer(
-        commandBuffer,
-        m_indexBuffer,
+        cmd,
+        m_indexBufferTransparent,
         0,
         VK_INDEX_TYPE_UINT32
     );
 
-    vkCmdDrawIndexed(
-        commandBuffer,
-        static_cast<u32>(m_indices.size()),
-        1,
-        0,
-        0,
-        0
-    );
+    vkCmdDrawIndexed(cmd, m_transparentIndices.size(), 1, 0, 0, 0);
 }
 
 ChunkMesh::MeshData ChunkMesh::calculateMeshData(
@@ -95,8 +123,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_WEST,
                         getUVs(block, Face::WEST, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
 
@@ -106,8 +134,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_EAST,
                         getUVs(block, Face::EAST, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
 
@@ -117,8 +145,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_BOTTOM,
                         getUVs(block, Face::BOTTOM, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
 
@@ -128,8 +156,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_TOP,
                         getUVs(block, Face::TOP, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
 
@@ -139,8 +167,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_NORTH,
                         getUVs(block, Face::NORTH, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
 
@@ -150,8 +178,8 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
                         ChunkMesh::FACE_SOUTH,
                         getUVs(block, Face::SOUTH, registry),
                         block,
-                        meshData.vertices,
-                        meshData.indices
+                        meshData,
+                        registry
                     );
                 }
             }
@@ -161,9 +189,19 @@ ChunkMesh::MeshData ChunkMesh::calculateMeshData(
     return meshData;
 }
 
-void ChunkMesh::createVertexBuffer()
+void ChunkMesh::createVertexBuffer(
+    VkBuffer &buffer,
+    VmaAllocation &allocation,
+    const std::vector<Vertex> &vertices
+)
 {
-    VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
+    if (vertices.empty()) {
+        buffer = VK_NULL_HANDLE;
+        allocation = VK_NULL_HANDLE;
+        return;
+    }
+
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     VkBuffer stagingBuffer;
     VmaAllocation stagingAllocation;
@@ -178,18 +216,18 @@ void ChunkMesh::createVertexBuffer()
 
     void *data;
     vmaMapMemory(m_ctx->getAllocator(), stagingAllocation, &data);
-    memcpy(data, m_vertices.data(), bufferSize);
+    memcpy(data, vertices.data(), bufferSize);
     vmaUnmapMemory(m_ctx->getAllocator(), stagingAllocation);
 
     m_ctx->createBuffer(
         bufferSize,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_GPU_ONLY,
-        m_vertexBuffer,
-        m_vertexAllocation
+        buffer,
+        allocation
     );
 
-    m_ctx->copyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
+    m_ctx->copyBuffer(stagingBuffer, buffer, bufferSize);
 
     vmaDestroyBuffer(
         m_ctx->getAllocator(),
@@ -198,9 +236,19 @@ void ChunkMesh::createVertexBuffer()
     );
 }
 
-void ChunkMesh::createIndexBuffer()
+void ChunkMesh::createIndexBuffer(
+    VkBuffer &buffer,
+    VmaAllocation &allocation,
+    const std::vector<u32> &indices
+)
 {
-    VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indices.size();
+    if (indices.empty()) {
+        buffer = VK_NULL_HANDLE;
+        allocation = VK_NULL_HANDLE;
+        return;
+    }
+
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     VkBuffer stagingBuffer;
     VmaAllocation stagingAllocation;
@@ -215,18 +263,18 @@ void ChunkMesh::createIndexBuffer()
 
     void *data;
     vmaMapMemory(m_ctx->getAllocator(), stagingAllocation, &data);
-    memcpy(data, m_indices.data(), bufferSize);
+    memcpy(data, indices.data(), bufferSize);
     vmaUnmapMemory(m_ctx->getAllocator(), stagingAllocation);
 
     m_ctx->createBuffer(
         bufferSize,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_GPU_ONLY,
-        m_indexBuffer,
-        m_indexAllocation
+        buffer,
+        allocation
     );
 
-    m_ctx->copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
+    m_ctx->copyBuffer(stagingBuffer, buffer, bufferSize);
 
     vmaDestroyBuffer(
         m_ctx->getAllocator(),
@@ -282,13 +330,22 @@ void ChunkMesh::addFace(
     const std::array<glm::vec3, 4> &vertices,
     const std::array<glm::vec2, 4> &uvs,
     BlockType block,
-    std::vector<Vertex> &verticesData,
-    std::vector<u32> &indicesData
+    MeshData &meshData,
+    const BlockRegistry &registry
 )
 {
-    UNUSED(block);
+    std::vector<Vertex> *verticesData;
+    std::vector<u32> *indicesData;
 
-    u32 indexOffset = verticesData.size();
+    if (registry.getBlock(block).transparency) {
+        verticesData = &meshData.transparentVertices;
+        indicesData = &meshData.transparentIndices;
+    } else {
+        verticesData = &meshData.vertices;
+        indicesData = &meshData.indices;
+    }
+
+    u32 indexOffset = verticesData->size();
 
     u32 encodedData =
         (u32(0)) |
@@ -301,15 +358,15 @@ void ChunkMesh::addFace(
         vertex.pos = pos + vertices[i];
         vertex.uv = uvs[i];
         vertex.data = encodedData;
-        verticesData.push_back(vertex);
+        verticesData->push_back(vertex);
     }
 
-    indicesData.push_back(indexOffset + 0);
-    indicesData.push_back(indexOffset + 1);
-    indicesData.push_back(indexOffset + 2);
-    indicesData.push_back(indexOffset + 2);
-    indicesData.push_back(indexOffset + 3);
-    indicesData.push_back(indexOffset + 0);
+    indicesData->push_back(indexOffset + 0);
+    indicesData->push_back(indexOffset + 1);
+    indicesData->push_back(indexOffset + 2);
+    indicesData->push_back(indexOffset + 2);
+    indicesData->push_back(indexOffset + 3);
+    indicesData->push_back(indexOffset + 0);
 }
 
 std::array<glm::vec2, 4> ChunkMesh::getUVs(

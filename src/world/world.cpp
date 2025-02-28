@@ -40,6 +40,34 @@ void World::init(gfx::VulkanCtx &ctx)
         )
         .build();
 
+    m_transparentPipeline = gfx::Pipeline::Builder(*m_ctx)
+        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
+        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
+        .setVertexInput(
+            &binding,
+            attributes.data(),
+            attributes.size()
+        )
+        .addDescriptorBinding({
+            .binding = 0,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT
+        })
+        .addDescriptorBinding({
+            .binding = 1,
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
+        })
+        .addPushConstant(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(glm::mat4)
+        )
+        .setBlending(true)
+        .build();
+
     m_texture.init(*m_ctx, "terrain.png");
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
 
@@ -59,6 +87,9 @@ void World::init(gfx::VulkanCtx &ctx)
     };
 
     m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
+    m_transparentDescriptorSet = m_transparentPipeline.createDescriptorSet(
+        descriptors
+    );
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
@@ -72,6 +103,7 @@ void World::destroy()
 {
     m_ubo.destroy();
     m_texture.destroy();
+    m_transparentPipeline.destroy();
     m_pipeline.destroy();
 
     for (auto &[pos, mesh] : m_meshes) {
@@ -197,7 +229,27 @@ void World::render(const core::Camera &camera)
             &model
         );
 
-        mesh->draw();
+        mesh->drawOpaque();
+    }
+
+    m_transparentPipeline.bind();
+    m_transparentPipeline.bindDescriptorSet(m_transparentDescriptorSet);
+
+    for (const auto &[pos, mesh] : m_meshes) {
+        f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
+        f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, {x, 0.0f, z});
+
+        m_transparentPipeline.push(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(model),
+            &model
+        );
+
+        mesh->drawTransparent();
     }
 }
 

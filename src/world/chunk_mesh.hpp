@@ -72,7 +72,9 @@ public:
     struct MeshData
     {
         std::vector<Vertex> vertices;
-        std::vector<uint32_t> indices;
+        std::vector<u32> indices;
+        std::vector<Vertex> transparentVertices;
+        std::vector<u32> transparentIndices;
     };
 
     ChunkMesh() = default;
@@ -86,7 +88,8 @@ public:
 
     void generate(MeshData &meshData);
 
-    void draw();
+    void drawOpaque();
+    void drawTransparent();
 
     static MeshData calculateMeshData(
         const Chunk &chunk,
@@ -98,15 +101,32 @@ private:
     // vulkan
     gfx::VulkanCtx *m_ctx;
     std::vector<Vertex> m_vertices;
-    std::vector<uint32_t> m_indices;
+    std::vector<u32> m_indices;
 
     VkBuffer m_vertexBuffer;
     VmaAllocation m_vertexAllocation;
     VkBuffer m_indexBuffer;
     VmaAllocation m_indexAllocation;
 
-    void createVertexBuffer();
-    void createIndexBuffer();
+    std::vector<Vertex> m_transparentVertices;
+    std::vector<u32> m_transparentIndices;
+
+    VkBuffer m_vertexBufferTransparent;
+    VmaAllocation m_vertexAllocationTransparent;
+    VkBuffer m_indexBufferTransparent;
+    VmaAllocation m_indexAllocationTransparent;
+
+    void createVertexBuffer(
+        VkBuffer &buffer,
+        VmaAllocation &allocation,
+        const std::vector<Vertex> &vertices
+    );
+
+    void createIndexBuffer(
+        VkBuffer &buffer,
+        VmaAllocation &allocation,
+        const std::vector<u32> &indices
+    );
 
     // mesh generation
     static const std::array<glm::vec3, 4> FACE_NORTH;
@@ -121,8 +141,8 @@ private:
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
         BlockType block,
-        std::vector<Vertex> &verticesData,
-        std::vector<u32> &indicesData
+        MeshData &meshData,
+        const BlockRegistry &registry
     );
 
     static std::array<glm::vec2, 4> getUVs(
