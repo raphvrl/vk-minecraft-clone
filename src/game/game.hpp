@@ -9,6 +9,7 @@
 #include "world/sky.hpp"
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
+#include "graphics/overlay_renderer.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
@@ -45,6 +46,8 @@ private:
     wld::Sky m_sky;
     wld::Outline m_outline;
     wld::Clouds m_clouds;
+
+    gfx::OverlayRenderer m_overlay;
 
     ecs::ECS m_ecs;
 

@@ -439,10 +439,6 @@ bool ChunkMesh::isFaceVisible(
         return true;
     }
 
-    if (block == BlockType::WATER && adjacentBlock == BlockType::WATER) {
-        return false;
-    }
-
     Block currentData = registry.getBlock(block);
     Block adjacentData = registry.getBlock(adjacentBlock);
 
@@ -450,11 +446,11 @@ bool ChunkMesh::isFaceVisible(
         return false;
     }
 
-    if (
-        block == adjacentBlock &&
-        currentData.transparency &&
-        adjacentData.transparency
-    ) {
+    if (block == adjacentBlock && currentData.transparency && adjacentData.transparency) {
+        return false;
+    }
+
+    if (currentData.transparency && !adjacentData.transparency) {
         return false;
     }
 

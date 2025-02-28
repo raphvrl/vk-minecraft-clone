@@ -8,7 +8,7 @@
 namespace wld
 {
 
-struct ChunkPosm;
+struct ChunkPos;
 
 class WorldGenerator
 {
@@ -31,7 +31,6 @@ private:
 
     BlockType getBlockAtHeight(i32 y, i32 terrainHeight, i32 dirtDepth);
     i32 getTerrainHeight(i32 x, i32 z);
-
 };
 
 } // namespace wld

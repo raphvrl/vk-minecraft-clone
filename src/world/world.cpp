@@ -65,6 +65,7 @@ void World::init(gfx::VulkanCtx &ctx)
             0,
             sizeof(glm::mat4)
         )
+        .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
         .build();
 
@@ -308,31 +309,7 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
 
 void World::deleteBlock(const glm::ivec3 &pos)
 {
-    ChunkPos chunkPos = {
-        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
-        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
-    };
-
-    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
-        glm::ivec3 localPos = {
-            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
-            pos.y,
-            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
-        };
-
-        it->second->setBlock(localPos, BlockType::AIR);
-
-        queueMeshGeneration(chunkPos);
-    
-        if (localPos.x == 0) 
-            queueMeshGeneration({chunkPos.x - 1, chunkPos.z});
-        if (localPos.x == 15)
-            queueMeshGeneration({chunkPos.x + 1, chunkPos.z});
-        if (localPos.z == 0)
-            queueMeshGeneration({chunkPos.x, chunkPos.z - 1});
-        if (localPos.z == 15)
-            queueMeshGeneration({chunkPos.x, chunkPos.z + 1});
-    }
+    placeBlock(pos, BlockType::AIR);
 }
 
 bool World::raycast(

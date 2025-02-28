@@ -8,9 +8,14 @@ Player::Player(
     ecs::ECS *ecs,
     core::Window &window,
     core::Camera &camera,
-    wld::World &world
-)
-    : System(ecs), m_window(window), m_camera(camera), m_world(world)
+    wld::World &world,
+    gfx::OverlayRenderer &overlay
+) : 
+    System(ecs), 
+    m_window(window),
+    m_camera(camera),
+    m_world(world),
+    m_overlay(overlay)
 {
 }
 
@@ -84,7 +89,7 @@ void Player::tick(f32 dt)
         } else if (collider && collider->isGrounded) {
             velocity->position.y += player->jumpForce;
             collider->isGrounded = false;
-            m_jumpCooldown = 0.1f;
+            m_jumpCooldown = 0.5f;
         }
     }
 
@@ -118,6 +123,14 @@ void Player::tick(f32 dt)
         wld::RaycastResult result;
 
         if (m_world.raycast(ray, 4.0f, result)) {
+            if (wouldCollide(
+                result.normal,
+                transform->position,
+                collider->size)
+            ) {
+                return;
+            }
+
             m_world.placeBlock(
                 result.normal,
                 wld::BlockType::COBBLESTONE
@@ -134,6 +147,14 @@ void Player::tick(f32 dt)
     if (player->placeCooldown > 0.0f) {
         player->placeCooldown -= dt;
     }
+
+    wld::BlockType headBlock = m_world.getBlock(
+        transform->position.x,
+        transform->position.y + player->eyeHeight,
+        transform->position.z
+    );
+
+    m_overlay.setWater(headBlock == wld::BlockType::WATER);
 }
 
 void Player::updateCamera()
@@ -154,6 +175,36 @@ void Player::updateCamera()
         mouse.x * player->sensitivity,
         mouse.y * player->sensitivity
     );
+}
+
+bool Player::wouldCollide(
+    const glm::ivec3 &block,
+    const glm::vec3 &pos,
+    const glm::vec3 &size
+)
+{
+    f32 blockMinX = static_cast<f32>(block.x);
+    f32 blockMaxX = static_cast<f32>(block.x + 1);
+    f32 blockMinY = static_cast<f32>(block.y);
+    f32 blockMaxY = static_cast<f32>(block.y + 1);
+    f32 blockMinZ = static_cast<f32>(block.z);
+    f32 blockMaxZ = static_cast<f32>(block.z + 1);
+
+    f32 playerHalfWidth = size.x * 0.5f;
+    f32 playerHalfDepth = size.z * 0.5f;
+
+    f32 playerMinX = pos.x - playerHalfWidth;
+    f32 playerMaxX = pos.x + playerHalfWidth;
+    f32 playerMinY = pos.y;
+    f32 playerMaxY = pos.y + size.y;
+    f32 playerMinZ = pos.z - playerHalfDepth;
+    f32 playerMaxZ = pos.z + playerHalfDepth;
+
+    bool collisionX = playerMinX < blockMaxX && playerMaxX > blockMinX;
+    bool collisionY = playerMinY < blockMaxY && playerMaxY > blockMinY;
+    bool collisionZ = playerMinZ < blockMaxZ && playerMaxZ > blockMinZ;
+
+    return collisionX && collisionY && collisionZ;
 }
 
 } // namespace sys

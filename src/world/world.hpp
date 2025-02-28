@@ -40,6 +40,11 @@ struct ChunkPos
         return x == other.x && z == other.z;
     }
 
+    bool operator!=(const ChunkPos &other) const
+    {
+        return x != other.x || z != other.z;
+    }
+
     ChunkPos &operator=(const ChunkPos &other)
     {
         x = other.x;

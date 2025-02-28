@@ -19,8 +19,10 @@ enum class BlockType
     DIRT = 3,
     COBBLESTONE = 4,
     BEDROCK = 7,
+    WATER = 9,
     SAND = 12,
-    WATER = 17,
+    LOG = 17,
+    LEAVES = 18,
 };
 
 struct TextureInfo

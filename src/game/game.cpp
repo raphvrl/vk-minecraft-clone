@@ -4,7 +4,7 @@ namespace game
 {
 
 Game::Game() :
-    m_playerSystem(&m_ecs, m_window, m_camera, m_world),
+    m_playerSystem(&m_ecs, m_window, m_camera, m_world, m_overlay),
     m_physicsSystem(&m_ecs, m_world)
 {
 }
@@ -20,6 +20,8 @@ void Game::init()
     m_sky.init(m_ctx);
     m_outline.init(m_ctx, m_world);
     m_clouds.init(m_ctx);
+
+    m_overlay.init(m_ctx);
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)
@@ -38,6 +40,7 @@ void Game::init()
 
 void Game::destroy()
 {
+    m_overlay.destroy();
     m_clouds.destroy();
     m_outline.destroy();
     m_sky.destroy();
@@ -113,6 +116,8 @@ void Game::render()
     m_world.render(m_camera);
     m_outline.render(m_camera);
     m_clouds.render(m_camera);
+
+    m_overlay.render();
 
     m_ctx.endFrame();
 }
