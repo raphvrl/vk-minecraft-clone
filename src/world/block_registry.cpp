@@ -49,7 +49,17 @@ void BlockRegistry::load(const std::string &path)
             block.textures = texInfo;
 
             if (blockTable->contains("transparency")) {
-                block.transparency = blockTable->get("transparency")->as_boolean();
+                block.transparency = blockTable
+                    ->get("transparency")
+                    ->as_boolean()
+                    ->value_or(false);
+            }
+
+            if (blockTable->contains("collision")) {
+                block.collision = blockTable
+                    ->get("collision")
+                    ->as_boolean()
+                    ->value_or(true);
             }
         }
 

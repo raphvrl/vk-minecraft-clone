@@ -56,6 +56,7 @@ struct Block
     std::string name;
     TextureInfo textures;
     bool transparency = false;
+    bool collision = true;
 };
 
 } // namespace wld

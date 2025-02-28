@@ -393,9 +393,12 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
             i32 localZ = z - (chunkPos.z * Chunk::CHUNK_SIZE);
 
             for (i32 y = minY; y <= maxY; ++y) {
+                BlockType block = chunk->getBlock(localX, y, localZ);
+
                 if (
                     chunk &&
-                    chunk->getBlock(localX, y, localZ) != BlockType::AIR
+                    block != BlockType::AIR &&
+                    m_blockRegistry.getBlock(block).collision
                 ) {
                     return true;
                 }
@@ -452,6 +455,19 @@ void World::checkPendingChunks(int &operationsThisFrame)
     } 
 
     for (const auto &pos : completedChunks) {
+        ChunkPos neighbors[4] = {
+            {pos.x - 1, pos.z},
+            {pos.x + 1, pos.z},
+            {pos.x, pos.z - 1},
+            {pos.x, pos.z + 1}
+        };
+        
+        for (const auto &neighborPos : neighbors) {
+            if (isChunkLoaded(neighborPos) && !isMeshPending(neighborPos)) {
+                queueMeshGeneration(neighborPos);
+            }
+        }
+        
         queueMeshGeneration(pos);
     }
 }

@@ -34,3 +34,5 @@ count = 256
 	id = 17
 	textures.all = { x = 0, y = 2 }
 	transparency = true
+	collision = false
+	
