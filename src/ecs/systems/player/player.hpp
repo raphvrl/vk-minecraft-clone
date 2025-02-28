@@ -8,6 +8,7 @@
 #include "ecs/components/physics/transform.hpp"
 #include "ecs/components/physics/velocity.hpp"
 #include "ecs/components/player/player.hpp"
+#include "ecs/components/physics/collider.hpp"
 
 namespace sys
 {
@@ -33,6 +34,8 @@ private:
     wld::World &m_world;
 
     EntityID m_playerEntity = ENTITY_NULL;
+
+    f32 m_jumpCooldown = 0.0f;
 };
 
 } // namespace sys

@@ -28,8 +28,10 @@ void Player::tick(f32 dt)
     auto *player = m_ecs->getComponent<cmp::Player>(m_playerEntity);
     auto *transform = m_ecs->getComponent<cmp::Transform>(m_playerEntity);
     auto *velocity = m_ecs->getComponent<cmp::Velocity>(m_playerEntity);
+    auto *collider = m_ecs->getComponent<cmp::Collider>(m_playerEntity);
 
-    velocity->position = glm::vec3(0.0f);
+    velocity->position.x = 0.0f;
+    velocity->position.z = 0.0f;
 
     if (!player || !transform || !velocity) {
         return;
@@ -71,12 +73,19 @@ void Player::tick(f32 dt)
         velocity->position += right * player->moveSpeed;
     }
 
-    if (m_window.isKeyPressed(core::Key::SPACE)) {
-        velocity->position.y += player->moveSpeed;
+    if (m_jumpCooldown > 0.0f) {
+        m_jumpCooldown -= dt;
     }
 
-    if (m_window.isKeyPressed(core::Key::LSHIFT)) {
-        velocity->position.y -= player->moveSpeed;
+    bool spacePressed = m_window.isKeyPressed(core::Key::SPACE);
+    if (spacePressed && m_jumpCooldown <= 0.0f) {
+        if (player->isFlying) {
+            velocity->position.y += player->moveSpeed;
+        } else if (collider && collider->isGrounded) {
+            velocity->position.y += player->jumpForce;
+            collider->isGrounded = false;
+            m_jumpCooldown = 0.1f;
+        }
     }
 
     if (

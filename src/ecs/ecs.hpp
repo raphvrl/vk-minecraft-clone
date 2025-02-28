@@ -63,27 +63,6 @@ public:
         componentMap.erase(typeIndex);
     }
 
-    template<typename T, typename... Args>
-    void addSystem(Args &&...args)
-    {
-        m_systems.push_back(std::make_unique<T>(
-            this,
-            std::forward<Args>(args)...)
-        );
-    }
-
-    template<typename T>
-    T *getSystem()
-    {
-        for (auto &system : m_systems) {
-            if (auto ptr = dynamic_cast<T *>(system.get())) {
-                return ptr;
-            }
-        }
-
-        return nullptr;
-    }
-
     template<typename... Components>
     std::vector<EntityID> view()
     {
@@ -96,13 +75,6 @@ public:
         }
 
         return entities;
-    }
-
-    void update(f32 dt)
-    {
-        for (auto &system : m_systems) {
-            system->tick(dt);
-        }
     }
 
     void storePositions()
@@ -138,7 +110,6 @@ private:
         std::unique_ptr<Component>>;
 
     std::unordered_map<EntityID, ComponentMap> m_components;
-    std::vector<std::unique_ptr<System>> m_systems;
 
     template <typename T>
     bool hasAllComponents(EntityID id)
