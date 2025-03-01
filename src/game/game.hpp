@@ -10,6 +10,7 @@
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
 #include "graphics/overlay_renderer.hpp"
+#include "graphics/text.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
@@ -48,6 +49,7 @@ private:
     wld::Clouds m_clouds;
 
     gfx::OverlayRenderer m_overlay;
+    gfx::Text m_text;
 
     ecs::ECS m_ecs;
 
@@ -55,6 +57,8 @@ private:
     sys::Physics m_physicsSystem;
 
     bool m_running;
+
+    f32 m_frameTime;
 };
 
 } // namespace game

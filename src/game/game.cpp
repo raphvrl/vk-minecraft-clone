@@ -22,6 +22,8 @@ void Game::init()
     m_clouds.init(m_ctx);
 
     m_overlay.init(m_ctx);
+    m_text.init(m_ctx);
+
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)
@@ -40,7 +42,9 @@ void Game::init()
 
 void Game::destroy()
 {
+    m_text.destroy();
     m_overlay.destroy();
+
     m_clouds.destroy();
     m_outline.destroy();
     m_sky.destroy();
@@ -61,6 +65,8 @@ void Game::run()
         f64 currentTime = m_window.getCurrentTime();
         f64 frameTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        m_frameTime = static_cast<f32>(frameTime);
 
         if (frameTime > 0.25) {
             frameTime = 0.25;
@@ -118,6 +124,19 @@ void Game::render()
     m_clouds.render(m_camera);
 
     m_overlay.render();
+
+    static f32 fpsSmoothed = 0.0f;
+    f32 currentFrameTime = m_frameTime;
+    f32 instantFps = 1.0f / currentFrameTime;
+
+    fpsSmoothed = fpsSmoothed * 0.95f + instantFps * 0.05f;
+    int fps = static_cast<int>(fpsSmoothed);
+    
+    m_text.draw(
+        "FPS: " + std::to_string(fps),
+        glm::vec2(-0.98f, -0.98f),
+        0.03f
+    );
 
     m_ctx.endFrame();
 }

@@ -24,7 +24,7 @@ void main()
 {
     float dist = length(worldPos - camPos);
 
-    vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 color = vec4(1.0, 1.0, 1.0, 0.7);
     color = addFog(color, dist);
 
     outColor = color;

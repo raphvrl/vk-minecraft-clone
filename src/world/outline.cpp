@@ -19,6 +19,7 @@ void Outline::init(gfx::VulkanCtx &ctx, World &world)
         .setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
         .setCullMode(VK_CULL_MODE_NONE)
         .setLineWidth(2.0f)
+        .setBlending(true)
         .build();
 
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));

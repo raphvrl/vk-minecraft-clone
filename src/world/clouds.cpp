@@ -24,6 +24,7 @@ void Clouds::init(gfx::VulkanCtx &ctx)
             0,
             sizeof(glm::mat4)
         )
+        .setBlending(true)
         .build();
 
     m_ubo.init(ctx, sizeof(UniformBufferObject));

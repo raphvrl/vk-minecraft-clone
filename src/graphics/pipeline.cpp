@@ -96,6 +96,12 @@ Pipeline::Builder &Pipeline::Builder::setBlending(bool enable)
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setPolygonMode(VkPolygonMode mode)
+{
+    m_polygonMode = mode;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -177,7 +183,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = m_polygonMode;
     rasterizer.lineWidth = m_lineWidth;
     rasterizer.cullMode = m_cullMode;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
