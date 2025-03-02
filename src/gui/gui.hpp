@@ -14,6 +14,12 @@
 namespace gui
 {
 
+struct GameStat
+{
+    u32 fps = 0;
+    u32 updatedChunks = 0;
+};
+
 enum class Mode
 {
     GAME,
@@ -45,7 +51,10 @@ public:
     void destroy();
 
     void update();
+    void updateStat(const GameStat &gameStat) { m_gameStat = gameStat; }
+
     void render();
+
 
 private:
     gfx::VulkanCtx *m_ctx;
@@ -74,6 +83,8 @@ private:
     TextRenderer m_text;
 
     std::unordered_map<std::string, Element> m_elements;
+
+    GameStat m_gameStat;
 
     void draw(const Element &element);
 

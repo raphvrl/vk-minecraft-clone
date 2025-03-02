@@ -95,8 +95,6 @@ void World::init(gfx::VulkanCtx &ctx)
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
     m_generator.init(0);
-
-    update({0.0f, 0.0f, 0.0f});
 }
 
 void World::destroy()
@@ -116,20 +114,28 @@ void World::destroy()
     m_meshes.clear();
 }
 
-void World::update(const glm::vec3 &playerPos)
+void World::update(const glm::vec3 &playerPos, f32 dt)
 {
     ChunkPos newPos = {
         static_cast<i32>(playerPos.x) / Chunk::CHUNK_SIZE,
         static_cast<i32>(playerPos.z) / Chunk::CHUNK_SIZE
     };
+
+    static f32 time = 0.0f;
+    time += dt;
+
+    if (time >= 1.0f) {
+        time = 0.0f;
+        m_updatedChunks = m_pendingChunks.size() + m_pendingMeshes.size();
+    }
     
     const f32 squaredDist = RENDER_DISTANCE * RENDER_DISTANCE;
 
-    if (newPos != m_playerChunkPos) {
-        m_chunksNeeded.clear();
-        m_chunksToLoad.clear();
-        m_chunksToUnload.clear();
+    m_chunksNeeded.clear();
+    m_chunksToLoad.clear();
+    m_chunksToUnload.clear();
 
+    if (newPos != m_playerChunkPos || m_pendingChunks.empty()) {
         std::queue<ChunkPos> empty;
         std::swap(m_pendingChunks, empty);
         std::swap(m_pendingMeshes, empty);
@@ -205,7 +211,7 @@ void World::update(const glm::vec3 &playerPos)
     }
 
     int meshesUpdated = 0;
-    while (!m_pendingMeshes.empty() && meshesUpdated < CHUNKS_PER_TICK) {
+    while (!m_pendingMeshes.empty() && meshesUpdated < MESHES_PER_TICK) {
         ChunkPos pos = m_pendingMeshes.front();
         m_pendingMeshes.pop();
 
@@ -214,8 +220,6 @@ void World::update(const glm::vec3 &playerPos)
             meshesUpdated++;
         }
     }
-
-    m_playerChunkPos = newPos;
 }
 
 void World::render(const core::Camera &camera)
@@ -338,16 +342,16 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
 
         it->second->setBlock(localPos, type);
 
-        m_pendingMeshes.push(chunkPos);
+        updateMeshe(chunkPos);
 
         if (localPos.x == 0)
-            m_pendingMeshes.push({chunkPos.x - 1, chunkPos.z});
+            updateMeshe({chunkPos.x - 1, chunkPos.z});
         if (localPos.x == Chunk::CHUNK_SIZE - 1)
-            m_pendingMeshes.push({chunkPos.x + 1, chunkPos.z});
+            updateMeshe({chunkPos.x + 1, chunkPos.z});
         if (localPos.z == 0)
-            m_pendingMeshes.push({chunkPos.x, chunkPos.z - 1});
+            updateMeshe({chunkPos.x, chunkPos.z - 1});
         if (localPos.z == Chunk::CHUNK_SIZE - 1)
-            m_pendingMeshes.push({chunkPos.x, chunkPos.z + 1});
+            updateMeshe({chunkPos.x, chunkPos.z + 1});
     }
 }
 

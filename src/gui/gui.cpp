@@ -180,7 +180,11 @@ void GUI::initGameElements()
 
 void GUI::drawGameElements()
 {
-    m_text.draw("Minecraft Vulkan Clone", glm::vec2(10.0f, 10.0f), 24);
+    std::string stat = "Minecraft Vulkan Clone ";
+    stat += "(" + std::to_string(m_gameStat.fps) + " fps";
+    stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";
+
+    m_text.draw(stat, {10.0f, 10.0f}, 24.0f);
 
     for (auto &[name, element] : m_elements) {
         draw(element);

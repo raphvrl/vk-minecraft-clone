@@ -60,7 +60,9 @@ private:
 
     bool m_running;
 
-    f32 m_frameTime;
+    f32 m_fps;
+
+    void updateGui();
 };
 
 } // namespace game
