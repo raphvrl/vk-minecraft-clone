@@ -12,11 +12,11 @@ void BlockRegistry::load(const std::string &path)
     m_blocks.resize(count);
 
     auto blocks = config["blocks"];
-    int id;
 
     for (auto &&[blockKey, blockData] : *blocks.as_table()) {
         Block block;
         TextureInfo texInfo;
+        int id = -1;
 
         if (auto blockTable = blockData.as_table()) {
             if (auto textures = blockTable->at("textures").as_table()) {
