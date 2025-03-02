@@ -50,6 +50,11 @@ void Clouds::destroy()
 void Clouds::update(f32 dt)
 {
     m_windOffset += WIND_SPEED * dt;
+
+    f32 patternSizeX = m_width * CLOUD_SIZE;
+    if (m_windOffset > patternSizeX) {
+        m_windOffset -= patternSizeX;
+    }
 }
 
 void Clouds::render(const core::Camera &camera)

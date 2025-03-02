@@ -119,7 +119,7 @@ private:
 
     std::vector<MeshTask> m_meshTasks;
 
-    static constexpr int OPPERATIONS_PER_FRAME = 6;
+    static constexpr int OPPERATIONS_PER_FRAME = 2;
 
     bool isMeshPending(const ChunkPos &pos);
     void checkPendingMeshes(int &operationsThisFrame);
@@ -131,7 +131,7 @@ private:
     const Chunk *getChunk(const ChunkPos &pos) const;
 
     static constexpr int RENDER_DISTANCE = 8;
-    static constexpr int CHUNKS_PER_FRAME = 1;
+    static constexpr int CHUNKS_PER_FRAME = 2;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;

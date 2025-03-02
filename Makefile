@@ -103,7 +103,7 @@ MODE ?= debug
 ifeq ($(MODE), debug)
 	CXXFLAGS += -g -O0 -DDEBUG
 else
-	CXXFLAGS += -O3 -DNDEBUG
+	CXXFLAGS += -O3 -DNDEBUG -ffp-contract=off
 endif
 
 ifeq ($(OS), Windows_NT)

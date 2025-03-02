@@ -221,7 +221,16 @@ void World::render(const core::Camera &camera)
 
     m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
 
-    for (const auto &[pos, mesh] : m_meshes) {
+    std::vector<std::pair<ChunkPos, ChunkMesh*>> meshesToRender;
+    {
+        std::lock_guard<std::mutex> lock(m_chunkMutex);
+        meshesToRender.reserve(m_meshes.size());
+        for (const auto& [pos, mesh] : m_meshes) {
+            meshesToRender.emplace_back(pos, mesh.get());
+        }
+    }
+
+    for (const auto &[pos, mesh] : meshesToRender) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
         f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
 
@@ -254,7 +263,7 @@ void World::render(const core::Camera &camera)
         m_descriptorSets[P_TRANSPARENT]
     );
 
-    for (const auto &[pos, mesh] : m_meshes) {
+    for (const auto &[pos, mesh] : meshesToRender) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
         f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
 
@@ -489,7 +498,7 @@ void World::checkPendingChunks(int &operationsThisFrame)
 
     auto it = m_chunkTasks.begin();
     while (it != m_chunkTasks.end() && processed < maxToProcess) {
-        if (it->future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        if (it->future.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
             auto pos = it->pos;
             {
                 std::lock_guard<std::mutex> lock(m_chunkMutex);
@@ -548,20 +557,23 @@ void World::checkPendingMeshes(int &operationsThisFrame)
 
     auto it = m_meshTasks.begin();
     while (it != m_meshTasks.end() && processed < maxToProcess) {
-        if (it->future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        if (it->future.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready) {
             auto pos = it->pos;
             auto meshData = it->future.get();
             
             if (auto chunkIt = m_chunks.find(pos); chunkIt != m_chunks.end()) {
-                if (auto meshIt = m_meshes.find(pos); meshIt != m_meshes.end()) {
-                    meshIt->second->destroy();
-                    m_meshes.erase(meshIt);
+                {
+                    std::lock_guard<std::mutex> lock(m_chunkMutex);
+                    if (auto meshIt = m_meshes.find(pos); meshIt != m_meshes.end()) {
+                        meshIt->second->destroy();
+                        m_meshes.erase(meshIt);
+                    }
+                    
+                    auto newMesh = std::make_unique<ChunkMesh>();
+                    newMesh->init(*m_ctx);
+                    newMesh->generate(meshData);
+                    m_meshes[pos] = std::move(newMesh);
                 }
-                
-                auto newMesh = std::make_unique<ChunkMesh>();
-                newMesh->init(*m_ctx);
-                newMesh->generate(meshData);
-                m_meshes[pos] = std::move(newMesh);
             }
             
             processed++;
