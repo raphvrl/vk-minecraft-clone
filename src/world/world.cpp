@@ -123,6 +123,10 @@ void World::update(const glm::vec3 &playerPos)
         static_cast<i32>(playerPos.z) / Chunk::CHUNK_SIZE
     };
 
+    if (newPos == m_playerChunkPos || !m_chunksNeeded.empty()) {
+        return;
+    }
+
     m_chunksNeeded.clear();
     m_chunksToLoad.clear();
     m_chunksToUnload.clear();
@@ -143,6 +147,14 @@ void World::update(const glm::vec3 &playerPos)
             }
         }
     }
+
+    std::sort(
+        m_chunksToLoad.begin(),
+        m_chunksToLoad.end(),
+        [](const auto &a, const auto &b) {
+            return a.second < b.second;
+        }
+    );
 
     for (const auto &[pos, chunk] : m_chunks) {
         if (m_chunksNeeded.find(pos) == m_chunksNeeded.end()) {
