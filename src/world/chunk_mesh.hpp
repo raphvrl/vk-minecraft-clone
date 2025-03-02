@@ -69,37 +69,32 @@ public:
         }
     };
 
-    struct MeshData
-    {
-        std::vector<Vertex> vertices;
-        std::vector<u32> indices;
-        std::vector<Vertex> transparentVertices;
-        std::vector<u32> transparentIndices;
-    };
-
     ChunkMesh() = default;
     virtual ~ChunkMesh() = default;
 
     ChunkMesh(const ChunkMesh &) = delete;
     ChunkMesh &operator=(const ChunkMesh &) = delete;
 
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::VulkanCtx &ctx, BlockRegistry &registry);
     void destroy();
 
-    void generate(MeshData &meshData);
+    void generate(
+        const Chunk &chunk,
+        const std::array<const Chunk *, 4> &neighbors
+    );
+
+    void update(
+        const Chunk &chunk,
+        const std::array<const Chunk *, 4> &neighbors
+    );
 
     void drawOpaque();
     void drawTransparent();
 
-    static MeshData calculateMeshData(
-        const Chunk &chunk,
-        std::array<const Chunk *, 4> &neighbors,
-        const BlockRegistry &registryconst 
-    );
-
 private:
-    // vulkan
     gfx::VulkanCtx *m_ctx;
+    BlockRegistry *m_registry;
+
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
 
@@ -136,29 +131,25 @@ private:
     static const std::array<glm::vec3, 4> FACE_TOP;
     static const std::array<glm::vec3, 4> FACE_BOTTOM;
 
-    static void addFace(
+    void addFace(
         const glm::vec3 &pos,
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
-        BlockType block,
-        MeshData &meshData,
-        const BlockRegistry &registry
+        BlockType block
     );
 
-    static std::array<glm::vec2, 4> getUVs(
+    std::array<glm::vec2, 4> getUVs(
         BlockType block,
-        Face face,
-        const BlockRegistry &registry
+        Face face
     );
 
-    static bool isFaceVisible(
+    bool isFaceVisible(
         const Chunk &chunk,
         std::array<const Chunk *, 4> neighbors,
         i32 x,
         i32 y,
         i32 z,
-        BlockType block,
-        const BlockRegistry &registry
+        BlockType block
     );
 };
 

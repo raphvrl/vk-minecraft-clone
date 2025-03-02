@@ -5,9 +5,10 @@
 namespace wld
 {
 
-void ChunkMesh::init(gfx::VulkanCtx &ctx)
+void ChunkMesh::init(gfx::VulkanCtx &ctx, BlockRegistry &registry)
 {
     m_ctx = &ctx;
+    m_registry = &registry;
 }
 
 void ChunkMesh::destroy()
@@ -39,16 +40,80 @@ void ChunkMesh::destroy()
     );
 }
 
-void ChunkMesh::generate(MeshData &meshData)
+void ChunkMesh::generate(
+    const Chunk &chunk,
+    const std::array<const Chunk *, 4> &neighbors
+)
 {
-    m_vertices = meshData.vertices;
-    m_indices = meshData.indices;
+    for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
+        for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
+            for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
+                BlockType block = chunk.getBlock(x, y, z);
+                if (block == BlockType::AIR) {
+                    continue;
+                }
+
+                glm::vec3 pos(x, y, z);
+
+                if (isFaceVisible(chunk, neighbors, x - 1, y, z, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_WEST,
+                        getUVs(block, Face::WEST),
+                        block
+                    );
+                }
+
+                if (isFaceVisible(chunk, neighbors, x + 1, y, z, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_EAST,
+                        getUVs(block, Face::EAST),
+                        block
+                    );
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y - 1, z, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_BOTTOM,
+                        getUVs(block, Face::BOTTOM),
+                        block
+                    );
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y + 1, z, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_TOP,
+                        getUVs(block, Face::TOP),
+                        block
+                    );
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y, z + 1, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_NORTH,
+                        getUVs(block, Face::NORTH),
+                        block
+                    );
+                }
+
+                if (isFaceVisible(chunk, neighbors, x, y, z - 1, block)) {
+                    addFace(
+                        pos,
+                        ChunkMesh::FACE_SOUTH,
+                        getUVs(block, Face::SOUTH),
+                        block
+                    );
+                }
+            }
+        }
+    };   
 
     createVertexBuffer(m_vertexBuffer, m_vertexAllocation, m_vertices);
     createIndexBuffer(m_indexBuffer, m_indexAllocation, m_indices);
-
-    m_transparentVertices = meshData.transparentVertices;
-    m_transparentIndices = meshData.transparentIndices;
 
     createVertexBuffer(
         m_vertexBufferTransparent,
@@ -61,6 +126,45 @@ void ChunkMesh::generate(MeshData &meshData)
         m_indexAllocationTransparent,
         m_transparentIndices
     );
+}
+
+void ChunkMesh::update(
+    const Chunk &chunk,
+    const std::array<const Chunk *, 4> &neighbors
+)
+{
+    m_vertices.clear();
+    m_indices.clear();
+    m_transparentVertices.clear();
+    m_transparentIndices.clear();
+
+    vkDeviceWaitIdle(m_ctx->getDevice());
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_vertexBuffer,
+        m_vertexAllocation
+    );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_indexBuffer,
+        m_indexAllocation
+    );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_vertexBufferTransparent,
+        m_vertexAllocationTransparent
+    );
+
+    vmaDestroyBuffer(
+        m_ctx->getAllocator(),
+        m_indexBufferTransparent,
+        m_indexAllocationTransparent
+    );
+
+    generate(chunk, neighbors);
 }
 
 void ChunkMesh::drawOpaque()
@@ -97,96 +201,6 @@ void ChunkMesh::drawTransparent()
     );
 
     vkCmdDrawIndexed(cmd, m_transparentIndices.size(), 1, 0, 0, 0);
-}
-
-ChunkMesh::MeshData ChunkMesh::calculateMeshData(
-    const Chunk &chunk,
-    std::array<const Chunk *, 4> &neighbors,
-    const BlockRegistry &registry
-)
-{
-    MeshData meshData;
-
-    for (u32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
-        for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
-                BlockType block = chunk.getBlock(x, y, z);
-                if (block == BlockType::AIR) {
-                    continue;
-                }
-
-                glm::vec3 pos(x, y, z);
-
-                if (isFaceVisible(chunk, neighbors, x - 1, y, z, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_WEST,
-                        getUVs(block, Face::WEST, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-
-                if (isFaceVisible(chunk, neighbors, x + 1, y, z, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_EAST,
-                        getUVs(block, Face::EAST, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-
-                if (isFaceVisible(chunk, neighbors, x, y - 1, z, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_BOTTOM,
-                        getUVs(block, Face::BOTTOM, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-
-                if (isFaceVisible(chunk, neighbors, x, y + 1, z, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_TOP,
-                        getUVs(block, Face::TOP, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-
-                if (isFaceVisible(chunk, neighbors, x, y, z + 1, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_NORTH,
-                        getUVs(block, Face::NORTH, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-
-                if (isFaceVisible(chunk, neighbors, x, y, z - 1, block, registry)) {
-                    addFace(
-                        pos,
-                        ChunkMesh::FACE_SOUTH,
-                        getUVs(block, Face::SOUTH, registry),
-                        block,
-                        meshData,
-                        registry
-                    );
-                }
-            }
-        }
-    }
-
-    return meshData;
 }
 
 void ChunkMesh::createVertexBuffer(
@@ -329,20 +343,18 @@ void ChunkMesh::addFace(
     const glm::vec3 &pos,
     const std::array<glm::vec3, 4> &vertices,
     const std::array<glm::vec2, 4> &uvs,
-    BlockType block,
-    MeshData &meshData,
-    const BlockRegistry &registry
+    BlockType block
 )
 {
     std::vector<Vertex> *verticesData;
     std::vector<u32> *indicesData;
 
-    if (registry.getBlock(block).transparency) {
-        verticesData = &meshData.transparentVertices;
-        indicesData = &meshData.transparentIndices;
+    if (m_registry->getBlock(block).transparency) {
+        verticesData = &m_transparentVertices;
+        indicesData = &m_transparentIndices;
     } else {
-        verticesData = &meshData.vertices;
-        indicesData = &meshData.indices;
+        verticesData = &m_vertices;
+        indicesData = &m_indices;
     }
 
     u32 indexOffset = verticesData->size();
@@ -380,13 +392,12 @@ void ChunkMesh::addFace(
 
 std::array<glm::vec2, 4> ChunkMesh::getUVs(
     BlockType block,
-    Face face,
-    const BlockRegistry &registry
+    Face face
 )
 {
     f32 tileSize = 16.0f / 256.0f;
 
-    TextureInfo texInfo = registry.getBlock(block).textures;
+    TextureInfo texInfo = m_registry->getBlock(block).textures;
     glm::uvec2 uv = texInfo.getUV(face);
 
     f32 x = (uv.x * tileSize);
@@ -406,8 +417,7 @@ bool ChunkMesh::isFaceVisible(
     i32 x,
     i32 y,
     i32 z,
-    BlockType block,
-    const BlockRegistry &registry
+    BlockType block
 )
 {
     BlockType adjacentBlock;
@@ -439,8 +449,8 @@ bool ChunkMesh::isFaceVisible(
         return true;
     }
 
-    Block currentData = registry.getBlock(block);
-    Block adjacentData = registry.getBlock(adjacentBlock);
+    Block currentData = m_registry->getBlock(block);
+    Block adjacentData = m_registry->getBlock(adjacentBlock);
 
     if (isChunkBoundary && block == adjacentBlock) {
         return false;
