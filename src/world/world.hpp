@@ -92,43 +92,17 @@ private:
             return std::hash<int>()(pos.x) ^ (std::hash<int>()(pos.z) << 1);
         }
     };
-
-    struct ChunkTask
-    {
-        ChunkPos pos = {0, 0};
-        f32 distance = 0.0f;
-        std::future<std::unique_ptr<Chunk>> future;
-    };
-
-    utils::ThreadPool m_threadPool;
-    std::vector<ChunkTask> m_chunkTasks;
-    std::mutex m_chunkMutex;
-
-    bool isChunkPending(const ChunkPos &pos);
-    void checkPendingChunks(int &operationsThisFrame);
     
     std::unordered_set<ChunkPos, ChunkPosHash> m_chunksNeeded;
     std::vector<std::pair<ChunkPos, f32>> m_chunksToLoad;
     std::vector<ChunkPos> m_chunksToUnload;
 
-    struct MeshTask
-    {
-        ChunkPos pos;
-        std::future<ChunkMesh::MeshData> future;
-    };
-
-    std::vector<MeshTask> m_meshTasks;
-
-    static constexpr int OPPERATIONS_PER_FRAME = 2;
-
-    bool isMeshPending(const ChunkPos &pos);
-    void checkPendingMeshes(int &operationsThisFrame);
-    void queueMeshGeneration(const ChunkPos &pos);
-
     void loadChunks(const ChunkPos &pos);
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
     const Chunk *getChunk(const ChunkPos &pos) const;
+
+    void updateMeshe(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 2;
