@@ -105,7 +105,10 @@ private:
     void updateMeshe(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
-    static constexpr int CHUNKS_PER_FRAME = 2;
+    static constexpr int CHUNKS_PER_TICK = 1;
+
+    std::queue<ChunkPos> m_pendingChunks;
+    std::queue<ChunkPos> m_pendingMeshes;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;
