@@ -123,7 +123,7 @@ void World::update(const glm::vec3 &playerPos)
         static_cast<i32>(playerPos.z) / Chunk::CHUNK_SIZE
     };
 
-    if (newPos == m_playerChunkPos || !m_chunksNeeded.empty()) {
+    if (newPos == m_playerChunkPos) {
         return;
     }
 

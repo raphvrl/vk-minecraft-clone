@@ -1,13 +1,13 @@
-#include "text.hpp"
+#include "text_renderer.hpp"
 
-namespace gfx
+namespace gui
 {
 
-void Text::init(VulkanCtx &ctx)
+void TextRenderer::init(gfx::VulkanCtx &ctx)
 {
     m_ctx = &ctx;
 
-    m_pipeline = Pipeline::Builder(ctx)
+    m_pipeline = gfx::Pipeline::Builder(ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "text.vert.spv")
         .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "text.frag.spv")
         .addDescriptorBinding({
@@ -35,7 +35,7 @@ void Text::init(VulkanCtx &ctx)
     m_font.init(*m_ctx, "font.png", false);
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
 
-    std::vector<DescriptorData> descriptors = {
+    std::vector<gfx::DescriptorData> descriptors = {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .binding = 0,
@@ -52,115 +52,17 @@ void Text::init(VulkanCtx &ctx)
 
     m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
 
-    m_charWidths.fill(4);
-
-    m_charWidths['a'] = 6;
-    m_charWidths['b'] = 6;
-    m_charWidths['c'] = 5;
-    m_charWidths['d'] = 6;
-    m_charWidths['e'] = 6;
-    m_charWidths['f'] = 5;
-    m_charWidths['g'] = 6;
-    m_charWidths['h'] = 6;
-    m_charWidths['i'] = 2;
-    m_charWidths['j'] = 5;
-    m_charWidths['k'] = 6;
-    m_charWidths['l'] = 2;
-    m_charWidths['m'] = 8;
-    m_charWidths['n'] = 6;
-    m_charWidths['o'] = 6;
-    m_charWidths['p'] = 6;
-    m_charWidths['q'] = 6;
-    m_charWidths['r'] = 5;
-    m_charWidths['s'] = 5;
-    m_charWidths['t'] = 5;
-    m_charWidths['u'] = 6;
-    m_charWidths['v'] = 6;
-    m_charWidths['w'] = 8;
-    m_charWidths['x'] = 6;
-    m_charWidths['y'] = 6;
-    m_charWidths['z'] = 6;
-
-    m_charWidths['A'] = 7;
-    m_charWidths['B'] = 7;
-    m_charWidths['C'] = 7;
-    m_charWidths['D'] = 7;
-    m_charWidths['E'] = 6;
-    m_charWidths['F'] = 6;
-    m_charWidths['G'] = 7;
-    m_charWidths['H'] = 7;
-    m_charWidths['I'] = 3;
-    m_charWidths['J'] = 6;
-    m_charWidths['K'] = 7;
-    m_charWidths['L'] = 6;
-    m_charWidths['M'] = 9;
-    m_charWidths['N'] = 7;
-    m_charWidths['O'] = 7;
-    m_charWidths['P'] = 6;
-    m_charWidths['Q'] = 7;
-    m_charWidths['R'] = 7;
-    m_charWidths['S'] = 6;
-    m_charWidths['T'] = 6;
-    m_charWidths['U'] = 7;
-    m_charWidths['V'] = 7;
-    m_charWidths['W'] = 9;
-    m_charWidths['X'] = 7;
-    m_charWidths['Y'] = 7;
-    m_charWidths['Z'] = 7;
-
-    m_charWidths['0'] = 6;
-    m_charWidths['1'] = 6;
-    m_charWidths['2'] = 6;
-    m_charWidths['3'] = 6;
-    m_charWidths['4'] = 6;
-    m_charWidths['5'] = 6;
-    m_charWidths['6'] = 6;
-    m_charWidths['7'] = 6;
-    m_charWidths['8'] = 6;
-    m_charWidths['9'] = 6;
-
-    m_charWidths[' '] = 3;
-    m_charWidths['.'] = 2;
-    m_charWidths[','] = 2;
-    m_charWidths['!'] = 2;
-    m_charWidths['?'] = 6;
-    m_charWidths['/'] = 6;
-    m_charWidths['\\'] = 6;
-    m_charWidths['('] = 4;
-    m_charWidths[')'] = 4;
-    m_charWidths['['] = 4;
-    m_charWidths[']'] = 4;
-    m_charWidths['{'] = 4;
-    m_charWidths['}'] = 4;
-    m_charWidths[':'] = 2;
-    m_charWidths[';'] = 2;
-    m_charWidths['+'] = 6;
-    m_charWidths['-'] = 6;
-    m_charWidths['_'] = 6;
-    m_charWidths['='] = 6;
-    m_charWidths['*'] = 5;
-    m_charWidths['&'] = 7;
-    m_charWidths['^'] = 5;
-    m_charWidths['%'] = 7;
-    m_charWidths['$'] = 6;
-    m_charWidths['#'] = 7;
-    m_charWidths['@'] = 7;
-    m_charWidths['~'] = 6;
-    m_charWidths['`'] = 3;
-    m_charWidths['\''] = 2;
-    m_charWidths['\"'] = 5;
-    m_charWidths['<'] = 5;
-    m_charWidths['>'] = 5;
+    calculateCharWidths();
 }
 
-void Text::destroy()
+void TextRenderer::destroy()
 {
     m_ubo.destroy();
     m_font.destroy();
     m_pipeline.destroy();
 }
 
-void Text::draw(
+void TextRenderer::draw(
     const std::string &text,
     const glm::vec2 &pos,
     u32 size,
@@ -173,7 +75,7 @@ void Text::draw(
     m_pipeline.bind();
     m_pipeline.bindDescriptorSet(m_descriptorSet);
 
-    glm::mat4 proj = glm::ortho(
+    glm::mat4 ortho = glm::ortho(
         -0.5f,
         static_cast<f32>(extent.width),
         -0.5f,
@@ -183,7 +85,7 @@ void Text::draw(
     );
 
     UniformBufferObject ubo{
-        .proj = proj
+        .ortho = ortho
     };
 
     m_ubo.update(&ubo, sizeof(ubo));
@@ -203,7 +105,7 @@ void Text::draw(
 
     x = std::floor(x);
 
-    f32 pixelOffset = static_cast<float>(size) / 8.0f;
+    const f32 pixelOffset = static_cast<float>(size) / 8.0f;
 
     for (unsigned char c : text) {
         int col = c % 16;
@@ -252,6 +154,81 @@ void Text::draw(
 
         x += m_charWidths[c] * pixelOffset;
     }
+}
+
+void TextRenderer::calculateCharWidths()
+{
+    stbi_set_flip_vertically_on_load(false);
+
+    int width, height, channels;
+    stbi_uc *pixels = stbi_load(
+        "assets/textures/font.png",
+        &width,
+        &height,
+        &channels,
+        STBI_rgb_alpha
+    );
+
+    if (!pixels) {
+        throw std::runtime_error("Failed to load texture image!");
+    }
+
+    const int charWidth = width / 16;
+    const int charHeight = height / 16;
+
+    m_charWidths.fill(6);
+    
+    for (int i = 0; i < 256; i++) {
+        int col = i % 16;
+        int row = i / 16;
+
+        int startX = col * charWidth;
+        int startY = row * charHeight;
+
+        int actualWidth = getCharWidth(
+            pixels,
+            width,
+            height,
+            channels,
+            startX,
+            startY,
+            charWidth,
+            charHeight
+        );
+
+        m_charWidths[i] = actualWidth + 1;
+    }
+
+    m_charWidths[' '] = 4;
+    stbi_image_free(pixels);
+}
+
+int TextRenderer::getCharWidth(
+    stbi_uc *pixels,
+    int imgWidth,
+    int imgHeight,
+    int channels,
+    int startX,
+    int startY,
+    int charWidth,
+    int charHeight
+)
+{
+    UNUSED(imgHeight);
+
+    for (int x = charWidth - 1; x >= 0; x--) {
+        for (int y = 0; y < charHeight; y++) {
+            int pixelX = startX + x;
+            int pixelY = startY + y;
+
+            int index = (pixelY * imgWidth + pixelX) * channels;
+            if (pixels[index + 3] > 127) {
+                return x + 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 } // namespace gfx

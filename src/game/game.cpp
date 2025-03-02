@@ -11,7 +11,7 @@ Game::Game() :
 
 void Game::init()
 {
-    m_window.init(1920, 1080, "Minecraft Clone");
+    m_window.init(1600, 900, "Minecraft Clone");
     m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
@@ -22,8 +22,8 @@ void Game::init()
     m_clouds.init(m_ctx);
 
     m_overlay.init(m_ctx);
-    m_text.init(m_ctx);
 
+    m_gui.init(m_ctx);
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)
@@ -42,7 +42,8 @@ void Game::init()
 
 void Game::destroy()
 {
-    m_text.destroy();
+    m_gui.destroy();
+
     m_overlay.destroy();
 
     m_clouds.destroy();
@@ -125,18 +126,7 @@ void Game::render()
 
     m_overlay.render();
 
-    static f32 fpsSmoothed = 0.0f;
-    f32 currentFrameTime = m_frameTime;
-    f32 instantFps = 1.0f / currentFrameTime;
-
-    fpsSmoothed = fpsSmoothed * 0.95f + instantFps * 0.05f;
-    int fps = static_cast<int>(fpsSmoothed);
-    
-    m_text.draw(
-        std::to_string(fps) + " fps",
-        glm::vec2(10.0f, 10.0f),
-        30.0f
-    );
+    m_gui.render();
 
     m_ctx.endFrame();
 }

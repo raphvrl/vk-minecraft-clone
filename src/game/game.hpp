@@ -10,7 +10,8 @@
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
 #include "graphics/overlay_renderer.hpp"
-#include "graphics/text.hpp"
+#include "gui/text_renderer.hpp"
+#include "gui/gui.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
@@ -49,7 +50,8 @@ private:
     wld::Clouds m_clouds;
 
     gfx::OverlayRenderer m_overlay;
-    gfx::Text m_text;
+
+    gui::GUI m_gui;
 
     ecs::ECS m_ecs;
 
