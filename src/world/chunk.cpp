@@ -1,4 +1,5 @@
 #include "chunk.hpp"
+#include "world.hpp"
 
 namespace wld
 {

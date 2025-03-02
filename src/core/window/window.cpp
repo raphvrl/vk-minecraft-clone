@@ -30,6 +30,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
     }
 
     m_keys.fill(false);
+    m_keysPrev.fill(false);
     m_mouseButtons.fill(false);
 
     glfwSetWindowUserPointer(m_handle, this);
@@ -50,11 +51,13 @@ void Window::update()
 {
     m_mouseRel = glm::vec2(0.0f);
 
-    glfwPollEvents();
-
+    m_keysPrev = m_keys;
+    
     f32 currentFrame = static_cast<f32>(glfwGetTime());
     m_deltaTime = currentFrame - m_lastFrame;
     m_lastFrame = currentFrame;
+
+    glfwPollEvents();
 }
 
 void Window::setCursorVisible(bool visible)

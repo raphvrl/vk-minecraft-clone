@@ -1,24 +1,58 @@
 #pragma once
 
-#include <FastNoiseLite.h>
-
+#include <vector>
 #include <unordered_map>
 #include <memory>
 #include <unordered_set>
 #include <algorithm>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <future>
 
 #include "chunk.hpp"
 #include "chunk_mesh.hpp"
 #include "block.hpp"
 #include "block_registry.hpp"
+#include "world_generator.hpp"
 #include "core/camera/camera.hpp"
 #include "graphics/vulkan_ctx.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
 #include "graphics/uniform_buffer.hpp"
+#include "utils/thread/thread_pool.hpp"
+#include "core/frustum.hpp"
 
 namespace wld
 {
+
+struct ChunkPos
+{
+    int x, z;
+
+    ChunkPos() : x(0), z(0) {}
+
+    ChunkPos(int x, int z) : x(x), z(z) {}
+
+    ChunkPos(const ChunkPos &other) : x(other.x), z(other.z) {}
+
+    bool operator==(const ChunkPos &other) const
+    {
+        return x == other.x && z == other.z;
+    }
+
+    bool operator!=(const ChunkPos &other) const
+    {
+        return x != other.x || z != other.z;
+    }
+
+    ChunkPos &operator=(const ChunkPos &other)
+    {
+        x = other.x;
+        z = other.z;
+        return *this;
+    }
+};
 
 struct Ray
 {
@@ -51,35 +85,50 @@ public:
 
     bool raycast(const Ray &ray, f32 maxDistance, RaycastResult &result);
     bool checkCollision(const glm::vec3 &min, const glm::vec3 &max);
-
 private:
-    struct ChunkPos {
-        int x, z;
-
-        bool operator==(const ChunkPos &other) const {
-            return x == other.x && z == other.z;
-        }
-
-        ChunkPos &operator=(const ChunkPos &other) {
-            x = other.x;
-            z = other.z;
-            return *this;
-        }
-    };
-
-    struct ChunkPosHash {
+    struct ChunkPosHash
+    {
         std::size_t operator()(const ChunkPos &pos) const {
             return std::hash<int>()(pos.x) ^ (std::hash<int>()(pos.z) << 1);
         }
     };
 
+    struct ChunkTask
+    {
+        ChunkPos pos;
+        f32 distance;
+        std::future<std::unique_ptr<Chunk>> future;
+    };
+
+    utils::ThreadPool m_threadPool;
+    std::vector<ChunkTask> m_chunkTasks;
+    std::mutex m_chunkMutex;
+
+    bool isChunkPending(const ChunkPos &pos);
+    void checkPendingChunks(int &operationsThisFrame);
+    
+    std::unordered_set<ChunkPos, ChunkPosHash> m_chunksNeeded;
+    std::vector<std::pair<ChunkPos, f32>> m_chunksToLoad;
+    std::vector<ChunkPos> m_chunksToUnload;
+
+    struct MeshTask
+    {
+        ChunkPos pos;
+        std::future<ChunkMesh::MeshData> future;
+    };
+
+    std::vector<MeshTask> m_meshTasks;
+
+    static constexpr int OPPERATIONS_PER_FRAME = 6;
+
+    bool isMeshPending(const ChunkPos &pos);
+    void checkPendingMeshes(int &operationsThisFrame);
+    void queueMeshGeneration(const ChunkPos &pos);
+
     void loadChunks(const ChunkPos &pos);
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
-    void generateChunk(Chunk &chunk, const ChunkPos &pos);
     const Chunk *getChunk(const ChunkPos &pos) const;
-
-    void updateChunkMesh(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_FRAME = 1;
@@ -94,15 +143,18 @@ private:
         alignas(16) glm::vec3 camPos;
     };
 
-    gfx::Pipeline m_pipeline;
+    enum PipelineType
+    {
+        P_OPAQUE,
+        P_TRANSPARENT
+    };
+
+    std::array<gfx::Pipeline, 2> m_pipelines;
     gfx::Texture m_texture;
     gfx::UniformBuffer m_ubo;
-    VkDescriptorSet m_descriptorSet;
+    std::array<VkDescriptorSet, 2> m_descriptorSets;
 
-
-    FastNoiseLite m_noise; 
-    FastNoiseLite m_mountainNoise;
-    FastNoiseLite m_detailNoise;
+    core::Frustum m_frustum;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 
@@ -114,6 +166,8 @@ private:
     ChunkPos m_playerChunkPos;
     ChunkMap m_chunks;
     ChunkMeshMap m_meshes;
+
+    WorldGenerator m_generator;
 };
 
 } // namespace wld

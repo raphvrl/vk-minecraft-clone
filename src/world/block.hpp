@@ -18,7 +18,11 @@ enum class BlockType
     GRASS = 2,
     DIRT = 3,
     COBBLESTONE = 4,
-    BEDROCK = 5,
+    BEDROCK = 7,
+    WATER = 9,
+    SAND = 12,
+    LOG = 17,
+    LEAVES = 18,
 };
 
 struct TextureInfo
@@ -49,24 +53,12 @@ struct TextureInfo
     }
 };
 
-class Block
+struct Block
 {
-
-public:
-    Block() = default;
-
-    const std::string &getName() const { return m_name; }
-    const TextureInfo &getTextureInfo() const { return m_textureInfo; }
-
-    void setName(const std::string &name) { m_name = name; }
-    void setTextureInfo(const TextureInfo &textureInfo) { 
-        m_textureInfo = textureInfo; 
-    }
-
-private:
-    std::string m_name;
-    TextureInfo m_textureInfo;
-
+    std::string name;
+    TextureInfo textures;
+    bool transparency = false;
+    bool collision = true;
 };
 
 } // namespace wld

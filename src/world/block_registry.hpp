@@ -2,7 +2,7 @@
 
 #include <toml++/toml.hpp>
 
-#include <map>
+#include <vector>
 #include <iostream>
 
 #include "chunk.hpp"
@@ -18,12 +18,17 @@ public:
     BlockRegistry() = default;
 
     void load(const std::string &path);
+
     const Block &getBlock(BlockType type) const {
-        return m_blocks.at(type);
+        return m_blocks[static_cast<u32>(type)];
+    }
+
+    const Block &getBlock(i32 id) const {
+        return m_blocks[id];
     }
 
 private:
-    std::unordered_map<BlockType, Block> m_blocks;
+    std::vector<Block> m_blocks;
 
 };
 

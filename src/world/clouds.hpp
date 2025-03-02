@@ -9,6 +9,7 @@
 #include "graphics/pipeline.hpp"
 #include "graphics/uniform_buffer.hpp"
 #include "core/camera/camera.hpp"
+#include "core/frustum.hpp"
 
 namespace wld
 {
@@ -41,10 +42,33 @@ private:
     i32 m_height;
     std::vector<bool> m_pattern;
 
+    struct CloudCell
+    {
+        int x, z;
+
+        bool operator==(const CloudCell &other) const
+        {
+            return x == other.x && z == other.z;
+        }
+    };
+
+    struct CloudCellHash
+    {
+        usize operator()(const CloudCell &cell) const
+        {
+            return std::hash<int>()(cell.x) ^ (std::hash<int>()(cell.z) << 1);
+        }
+    };
+
+    std::unordered_map<
+        CloudCell,
+        std::vector<glm::vec2>,
+        CloudCellHash
+    > m_clouds;
+
+    static constexpr int GRID_DIV = 4;
+
     void loadPattern(const std::string &path);
-
-    std::vector<glm::vec2> m_clouds;
-
     void generateClouds();
 
     static constexpr f32 CLOUD_SIZE = 12.0f;

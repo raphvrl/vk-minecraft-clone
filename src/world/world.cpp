@@ -13,7 +13,7 @@ void World::init(gfx::VulkanCtx &ctx)
     auto binding = ChunkMesh::Vertex::getBindingDescription();
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
-    m_pipeline = gfx::Pipeline::Builder(*m_ctx)
+    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
         .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
         .setVertexInput(
@@ -40,7 +40,36 @@ void World::init(gfx::VulkanCtx &ctx)
         )
         .build();
 
-    m_texture.init(*m_ctx, "blocks.png");
+    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_ctx)
+        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
+        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
+        .setVertexInput(
+            &binding,
+            attributes.data(),
+            attributes.size()
+        )
+        .addDescriptorBinding({
+            .binding = 0,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT
+        })
+        .addDescriptorBinding({
+            .binding = 1,
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .count = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
+        })
+        .addPushConstant(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(glm::mat4)
+        )
+        .setCullMode(VK_CULL_MODE_NONE)
+        .setBlending(true)
+        .build();
+
+    m_texture.init(*m_ctx, "terrain.png");
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
 
     std::vector<gfx::DescriptorData> descriptors = {
@@ -58,23 +87,14 @@ void World::init(gfx::VulkanCtx &ctx)
         }
     };
 
-    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
-
-    m_noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    m_noise.SetSeed(42);
-    m_noise.SetFrequency(0.02f);
-    m_noise.SetFractalOctaves(1);
-
-    m_mountainNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    m_mountainNoise.SetSeed(42);
-    m_mountainNoise.SetFrequency(0.015f);
-
-    m_detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    m_detailNoise.SetSeed(42);
-    m_detailNoise.SetFrequency(0.08f);
+    for (usize i = 0; i < m_pipelines.size(); i++) {
+        m_descriptorSets[i] = m_pipelines[i].createDescriptorSet(descriptors);
+    }
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
+
+    m_generator.init(0);
 
     update({0.0f, 0.0f, 0.0f});
 }
@@ -83,7 +103,10 @@ void World::destroy()
 {
     m_ubo.destroy();
     m_texture.destroy();
-    m_pipeline.destroy();
+    
+    for (auto &pipeline : m_pipelines) {
+        pipeline.destroy();
+    }
 
     for (auto &[pos, mesh] : m_meshes) {
         mesh->destroy();
@@ -100,105 +123,95 @@ void World::update(const glm::vec3 &playerPos)
         static_cast<i32>(playerPos.z) / Chunk::CHUNK_SIZE
     };
 
+    int operationsThisFrame = 0;
+
+    checkPendingChunks(operationsThisFrame);
+    checkPendingMeshes(operationsThisFrame);
+
+    if (operationsThisFrame >= OPPERATIONS_PER_FRAME) {
+        return;
+    }
+
     if (newPos.x == m_playerChunkPos.x && newPos.z == m_playerChunkPos.z) {
         return;
     }
 
-    std::unordered_set<ChunkPos, ChunkPosHash> chunksNeeded;
-    std::vector<std::pair<ChunkPos, f32>> chunksToLoad;
-    std::vector<ChunkPos> chunksToUnload;
+    m_chunksNeeded.clear();
+    m_chunksToLoad.clear();
+    m_chunksToUnload.clear();
 
-    for (i32 x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
-        for (i32 z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
+    const f32 maxDistSquared = RENDER_DISTANCE * RENDER_DISTANCE;
+
+    for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; ++x) {
+        for (int z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; ++z) {
+            if (x * x + z * z > maxDistSquared) continue;
+
             ChunkPos pos = {newPos.x + x, newPos.z + z};
-            f32 dist = glm::distance(
-                glm::vec2(newPos.x, newPos.z),
-                glm::vec2(pos.x, pos.z)
-            );
+            m_chunksNeeded.insert(pos);
 
-            if (dist <= RENDER_DISTANCE) {
-                chunksNeeded.insert(pos);
-                if (!isChunkLoaded(pos)) {
-                    chunksToLoad.push_back({pos, dist});
-                }
+            if (!isChunkLoaded(pos) && !isChunkPending(pos)) {
+                f32 maxDistSquared = static_cast<f32>(x * x + z * z);
+                m_chunksToLoad.push_back({pos, maxDistSquared});
             }
         }
     }
 
-    std::sort(chunksToLoad.begin(), chunksToLoad.end(), 
+    std::sort(m_chunksToLoad.begin(), m_chunksToLoad.end(),
         [](const auto &a, const auto &b) {
             return a.second < b.second;
         }
     );
 
-    for (const auto &[pos, _] : m_chunks) {
-        if (chunksNeeded.find(pos) == chunksNeeded.end()) {
-            chunksToUnload.push_back(pos);
+    {
+        std::lock_guard<std::mutex> lock(m_chunkMutex);
+        for (const auto &[pos, _] : m_chunks) {
+            if (m_chunksNeeded.find(pos) == m_chunksNeeded.end()) {
+                m_chunksToUnload.push_back(pos);
+            }
         }
     }
 
-    for (const auto &pos : chunksToUnload) {
+    for (const auto &pos : m_chunksToUnload) {
         unloadChunks(pos);
     }
 
-    usize chunkToLoadThisFrame = std::min(
-        chunksToLoad.size(),
-        static_cast<usize>(CHUNKS_PER_FRAME)
+    usize chunkLimit = std::min(
+        m_chunksToLoad.size(),
+        static_cast<usize>(CHUNKS_PER_FRAME * 2)
     );
 
-    std::vector<ChunkPos> meshesToUpdate;
+    for (usize i = 0; i < chunkLimit; i++) {
+        const auto &pos = m_chunksToLoad[i].first;
 
-    for (usize i = 0; i < chunkToLoadThisFrame; i++) {
-        const auto &pos = chunksToLoad[i].first;
-        loadChunks(pos);
-        meshesToUpdate.push_back(pos);
+        if (isChunkPending(pos)) continue;
 
-        for (i32 dx = -1; dx <= 1; dx++) {
-            for (i32 dz = -1; dz <= 1; dz++) {
-                if (dx == 0 && dz == 0) {
-                    continue;
-                }
-
-                ChunkPos neighbor = {pos.x + dx, pos.z + dz};
-                if (isChunkLoaded(neighbor)) {
-                    meshesToUpdate.push_back(neighbor);
-                }
+        ChunkTask task;
+        task.pos = pos;
+        task.future = m_threadPool.enqueue(
+            [this, pos]() {
+                auto chunk = std::make_unique<Chunk>();
+                m_generator.generateChunk(*chunk, pos);
+                return chunk;
             }
-        }
+        );
+
+        m_chunkTasks.push_back(std::move(task));
     }
 
-    for (const auto &pos : meshesToUpdate) {
-        if (auto chunk = m_chunks.find(pos); chunk != m_chunks.end()) {
-            if (auto it = m_meshes.find(pos); it != m_meshes.end()) {
-                it->second->destroy();
-                m_meshes.erase(it);
-            }
-
-            auto mesh = std::make_unique<ChunkMesh>();
-            mesh->init(*m_ctx, m_blockRegistry);
-
-            std::array<const Chunk *, 4> neighbors = {
-                getChunk({pos.x - 1, pos.z}),
-                getChunk({pos.x + 1, pos.z}),
-                getChunk({pos.x, pos.z - 1}),
-                getChunk({pos.x, pos.z + 1})
-            };
-
-            mesh->generate(*chunk->second, neighbors);
-            m_meshes[pos] = std::move(mesh);
-        }
-    }
-
-    if (chunksToLoad.size() <= CHUNKS_PER_FRAME) {
+    if (m_chunksToLoad.size() <= CHUNKS_PER_FRAME) {
         m_playerChunkPos = newPos;
     }
 }
 
 void World::render(const core::Camera &camera)
 {
-    m_pipeline.bind();
+    m_frustum = core::Frustum::fromViewProj(
+        camera.getView(),
+        camera.getProj()
+    );
 
-    m_pipeline.bindDescriptorSet(m_descriptorSet);
+    m_pipelines[P_OPAQUE].bind();
+    m_pipelines[P_OPAQUE].bindDescriptorSet(m_descriptorSets[P_OPAQUE]);
 
     UniformBufferObject uniformBuffer = {
         .view = camera.getView(),
@@ -212,17 +225,61 @@ void World::render(const core::Camera &camera)
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
         f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
 
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
+        );
+
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
 
-        m_pipeline.push(
+        m_pipelines[P_OPAQUE].push(
             VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(model),
             &model
         );
 
-        mesh->draw();
+        mesh->drawOpaque();
+    }
+
+    m_pipelines[P_TRANSPARENT].bind();
+    m_pipelines[P_TRANSPARENT].bindDescriptorSet(
+        m_descriptorSets[P_TRANSPARENT]
+    );
+
+    for (const auto &[pos, mesh] : m_meshes) {
+        f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
+        f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
+
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
+        );
+
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, {x, 0.0f, z});
+
+        m_pipelines[P_TRANSPARENT].push(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(model),
+            &model
+        );
+
+        mesh->drawTransparent();
     }
 }
 
@@ -232,14 +289,12 @@ BlockType World::getBlock(int x, int y, int z) const
         return BlockType::AIR;
     }
 
-    ChunkPos chunkPos = {
-        .x = (x < 0) ? 
-            (x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
-                x / Chunk::CHUNK_SIZE,
-        .z = (z < 0) ? 
-            (z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : 
-                z / Chunk::CHUNK_SIZE
-    };
+    ChunkPos chunkPos(
+        (x < 0) ?(x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
+            x / Chunk::CHUNK_SIZE,
+        (z < 0) ? (z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE :
+            z / Chunk::CHUNK_SIZE
+    );
 
     auto it = m_chunks.find(chunkPos);
     if (it == m_chunks.end()) {
@@ -268,46 +323,22 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
 
         it->second->setBlock(localPos, type);
 
-        updateChunkMesh(chunkPos);
+        queueMeshGeneration(chunkPos);
 
         if (localPos.x == 0) 
-            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
+            queueMeshGeneration({chunkPos.x - 1, chunkPos.z});
         if (localPos.x == 15)
-            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
+            queueMeshGeneration({chunkPos.x + 1, chunkPos.z});
         if (localPos.z == 0)
-            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
+            queueMeshGeneration({chunkPos.x, chunkPos.z - 1});
         if (localPos.z == 15)
-            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
+            queueMeshGeneration({chunkPos.x, chunkPos.z + 1});
     }
 }
 
 void World::deleteBlock(const glm::ivec3 &pos)
 {
-    ChunkPos chunkPos = {
-        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
-        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
-    };
-
-    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
-        glm::ivec3 localPos = {
-            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
-            pos.y,
-            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
-        };
-
-        it->second->setBlock(localPos, BlockType::AIR);
-
-        updateChunkMesh(chunkPos);
-    
-        if (localPos.x == 0)
-            updateChunkMesh({chunkPos.x - 1, chunkPos.z});
-        if (localPos.x == 15) 
-            updateChunkMesh({chunkPos.x + 1, chunkPos.z});
-        if (localPos.z == 0)
-            updateChunkMesh({chunkPos.x, chunkPos.z - 1});
-        if (localPos.z == 15)
-            updateChunkMesh({chunkPos.x, chunkPos.z + 1});
-    }
+    placeBlock(pos, BlockType::AIR);
 }
 
 bool World::raycast(
@@ -352,7 +383,10 @@ bool World::raycast(
         }
 
         BlockType type = getBlock(blockPos);
-        if (type != BlockType::AIR) {
+        if (
+            type != BlockType::AIR &&
+            m_blockRegistry.getBlock(type).collision
+        ) {
             result.pos = blockPos;
             result.face = hitFace;
 
@@ -397,7 +431,7 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
     minY = std::max(minY, 0);
     maxY = std::min(maxY, Chunk::CHUNK_HEIGHT - 1);
 
-    ChunkPos currentChunk = {0, 0};
+    ChunkPos currentChunk = {INT_MAX, INT_MAX};
     const Chunk *chunk = nullptr;
 
     for (int x = minX; x <= maxX; ++x) {
@@ -420,9 +454,12 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
             i32 localZ = z - (chunkPos.z * Chunk::CHUNK_SIZE);
 
             for (i32 y = minY; y <= maxY; ++y) {
+                BlockType block = chunk->getBlock(localX, y, localZ);
+
                 if (
                     chunk &&
-                    chunk->getBlock(localX, y, localZ) != BlockType::AIR
+                    block != BlockType::AIR &&
+                    m_blockRegistry.getBlock(block).collision
                 ) {
                     return true;
                 }
@@ -433,10 +470,144 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
     return false;
 }
 
+bool World::isChunkPending(const ChunkPos &pos)
+{
+    for (const auto &chunk : m_chunkTasks) {
+        if (chunk.pos == pos) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void World::checkPendingChunks(int &operationsThisFrame)
+{
+    std::vector<ChunkPos> completedChunks;
+    int maxToProcess = OPPERATIONS_PER_FRAME - operationsThisFrame;
+    int processed = 0;
+
+    auto it = m_chunkTasks.begin();
+    while (it != m_chunkTasks.end() && processed < maxToProcess) {
+        if (it->future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            auto pos = it->pos;
+            {
+                std::lock_guard<std::mutex> lock(m_chunkMutex);
+                m_chunks[pos] = it->future.get();
+            }
+            completedChunks.push_back(pos);
+            it = m_chunkTasks.erase(it);
+            processed++;
+        } else {
+            ++it;
+        }
+    }
+
+    operationsThisFrame += processed;
+
+    int chunkLimit = std::min(
+        static_cast<int>(completedChunks.size()),
+        OPPERATIONS_PER_FRAME - operationsThisFrame
+    );
+
+    for (int i = 0; i < chunkLimit; i++) {
+        queueMeshGeneration(completedChunks[i]);
+        operationsThisFrame++;
+    } 
+
+    for (const auto &pos : completedChunks) {
+        ChunkPos neighbors[4] = {
+            {pos.x - 1, pos.z},
+            {pos.x + 1, pos.z},
+            {pos.x, pos.z - 1},
+            {pos.x, pos.z + 1}
+        };
+        
+        for (const auto &neighborPos : neighbors) {
+            if (isChunkLoaded(neighborPos) && !isMeshPending(neighborPos)) {
+                queueMeshGeneration(neighborPos);
+            }
+        }
+        
+        queueMeshGeneration(pos);
+    }
+}
+
+bool World::isMeshPending(const ChunkPos &pos)
+{
+    return std::any_of(
+        m_meshTasks.begin(),
+        m_meshTasks.end(),
+        [&pos](const MeshTask &task) { return task.pos == pos; });
+}
+
+void World::checkPendingMeshes(int &operationsThisFrame)
+{
+    int maxToProcess = OPPERATIONS_PER_FRAME - operationsThisFrame;
+    int processed = 0;
+
+    auto it = m_meshTasks.begin();
+    while (it != m_meshTasks.end() && processed < maxToProcess) {
+        if (it->future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            auto pos = it->pos;
+            auto meshData = it->future.get();
+            
+            if (auto chunkIt = m_chunks.find(pos); chunkIt != m_chunks.end()) {
+                if (auto meshIt = m_meshes.find(pos); meshIt != m_meshes.end()) {
+                    meshIt->second->destroy();
+                    m_meshes.erase(meshIt);
+                }
+                
+                auto newMesh = std::make_unique<ChunkMesh>();
+                newMesh->init(*m_ctx);
+                newMesh->generate(meshData);
+                m_meshes[pos] = std::move(newMesh);
+            }
+            
+            processed++;
+            it = m_meshTasks.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    operationsThisFrame += processed;
+}
+
+void World::queueMeshGeneration(const ChunkPos &pos)
+{
+    if (isMeshPending(pos)) return;
+
+    MeshTask task;
+    task.pos = pos;
+    task.future = m_threadPool.enqueue([this, pos]() {
+        std::lock_guard<std::mutex> lock(m_chunkMutex);
+        
+        auto chunkIt = m_chunks.find(pos);
+        if (chunkIt == m_chunks.end()) {
+            return ChunkMesh::MeshData{};
+        }
+        
+        std::array<const Chunk*, 4> neighbors = {
+            getChunk({pos.x - 1, pos.z}),
+            getChunk({pos.x + 1, pos.z}),
+            getChunk({pos.x, pos.z - 1}),
+            getChunk({pos.x, pos.z + 1})
+        };
+
+        return ChunkMesh::calculateMeshData(
+            *chunkIt->second,
+            neighbors, m_blockRegistry
+        );
+    });
+    
+    m_meshTasks.push_back(std::move(task));
+}
+
 void World::loadChunks(const ChunkPos &pos)
 {
     auto chunk = std::make_unique<Chunk>();
-    generateChunk(*chunk, pos);
+    m_generator.generateChunk(*chunk, pos);
 
     m_chunks[pos] = std::move(chunk);
 }
@@ -453,53 +624,8 @@ void World::unloadChunks(const ChunkPos &pos)
 
 bool World::isChunkLoaded(const ChunkPos &pos)
 {
+    std::lock_guard<std::mutex> lock(m_chunkMutex);
     return m_chunks.find(pos) != m_chunks.end();
-}
-
-void World::generateChunk(Chunk &chunk, const ChunkPos &pos)
-{
-    constexpr i32 SEA_LEVEL = 64;
-    constexpr i32 DIRT_DEPTH = 4;
-    constexpr f32 HEIGHT_SCALE = 8.0f;
-    constexpr f32 MOUNTAIN_SCALE = 16.0f;
-    constexpr f32 MOUNTAIN_THRESHOLD = 0.4f;
-
-    for (u32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
-        for (u32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            f32 worldX = static_cast<f32>(
-                pos.x * static_cast<f32>(Chunk::CHUNK_SIZE) + x
-            );
-            f32 worldZ = static_cast<f32>(
-                pos.z * static_cast<f32>(Chunk::CHUNK_SIZE) + z
-            );
-
-            f32 baseNoise = m_noise.GetNoise(worldX, worldZ);
-            f32 mountainNoise = m_mountainNoise.GetNoise(worldX, worldZ);
-            mountainNoise = (mountainNoise > MOUNTAIN_THRESHOLD) ? 
-                (mountainNoise - MOUNTAIN_THRESHOLD) * MOUNTAIN_SCALE : 0.0f;
-
-            f32 detailNoise = m_detailNoise.GetNoise(worldX, worldZ) * 0.05f;
-
-            f32 totalHeight = baseNoise + (mountainNoise * 0.3f) + detailNoise;
-
-            i32 height = static_cast<i32>(SEA_LEVEL + totalHeight * HEIGHT_SCALE);
-            height = glm::clamp(height, SEA_LEVEL - 2, Chunk::CHUNK_HEIGHT - 1);
-
-            for (i32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
-                if (y == 0) {
-                    chunk.setBlock(x, y, z, BlockType::BEDROCK);
-                } else if (y > height) {
-                    chunk.setBlock(x, y, z, BlockType::AIR);
-                } else if (y == height) {
-                    chunk.setBlock(x, y, z, BlockType::GRASS);
-                } else if (y > height - DIRT_DEPTH) {
-                    chunk.setBlock(x, y, z, BlockType::DIRT);
-                } else {
-                    chunk.setBlock(x, y, z, BlockType::STONE);
-                }
-            }
-        }
-    }
 }
 
 const Chunk *World::getChunk(const ChunkPos &pos) const
@@ -509,29 +635,6 @@ const Chunk *World::getChunk(const ChunkPos &pos) const
     }
 
     return nullptr;
-}
-
-void World::updateChunkMesh(const ChunkPos &pos)
-{
-    if (
-        std::abs(pos.x - m_playerChunkPos.x) > RENDER_DISTANCE ||
-        std::abs(pos.z - m_playerChunkPos.z) > RENDER_DISTANCE
-    ) {
-        return;
-    }
-
-    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
-        if (auto mesh = m_meshes.find(pos); mesh != m_meshes.end()) {
-            std::array<const Chunk *, 4> neighbors = {
-                getChunk({pos.x - 1, pos.z}),
-                getChunk({pos.x + 1, pos.z}),
-                getChunk({pos.x, pos.z - 1}),
-                getChunk({pos.x, pos.z + 1})
-            };
-
-            mesh->second->update(*it->second, neighbors);
-        }
-    }
 }
 
 } // namespace wld

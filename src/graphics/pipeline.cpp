@@ -90,6 +90,18 @@ Pipeline::Builder &Pipeline::Builder::setLineWidth(f32 width)
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setBlending(bool enable)
+{
+    m_blending = enable;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setPolygonMode(VkPolygonMode mode)
+{
+    m_polygonMode = mode;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     auto vertexCode = readFile(
@@ -171,7 +183,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = m_polygonMode;
     rasterizer.lineWidth = m_lineWidth;
     rasterizer.cullMode = m_cullMode;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -188,7 +200,7 @@ Pipeline Pipeline::Builder::build()
         VK_COLOR_COMPONENT_G_BIT | 
         VK_COLOR_COMPONENT_B_BIT | 
         VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.blendEnable = m_blending ? VK_TRUE : VK_FALSE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;

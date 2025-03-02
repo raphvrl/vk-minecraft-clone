@@ -10,6 +10,8 @@
 #include "components/component.hpp"
 #include "systems/system.hpp"
 
+#include "components/physics/transform.hpp"
+
 namespace ecs
 {
 
@@ -26,7 +28,7 @@ public:
         m_components.erase(id);
     }
 
-    template <typename T>
+    template<typename T>
     T *addComponent(EntityID id)
     {
         auto &componentMap = m_components[id];
@@ -38,7 +40,7 @@ public:
         return static_cast<T *>(componentMap[typeIndex].get());
     }
 
-    template <typename T>
+    template<typename T>
     T *getComponent(EntityID id)
     {
         auto &componentMap = m_components[id];
@@ -52,7 +54,7 @@ public:
         return static_cast<T *>(iter->second.get());
     }
 
-    template <typename T>
+    template<typename T>
     void removeComponent(EntityID id)
     {
         auto &componentMap = m_components[id];
@@ -61,16 +63,7 @@ public:
         componentMap.erase(typeIndex);
     }
 
-    template <typename T, typename... Args>
-    void addSystem(Args &&...args)
-    {
-        m_systems.push_back(std::make_unique<T>(
-            this,
-            std::forward<Args>(args)...)
-        );
-    }
-
-    template <typename... Components>
+    template<typename... Components>
     std::vector<EntityID> view()
     {
         std::vector<EntityID> entities;
@@ -84,10 +77,29 @@ public:
         return entities;
     }
 
-    void update(f32 dt)
+    void storePositions()
     {
-        for (auto &system : m_systems) {
-            system->tick(dt);
+        auto entities = view<cmp::Transform>();
+
+        for (auto &entity : entities) {
+            if (auto transform = getComponent<cmp::Transform>(entity)) {
+                transform->prevPosition = transform->position;
+            }
+        }
+    }
+
+    void interpolate(f32 alpha)
+    {
+        auto entities = view<cmp::Transform>();
+
+        for (auto &entity : entities) {
+            if (auto transform = getComponent<cmp::Transform>(entity)) {
+                transform->renderPosition = glm::mix(
+                    transform->prevPosition,
+                    transform->position,
+                    alpha
+                );
+            }
         }
     }
 
@@ -98,7 +110,6 @@ private:
         std::unique_ptr<Component>>;
 
     std::unordered_map<EntityID, ComponentMap> m_components;
-    std::vector<std::unique_ptr<System>> m_systems;
 
     template <typename T>
     bool hasAllComponents(EntityID id)

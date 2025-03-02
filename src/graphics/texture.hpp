@@ -19,7 +19,7 @@ public:
     Texture(const Texture &) = delete;
     Texture &operator=(const Texture &) = delete;
 
-    void init(VulkanCtx &ctx, const std::string &path);
+    void init(VulkanCtx &ctx, const std::string &path, bool mipmaps = true);
     void destroy();
 
     VkImageView getImageView() const { return m_imageView; }
@@ -41,9 +41,9 @@ private:
     u32 m_height;
     u32 m_mipLevels;
 
-    void createImage(const std::string &path);
+    void createImage(const std::string &path, bool mipmaps);
     void createImageView();
-    void createSampler();
+    void createSampler(bool mipmaps);
 
     void generateMipmaps();
 };

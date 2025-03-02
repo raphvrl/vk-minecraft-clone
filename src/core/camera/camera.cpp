@@ -13,7 +13,7 @@ Camera::Camera()
     m_yaw = 90.0f;
     m_pitch = 0.0f;
 
-    m_fov = 45.0f;
+    m_fov = 63.0f;
     m_aspect = 1280.0f / 720.0f;
     m_near = 0.1f;
     m_far = 1000.0f;

@@ -61,6 +61,8 @@ public:
         Builder &setCullMode(VkCullModeFlags mode);
         Builder &setTopology(VkPrimitiveTopology topology);
         Builder &setLineWidth(f32 width);
+        Builder &setBlending(bool enable);
+        Builder &setPolygonMode(VkPolygonMode mode);
 
         Pipeline build();
 
@@ -84,6 +86,10 @@ public:
         VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
         f32 m_lineWidth = 1.0f;
+
+        bool m_blending = false;
+
+        VkPolygonMode m_polygonMode = VK_POLYGON_MODE_FILL;
 
         std::vector<char> readFile(const std::string &path);
         VkShaderModule createShaderModule(const std::vector<char> &code);
