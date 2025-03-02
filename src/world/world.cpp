@@ -13,7 +13,7 @@ void World::init(gfx::VulkanCtx &ctx)
     auto binding = ChunkMesh::Vertex::getBindingDescription();
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
-    m_pipeline = gfx::Pipeline::Builder(*m_ctx)
+    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
         .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
         .setVertexInput(
@@ -40,7 +40,7 @@ void World::init(gfx::VulkanCtx &ctx)
         )
         .build();
 
-    m_transparentPipeline = gfx::Pipeline::Builder(*m_ctx)
+    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
         .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
         .setVertexInput(
@@ -87,10 +87,9 @@ void World::init(gfx::VulkanCtx &ctx)
         }
     };
 
-    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
-    m_transparentDescriptorSet = m_transparentPipeline.createDescriptorSet(
-        descriptors
-    );
+    for (usize i = 0; i < m_pipelines.size(); i++) {
+        m_descriptorSets[i] = m_pipelines[i].createDescriptorSet(descriptors);
+    }
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
@@ -104,8 +103,10 @@ void World::destroy()
 {
     m_ubo.destroy();
     m_texture.destroy();
-    m_transparentPipeline.destroy();
-    m_pipeline.destroy();
+    
+    for (auto &pipeline : m_pipelines) {
+        pipeline.destroy();
+    }
 
     for (auto &[pos, mesh] : m_meshes) {
         mesh->destroy();
@@ -204,9 +205,13 @@ void World::update(const glm::vec3 &playerPos)
 
 void World::render(const core::Camera &camera)
 {
-    m_pipeline.bind();
+    m_frustum = core::Frustum::fromViewProj(
+        camera.getView(),
+        camera.getProj()
+    );
 
-    m_pipeline.bindDescriptorSet(m_descriptorSet);
+    m_pipelines[P_OPAQUE].bind();
+    m_pipelines[P_OPAQUE].bindDescriptorSet(m_descriptorSets[P_OPAQUE]);
 
     UniformBufferObject uniformBuffer = {
         .view = camera.getView(),
@@ -220,10 +225,21 @@ void World::render(const core::Camera &camera)
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
         f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
 
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
+        );
+
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
 
-        m_pipeline.push(
+        m_pipelines[P_OPAQUE].push(
             VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(model),
@@ -233,17 +249,30 @@ void World::render(const core::Camera &camera)
         mesh->drawOpaque();
     }
 
-    m_transparentPipeline.bind();
-    m_transparentPipeline.bindDescriptorSet(m_transparentDescriptorSet);
+    m_pipelines[P_TRANSPARENT].bind();
+    m_pipelines[P_TRANSPARENT].bindDescriptorSet(
+        m_descriptorSets[P_TRANSPARENT]
+    );
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
         f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
 
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
+        );
+
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, {x, 0.0f, z});
 
-        m_transparentPipeline.push(
+        m_pipelines[P_TRANSPARENT].push(
             VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(model),

@@ -21,6 +21,7 @@
 #include "graphics/texture.hpp"
 #include "graphics/uniform_buffer.hpp"
 #include "utils/thread/thread_pool.hpp"
+#include "core/frustum.hpp"
 
 namespace wld
 {
@@ -142,12 +143,18 @@ private:
         alignas(16) glm::vec3 camPos;
     };
 
-    gfx::Pipeline m_pipeline;
-    gfx::Pipeline m_transparentPipeline;
+    enum PipelineType
+    {
+        P_OPAQUE,
+        P_TRANSPARENT
+    };
+
+    std::array<gfx::Pipeline, 2> m_pipelines;
     gfx::Texture m_texture;
     gfx::UniformBuffer m_ubo;
-    VkDescriptorSet m_descriptorSet;
-    VkDescriptorSet m_transparentDescriptorSet;
+    std::array<VkDescriptorSet, 2> m_descriptorSets;
+
+    core::Frustum m_frustum;
 
     using ChunkMap = std::unordered_map<ChunkPos,
         std::unique_ptr<Chunk>, 

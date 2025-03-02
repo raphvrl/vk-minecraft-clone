@@ -133,9 +133,9 @@ void Game::render()
     int fps = static_cast<int>(fpsSmoothed);
     
     m_text.draw(
-        "FPS: " + std::to_string(fps),
-        glm::vec2(-0.98f, -0.98f),
-        0.03f
+        std::to_string(fps) + " fps",
+        glm::vec2(10.0f, 10.0f),
+        30.0f
     );
 
     m_ctx.endFrame();

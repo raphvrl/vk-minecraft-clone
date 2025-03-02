@@ -3,13 +3,13 @@
 namespace gfx
 {
 
-void Texture::init(VulkanCtx &ctx, const std::string &path)
+void Texture::init(VulkanCtx &ctx, const std::string &path, bool mipmaps)
 {
     m_ctx = &ctx;
 
-    createImage(path);
+    createImage(path, mipmaps);
     createImageView();
-    createSampler();
+    createSampler(mipmaps);
 }
 
 void Texture::destroy()
@@ -21,7 +21,7 @@ void Texture::destroy()
     vmaDestroyImage(m_ctx->getAllocator(), m_image, m_imageAllocation);
 }
 
-void Texture::createImage(const std::string &path)
+void Texture::createImage(const std::string &path, bool mipmaps)
 {
     std::string fullPath = std::string(TEXTURE_PATH) + path;
 
@@ -59,21 +59,35 @@ void Texture::createImage(const std::string &path)
 
     stbi_image_free(pixels);
 
-    m_mipLevels = static_cast<u32>(
-        std::min(
-            std::floor(std::log2(std::max(texWidth, texHeight))  + 1),
-            std::floor(std::log2(std::max(texWidth, texHeight) / MIN_MIP_SIZE) + 1)
-        )
-    );
+    if (mipmaps) {
+        m_mipLevels = static_cast<u32>(
+            std::min(
+                std::floor(
+                    std::log2(std::max(texWidth, texHeight))  + 1
+                ),
+                std::floor(
+                    std::log2(std::max(texWidth, texHeight) / MIN_MIP_SIZE) + 1
+                )
+            )
+        );
+    } else {
+        m_mipLevels = 1;
+    }
+
+    VkImageUsageFlags usageFlags = 
+    VK_IMAGE_USAGE_SAMPLED_BIT |
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    if (mipmaps) {
+        usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    }
 
     m_ctx->createImage(
         texWidth,
         texHeight,
         m_format,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | 
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-        VK_IMAGE_USAGE_SAMPLED_BIT,
+        usageFlags,
         VMA_MEMORY_USAGE_GPU_ONLY,
         m_image,
         m_imageAllocation,
@@ -104,7 +118,17 @@ void Texture::createImage(const std::string &path)
     m_width = texWidth;
     m_height = texHeight;
 
-    generateMipmaps();
+    if (mipmaps) {
+        generateMipmaps();
+    } else {
+        m_ctx->transitionImageLayout(
+            m_image,
+            m_format,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            m_mipLevels
+        );
+    }
 }
 
 void Texture::createImageView()
@@ -130,7 +154,7 @@ void Texture::createImageView()
     VulkanCtx::check(res, "failed to create texture image view!");
 }
 
-void Texture::createSampler()
+void Texture::createSampler(bool mipmaps)
 {
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -144,10 +168,18 @@ void Texture::createSampler()
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
     samplerInfo.compareEnable = VK_FALSE;
     samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = m_mipLevels;
-    samplerInfo.mipLodBias = 0.0f;
+
+    if (mipmaps) {
+        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = static_cast<float>(m_mipLevels);
+        samplerInfo.mipLodBias = 0.0f;
+    } else {
+        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = 0.0f;
+        samplerInfo.mipLodBias = 0.0f;
+    }
 
     VkResult res = vkCreateSampler(
         m_ctx->getDevice(),
