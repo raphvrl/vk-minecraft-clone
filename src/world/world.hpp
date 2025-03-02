@@ -95,8 +95,8 @@ private:
 
     struct ChunkTask
     {
-        ChunkPos pos;
-        f32 distance;
+        ChunkPos pos = {0, 0};
+        f32 distance = 0.0f;
         std::future<std::unique_ptr<Chunk>> future;
     };
 
