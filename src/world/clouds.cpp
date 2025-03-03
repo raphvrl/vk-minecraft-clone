@@ -98,7 +98,7 @@ void Clouds::render(const core::Camera &camera)
                 for (int gridX = 0; gridX < GRID_DIV; gridX++) {
 
                     f32 subCellWidth = patternSizeX / GRID_DIV;
-                    f32 subCellHeight = patternSizeZ / GRID_DIV; 
+                    f32 subCellHeight = patternSizeZ / GRID_DIV;
 
                     glm::vec3 min(
                         baseOffsetX + gridX * subCellWidth - margin - m_windOffset,
@@ -157,6 +157,8 @@ void Clouds::render(const core::Camera &camera)
 
 void Clouds::loadPattern(const std::string &path)
 {
+    stbi_set_flip_vertically_on_load(false);
+    
     int width, height, channels;
     stbi_uc *pixels = stbi_load(
         path.c_str(),

@@ -17,6 +17,9 @@ struct Player : public ecs::Component
     bool isFlying = false;
 
     f32 eyeHeight = 1.8f;
+
+    bool isInWater = false;
+    f32 swimSpeed = 3.0f;
 };
 
 } // namespace ecs

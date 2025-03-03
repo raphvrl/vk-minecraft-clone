@@ -95,8 +95,6 @@ void World::init(gfx::VulkanCtx &ctx)
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
     m_generator.init(0);
-
-    update({0.0f, 0.0f, 0.0f});
 }
 
 void World::destroy()
@@ -116,78 +114,112 @@ void World::destroy()
     m_meshes.clear();
 }
 
-void World::update(const glm::vec3 &playerPos)
+void World::update(const glm::vec3 &playerPos, f32 dt)
 {
     ChunkPos newPos = {
         static_cast<i32>(playerPos.x) / Chunk::CHUNK_SIZE,
         static_cast<i32>(playerPos.z) / Chunk::CHUNK_SIZE
     };
 
-    if (newPos == m_playerChunkPos || !m_chunksNeeded.empty()) {
-        return;
+    static f32 time = 0.0f;
+    time += dt;
+
+    if (time >= 1.0f) {
+        time = 0.0f;
+        m_updatedChunks = m_pendingChunks.size() + m_pendingMeshes.size();
     }
+    
+    const f32 squaredDist = RENDER_DISTANCE * RENDER_DISTANCE;
 
     m_chunksNeeded.clear();
     m_chunksToLoad.clear();
     m_chunksToUnload.clear();
 
-    const f32 squaredDist = RENDER_DISTANCE * RENDER_DISTANCE;
+    if (newPos != m_playerChunkPos || m_pendingChunks.empty()) {
+        std::queue<ChunkPos> empty;
+        std::swap(m_pendingChunks, empty);
+        std::swap(m_pendingMeshes, empty);
 
-    for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
-        for (int z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
-            if (x * x + z * z > squaredDist) continue;
+        for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+            for (int z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
+                if (x * x + z * z > squaredDist) continue;
 
-            ChunkPos pos = {newPos.x + x, newPos.z + z};
+                ChunkPos pos = {newPos.x + x, newPos.z + z};
 
-            m_chunksNeeded.insert(pos);
+                m_chunksNeeded.insert(pos);
 
-            if (!isChunkLoaded(pos)) {
-                f32 maxDist = static_cast<f32>(x * x + z * z);
-                m_chunksToLoad.push_back({pos, maxDist});
+                if (!isChunkLoaded(pos)) {
+                    f32 maxDist = static_cast<f32>(x * x + z * z);
+                    m_chunksToLoad.push_back({pos, maxDist});
+                }
             }
         }
-    }
 
-    std::sort(
-        m_chunksToLoad.begin(),
-        m_chunksToLoad.end(),
-        [](const auto &a, const auto &b) {
-            return a.second < b.second;
+        std::sort(
+            m_chunksToLoad.begin(),
+            m_chunksToLoad.end(),
+            [](const auto &a, const auto &b) {
+                return a.second < b.second;
+            }
+        );
+
+        for (const auto &[pos, dist] : m_chunksToLoad) {
+            m_pendingChunks.push(pos);
         }
-    );
 
-    for (const auto &[pos, chunk] : m_chunks) {
-        if (m_chunksNeeded.find(pos) == m_chunksNeeded.end()) {
-            m_chunksToUnload.push_back(pos);
+        for (const auto &[pos, chunk] : m_chunks) {
+            if (m_chunksNeeded.find(pos) == m_chunksNeeded.end()) {
+                m_chunksToUnload.push_back(pos);
+            }
         }
+
+        for (const auto &pos : m_chunksToUnload) {
+            unloadChunks(pos);
+        }
+
+        m_playerChunkPos = newPos;
     }
 
-    for (const auto &pos : m_chunksToUnload) {
-        unloadChunks(pos);
-    }
+    int chunksLoaded = 0;
+    while (!m_pendingChunks.empty() && chunksLoaded < CHUNKS_PER_TICK) {
+        ChunkPos pos = m_pendingChunks.front();
+        m_pendingChunks.pop();
 
-    for (const auto &[pos, dist] : m_chunksToLoad) {
-        loadChunks(pos);
-    }
-
-    for (const auto &[pos, chunk] : m_chunks) {
-        if (m_meshes.find(pos) == m_meshes.end()) {
-            auto mesh = std::make_unique<ChunkMesh>();
-            mesh->init(*m_ctx, m_blockRegistry);
-
-            std::array<const Chunk *, 4> neighbors = {
-                getChunk({pos.x - 1, pos.z}),
-                getChunk({pos.x + 1, pos.z}),
-                getChunk({pos.x, pos.z - 1}),
-                getChunk({pos.x, pos.z + 1})
+        if (!isChunkLoaded(pos) && m_chunksNeeded.find(pos) != m_chunksNeeded.end()) {
+            loadChunks(pos);
+            
+            m_pendingMeshes.push(pos);
+            
+            ChunkPos neighbors[4] = {
+                {pos.x - 1, pos.z},
+                {pos.x + 1, pos.z},
+                {pos.x, pos.z - 1},
+                {pos.x, pos.z + 1}
             };
-
-            mesh->generate(*chunk, neighbors);
-            m_meshes[pos] = std::move(mesh);
+            
+            for (const auto& neighborPos : neighbors) {
+                if (
+                    isChunkLoaded(neighborPos)
+                    && m_chunksNeeded.find(neighborPos) != m_chunksNeeded.end()
+                ) {
+                    m_pendingMeshes.push(neighborPos);
+                }
+            }
+            
+            chunksLoaded++;
         }
     }
 
-    m_playerChunkPos = newPos;
+    int meshesUpdated = 0;
+    while (!m_pendingMeshes.empty() && meshesUpdated < MESHES_PER_TICK) {
+        ChunkPos pos = m_pendingMeshes.front();
+        m_pendingMeshes.pop();
+
+        if (isChunkLoaded(pos)) {
+            updateMeshe(pos);
+            meshesUpdated++;
+        }
+    }
 }
 
 void World::render(const core::Camera &camera)

@@ -72,7 +72,7 @@ public:
     void init(gfx::VulkanCtx &ctx);
     void destroy();
 
-    void update(const glm::vec3 &playerPos);
+    void update(const glm::vec3 &playerPos, f32 dt);
     void render(const core::Camera &camera);
 
     BlockType getBlock(int x, int y, int z) const;
@@ -85,6 +85,9 @@ public:
 
     bool raycast(const Ray &ray, f32 maxDistance, RaycastResult &result);
     bool checkCollision(const glm::vec3 &min, const glm::vec3 &max);
+
+    usize getUpdatedChunks() const { return m_updatedChunks; }
+
 private:
     struct ChunkPosHash
     {
@@ -105,7 +108,13 @@ private:
     void updateMeshe(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
-    static constexpr int CHUNKS_PER_FRAME = 2;
+    static constexpr int CHUNKS_PER_TICK = 1;
+    static constexpr int MESHES_PER_TICK = 2;
+
+    std::queue<ChunkPos> m_pendingChunks;
+    std::queue<ChunkPos> m_pendingMeshes;
+
+    usize m_updatedChunks = 0;
 
     gfx::VulkanCtx *m_ctx;
     BlockRegistry m_blockRegistry;

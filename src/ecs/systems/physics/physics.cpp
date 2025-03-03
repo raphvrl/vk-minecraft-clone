@@ -20,7 +20,15 @@ void Physics::tick(f32 dt)
         auto *player = m_ecs->getComponent<cmp::Player>(entity);
 
         if (player && !player->isFlying) {
-            velocity->acceleration.y = GRAVITY;
+            if (player->isInWater) {
+                velocity->acceleration.y = GRAVITY * 0.3f;
+
+                velocity->position.x *= 0.8f;
+                velocity->position.y *= 0.9f;
+                velocity->position.z *= 0.8f;
+            } else {
+                velocity->acceleration.y = GRAVITY;
+            }
         } else if (!player) {
             velocity->acceleration.y = GRAVITY;
         } else {

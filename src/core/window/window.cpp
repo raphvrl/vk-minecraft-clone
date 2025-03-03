@@ -29,6 +29,14 @@ void Window::init(u32 width, u32 height, const std::string &title)
         throw std::runtime_error("Failed to create window");
     }
 
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    if (mode) {
+        int xpos = (mode->width - static_cast<int>(m_width)) / 2;
+        int ypos = (mode->height - static_cast<int>(m_height)) / 2;
+ 
+        glfwSetWindowPos(m_handle, xpos, ypos);
+    }
+
     m_keys.fill(false);
     m_keysPrev.fill(false);
     m_mouseButtons.fill(false);

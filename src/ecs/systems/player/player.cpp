@@ -82,16 +82,37 @@ void Player::tick(f32 dt)
         m_jumpCooldown -= dt;
     }
 
+    wld::BlockType headBlock = m_world.getBlock(
+        transform->position.x,
+        transform->position.y + player->eyeHeight,
+        transform->position.z
+    );
+
+    wld::BlockType bodyBlock = m_world.getBlock(
+        transform->position.x,
+        transform->position.y + player->eyeHeight * 0.5f,
+        transform->position.z
+    );
+
+    player->isInWater = (
+        headBlock == wld::BlockType::WATER ||
+        bodyBlock == wld::BlockType::WATER
+    );
+
+    m_overlay.setWater(headBlock == wld::BlockType::WATER);
+
     bool spacePressed = m_window.isKeyPressed(core::Key::SPACE);
     if (spacePressed && m_jumpCooldown <= 0.0f) {
-        if (player->isFlying) {
-            velocity->position.y += player->moveSpeed;
-        } else if (collider && collider->isGrounded) {
-            velocity->position.y += player->jumpForce;
+        if (collider->isGrounded) {
+            velocity->position.y = player->jumpForce;
             collider->isGrounded = false;
             m_jumpCooldown = 0.5f;
         }
     }
+
+    if (m_window.isKeyPressed(core::Key::LSHIFT) && player->isInWater) {
+        velocity->position.y = -player->swimSpeed * 0.8f;
+    } 
 
     if (
         m_window.isMouseButtonPressed(core::MouseButton::LEFT) &&
@@ -147,14 +168,6 @@ void Player::tick(f32 dt)
     if (player->placeCooldown > 0.0f) {
         player->placeCooldown -= dt;
     }
-
-    wld::BlockType headBlock = m_world.getBlock(
-        transform->position.x,
-        transform->position.y + player->eyeHeight,
-        transform->position.z
-    );
-
-    m_overlay.setWater(headBlock == wld::BlockType::WATER);
 }
 
 void Player::updateCamera()

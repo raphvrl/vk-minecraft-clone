@@ -11,7 +11,7 @@ Game::Game() :
 
 void Game::init()
 {
-    m_window.init(1920, 1080, "Minecraft Clone");
+    m_window.init(1600, 900, "Minecraft Clone");
     m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
@@ -22,8 +22,8 @@ void Game::init()
     m_clouds.init(m_ctx);
 
     m_overlay.init(m_ctx);
-    m_text.init(m_ctx);
 
+    m_gui.init(m_ctx);
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)
@@ -42,7 +42,8 @@ void Game::init()
 
 void Game::destroy()
 {
-    m_text.destroy();
+    m_gui.destroy();
+
     m_overlay.destroy();
 
     m_clouds.destroy();
@@ -58,6 +59,10 @@ void Game::run()
     constexpr f64 MS_PER_TICK = 0.05;
     f64 lastTime = m_window.getCurrentTime();
     f64 accumulator = 0.0;
+    
+    int frameCount = 0;
+    f64 fpsTimer = 0.0;
+    f32 fps = 0.0;
 
     m_ecs.storePositions();
     
@@ -66,7 +71,15 @@ void Game::run()
         f64 frameTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        m_frameTime = static_cast<f32>(frameTime);
+        frameCount++;
+        fpsTimer += frameTime;
+        if (fpsTimer >= 1.0) {
+            fps = static_cast<f32>(frameCount) / static_cast<f32>(fpsTimer);
+            frameCount = 0;
+            fpsTimer = 0.0;
+        }
+
+        m_fps = fps;
 
         if (frameTime > 0.25) {
             frameTime = 0.25;
@@ -92,6 +105,8 @@ void Game::run()
         m_camera.updateView();
         m_camera.updateProj(m_window.getAspect());
 
+        updateGui();
+
         render();
     }
 }
@@ -105,7 +120,7 @@ void Game::handleInput()
 
 void Game::tick(f32 dt)
 {
-    m_world.update(m_camera.getPos());
+    m_world.update(m_camera.getPos(), dt);
     m_clouds.update(dt);
 
     m_playerSystem.tick(dt);
@@ -125,20 +140,19 @@ void Game::render()
 
     m_overlay.render();
 
-    static f32 fpsSmoothed = 0.0f;
-    f32 currentFrameTime = m_frameTime;
-    f32 instantFps = 1.0f / currentFrameTime;
-
-    fpsSmoothed = fpsSmoothed * 0.95f + instantFps * 0.05f;
-    int fps = static_cast<int>(fpsSmoothed);
-    
-    m_text.draw(
-        std::to_string(fps) + " fps",
-        glm::vec2(10.0f, 10.0f),
-        30.0f
-    );
+    m_gui.render();
 
     m_ctx.endFrame();
+}
+
+void Game::updateGui()
+{
+    gui::GameStat gameStat;
+    gameStat.fps = static_cast<u32>(m_fps);
+    gameStat.updatedChunks = m_world.getUpdatedChunks();
+
+    m_gui.updateStat(gameStat);
+    m_gui.update();
 }
 
 } // namespace game
