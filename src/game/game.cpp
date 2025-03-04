@@ -56,7 +56,6 @@ void Game::destroy()
 
 void Game::run()
 {
-    constexpr f64 MS_PER_TICK = 0.05;
     f64 lastTime = m_window.getCurrentTime();
     f64 accumulator = 0.0;
     

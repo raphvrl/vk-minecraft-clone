@@ -7,7 +7,7 @@ layout(location = 2) in uint inData;
 layout(location = 0) out vec2 fragUV;
 layout(location = 1) out vec3 camPos;
 layout(location = 2) out vec3 worldPos;
-layout(location = 3) out vec3 biomeColor;
+layout(location = 3) out vec3 color;
 layout(location = 4) out uint lightLevel;
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {
@@ -22,9 +22,9 @@ layout(push_constant) uniform PushConstantObject {
 
 void main()
 {
-    biomeColor.r = float(inData & 0xFF) / 255.0;
-    biomeColor.g = float((inData >> 8) & 0xFF) / 255.0;
-    biomeColor.b = float((inData >> 16) & 0xFF) / 255.0;
+    color.r = float(inData & 0xFF) / 255.0;
+    color.g = float((inData >> 8) & 0xFF) / 255.0;
+    color.b = float((inData >> 16) & 0xFF) / 255.0;
     lightLevel = (inData >> 24) & 0xF;
 
     fragUV = inUV;

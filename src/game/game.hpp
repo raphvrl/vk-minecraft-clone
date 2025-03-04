@@ -35,6 +35,8 @@ public:
     void run();
 
 private:
+    static constexpr f64 MS_PER_TICK = 0.05;
+
     void handleInput();
     void tick(f32 dt);
     void render();

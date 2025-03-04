@@ -359,10 +359,21 @@ void ChunkMesh::addFace(
 
     u32 indexOffset = verticesData->size();
 
+    u32 r, g, b;
+    if (block == BlockType::WATER) {
+        r = 64;
+        g = 156;
+        b = 255;
+    } else {
+        r = 255;
+        g = 255;
+        b = 255;
+    }
+
     u32 encodedData =
-        (u32(0)) |
-        (u32(0) << 8) |
-        (u32(0) << 16) |
+        (u32(r)) |
+        (u32(g) << 8) |
+        (u32(b) << 16) |
         (u32(0) << 24);
 
     std::array<glm::vec3, 4> adjustedVerts = vertices;

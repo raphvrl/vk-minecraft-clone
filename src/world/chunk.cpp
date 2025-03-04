@@ -35,5 +35,4 @@ BlockType Chunk::getBlock(int x, int y, int z) const
     return m_blocks[getIndex(x, y, z)];
 }
 
-
 } // namespace wld
