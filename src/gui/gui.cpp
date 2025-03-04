@@ -87,10 +87,10 @@ void GUI::render()
 
     m_ubo.update(&ubo, sizeof(ubo));
 
-    switch (m_mode)
+    switch (m_gameStat.state)
     {
 
-    case Mode::GAME:
+    case game::GameState::RUNNING:
         drawGameElements();
         break;
 
@@ -180,6 +180,10 @@ void GUI::initGameElements()
 
 void GUI::drawGameElements()
 {
+    if (m_gameStat.state != game::GameState::RUNNING) {
+        return;
+    }
+
     std::string stat = "Minecraft Vulkan Clone ";
     stat += "(" + std::to_string(m_gameStat.fps) + " fps";
     stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";

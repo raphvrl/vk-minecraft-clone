@@ -12,6 +12,7 @@
 #include "graphics/overlay_renderer.hpp"
 #include "gui/text_renderer.hpp"
 #include "gui/gui.hpp"
+#include "game/game_state.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform.hpp"
@@ -38,6 +39,7 @@ private:
     static constexpr f64 MS_PER_TICK = 0.05;
 
     void handleInput();
+    void update(f32 dt);
     void tick(f32 dt);
     void render();
 
@@ -63,6 +65,8 @@ private:
     bool m_running;
 
     f32 m_fps;
+
+    GameState m_state = GameState::RUNNING;
 
     void updateGui();
 };

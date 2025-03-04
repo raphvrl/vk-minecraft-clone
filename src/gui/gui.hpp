@@ -10,6 +10,7 @@
 #include "graphics/texture.hpp"
 #include "graphics/uniform_buffer.hpp"
 #include "text_renderer.hpp"
+#include "game/game_state.hpp"
 
 namespace gui
 {
@@ -18,12 +19,8 @@ struct GameStat
 {
     u32 fps = 0;
     u32 updatedChunks = 0;
-};
+    game::GameState state = game::GameState::RUNNING;
 
-enum class Mode
-{
-    GAME,
-    PAUSE,
 };
 
 enum class Anchor
@@ -58,7 +55,6 @@ public:
 
 private:
     gfx::VulkanCtx *m_ctx;
-    Mode m_mode = Mode::GAME;
 
     gfx::Pipeline m_pipeline;
 
