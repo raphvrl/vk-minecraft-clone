@@ -119,8 +119,10 @@ void Game::handleInput()
 
     if (m_state == GameState::RUNNING) {
         m_window.setCursorVisible(false);
+        m_window.setCursorCapture(true);
     } else {
         m_window.setCursorVisible(true);
+        m_window.setCursorCapture(false);
     }
 }
 

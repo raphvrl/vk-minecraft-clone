@@ -123,7 +123,7 @@ public:
 
     void close() { glfwSetWindowShouldClose(m_handle, GLFW_TRUE); }
 
-    void setCursorVisible(bool visible);
+    void setCursorMode(int mode) { glfwSetInputMode(m_handle, GLFW_CURSOR, mode); }
 
     bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
 
