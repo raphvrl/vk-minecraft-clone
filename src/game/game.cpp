@@ -13,7 +13,6 @@ Game::Game() :
 void Game::init()
 {
     m_window.init(1600, 900, "Minecraft Clone");
-    m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
 
@@ -112,17 +111,15 @@ void Game::run()
 
 void Game::handleInput()
 {
-    if (m_window.isKeyJustPressed(core::Key::ESCAPE)) {
+    if (m_window.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
         m_state = (m_state == GameState::RUNNING) ?
             GameState::PAUSED : GameState::RUNNING;
     }
 
     if (m_state == GameState::RUNNING) {
-        m_window.setCursorVisible(false);
-        m_window.setCursorCapture(true);
+        m_window.setCursorMode(GLFW_CURSOR_DISABLED);
     } else {
-        m_window.setCursorVisible(true);
-        m_window.setCursorCapture(false);
+        m_window.setCursorMode(GLFW_CURSOR_NORMAL);
     }
 }
 

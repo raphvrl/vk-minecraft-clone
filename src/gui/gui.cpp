@@ -94,6 +94,10 @@ void GUI::render()
         drawGameElements();
         break;
 
+    case game::GameState::PAUSED:
+        drawPauseElements();
+        break;
+
     default:
         break;
     }
@@ -180,15 +184,20 @@ void GUI::initGameElements()
 
 void GUI::drawGameElements()
 {
-    if (m_gameStat.state != game::GameState::RUNNING) {
-        return;
-    }
-
     std::string stat = "Minecraft Vulkan Clone ";
     stat += "(" + std::to_string(m_gameStat.fps) + " fps";
     stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";
 
     m_text.draw(stat, {10.0f, 10.0f}, 24.0f);
+
+    for (auto &[name, element] : m_elements) {
+        draw(element);
+    }
+}
+
+void GUI::drawPauseElements()
+{
+    m_text.draw("Game menu", {0.0f, -200.0f}, 24.0f, TextAlign::CENTER);
 
     for (auto &[name, element] : m_elements) {
         draw(element);

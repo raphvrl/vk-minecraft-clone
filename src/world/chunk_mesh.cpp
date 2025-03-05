@@ -360,15 +360,9 @@ void ChunkMesh::addFace(
     u32 indexOffset = verticesData->size();
 
     u32 r, g, b;
-    if (block == BlockType::WATER) {
-        r = 64;
-        g = 156;
-        b = 255;
-    } else {
-        r = 255;
-        g = 255;
-        b = 255;
-    }
+    r = 255,
+    g = 255,
+    b = 255;
 
     u32 encodedData =
         (u32(r)) |

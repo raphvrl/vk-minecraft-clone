@@ -87,6 +87,7 @@ private:
     void initGameElements();
 
     void drawGameElements();
+    void drawPauseElements();
 };
 
 } // namespace gui

@@ -12,9 +12,11 @@ namespace gui
 
 enum class TextAlign
 {
-    LEFT,
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT,
     CENTER,
-    RIGHT
 };
 
 class TextRenderer
@@ -28,7 +30,7 @@ public:
         const std::string &text,
         const glm::vec2 &pos,
         u32 size = 16,
-        TextAlign align = TextAlign::LEFT
+        TextAlign align = TextAlign::TOP_LEFT
     );
 
 private:
