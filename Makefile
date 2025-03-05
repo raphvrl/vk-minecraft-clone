@@ -101,7 +101,7 @@ LDFLAGS += -static-libgcc -static-libstdc++ -static
 MODE ?= debug
 
 ifeq ($(MODE), debug)
-	CXXFLAGS += -g -O0 -DDEBUG -pipe
+	CXXFLAGS += -g -O2 -DDEBUG -pipe
 else
 	CXXFLAGS += -O3 -DNDEBUG -pipe
 endif

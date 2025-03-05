@@ -58,6 +58,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x - 1, y, z, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_WEST,
                         getUVs(block, Face::WEST),
@@ -68,6 +69,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x + 1, y, z, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_EAST,
                         getUVs(block, Face::EAST),
@@ -78,6 +80,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x, y - 1, z, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_BOTTOM,
                         getUVs(block, Face::BOTTOM),
@@ -88,6 +91,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x, y + 1, z, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_TOP,
                         getUVs(block, Face::TOP),
@@ -98,6 +102,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x, y, z + 1, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_NORTH,
                         getUVs(block, Face::NORTH),
@@ -108,6 +113,7 @@ void ChunkMesh::generate(
                 if (isFaceVisible(chunk, neighbors, x, y, z - 1, block)) {
                     addFace(
                         chunk,
+                        neighbors,
                         pos,
                         ChunkMesh::FACE_SOUTH,
                         getUVs(block, Face::SOUTH),
@@ -347,6 +353,7 @@ const std::array<glm::vec3, 4> ChunkMesh::FACE_BOTTOM = {
 
 void ChunkMesh::addFace(
     const Chunk &chunk,
+    const std::array<const Chunk *, 4> &neighbors,
     const glm::vec3 &pos,
     const std::array<glm::vec3, 4> &vertices,
     const std::array<glm::vec2, 4> &uvs,
@@ -375,11 +382,21 @@ void ChunkMesh::addFace(
         }
     }
 
+    glm::vec3 normal = getNormalFromFace(adjustedVerts);
+    glm::ivec3 adjPos = glm::ivec3(pos) + glm::ivec3(normal);
+    u8 faceLightLevel = getFaceLightLevel(
+        chunk,
+        neighbors,
+        adjPos.x,
+        adjPos.y,
+        adjPos.z
+    );
+
     for (usize i = 0; i < 4; i++) {
         Vertex vertex;
         vertex.pos = pos + adjustedVerts[i];
         vertex.uv = uvs[i];
-        vertex.lightLevel = chunk.getLight(pos.x, pos.y, pos.z);
+        vertex.lightLevel = faceLightLevel;
         verticesData->push_back(vertex);
     }
 
@@ -470,6 +487,47 @@ bool ChunkMesh::isFaceVisible(
     }
 
     return false;
+}
+
+glm::vec3 ChunkMesh::getNormalFromFace(std::array<glm::vec3, 4> &face)
+{
+    if (face == FACE_TOP) return glm::vec3(0.0f, 1.0f, 0.0f);
+    if (face == FACE_BOTTOM) return glm::vec3(0.0f, -1.0f, 0.0f);
+    if (face == FACE_NORTH) return glm::vec3(0.0f, 0.0f, 1.0f);
+    if (face == FACE_SOUTH) return glm::vec3(0.0f, 0.0f, -1.0f);
+    if (face == FACE_EAST) return glm::vec3(1.0f, 0.0f, 0.0f);
+    if (face == FACE_WEST) return glm::vec3(-1.0f, 0.0f, 0.0f);
+
+    return glm::vec3(0.0f, 1.0f, 0.0f);
+}
+
+u8 ChunkMesh::getFaceLightLevel(
+    const Chunk &chunk,
+    const std::array<const Chunk *, 4> &neighbors,
+    int x,
+    int y,
+    int z
+)
+{
+    if (x < 0) {
+        if (neighbors[0] == nullptr) return 0;
+        return neighbors[0]->getLight(Chunk::CHUNK_SIZE - 1, y, z);
+    } else if (x >= Chunk::CHUNK_SIZE) {
+        if (neighbors[1] == nullptr) return 0;
+        return neighbors[1]->getLight(0, y, z);
+    } else if (z < 0) {
+        if (neighbors[2] == nullptr) return 0;
+        return neighbors[2]->getLight(x, y, Chunk::CHUNK_SIZE - 1);
+    } else if (z >= Chunk::CHUNK_SIZE) {
+        if (neighbors[3] == nullptr) return 0;
+        return neighbors[3]->getLight(x, y, 0);
+    } else if (y < 0 || y >= Chunk::CHUNK_HEIGHT) {
+        return 0;
+    } else {
+        return chunk.getLight(x, y, z);
+    }
+
+    return 0;
 }
 
 } // namespace wld

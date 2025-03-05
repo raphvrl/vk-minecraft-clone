@@ -10,6 +10,12 @@ namespace wld
 
 struct ChunkPos;
 
+struct LightNode
+{
+    int x, y, z;
+    u8 level;
+};
+
 class Chunk
 {
 
@@ -45,6 +51,8 @@ private:
     }
 
     void calculateLight();
+    void calulateSkyLight();
+    void propagateLight();
 };
 
 } // namespace wld
