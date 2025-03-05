@@ -341,6 +341,7 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
         };
 
         it->second->setBlock(localPos, type);
+        it->second->update();
 
         updateMeshe(chunkPos);
 
@@ -492,7 +493,9 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
 void World::loadChunks(const ChunkPos &pos)
 {
     auto chunk = std::make_unique<Chunk>();
+
     m_generator.generateChunk(*chunk, pos);
+    chunk->update();
 
     m_chunks[pos] = std::move(chunk);
 }

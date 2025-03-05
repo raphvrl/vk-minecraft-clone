@@ -5,8 +5,7 @@ layout(location = 0) out vec4 outColor;
 layout(location = 0) in vec2 fragUV;
 layout(location = 1) in vec3 camPos;
 layout(location = 2) in vec3 worldPos;
-layout(location = 3) in vec3 color;
-layout(location = 4) flat in uint lightLevel;
+layout(location = 3) in flat uint lightLevel;
 
 layout(set = 0, binding = 1) uniform sampler2D tex; 
 
@@ -31,7 +30,11 @@ void main()
 {
     float dist = length(worldPos - camPos);
 
-    vec4 color = texture(tex, fragUV) * vec4(color, 1.0);
+    vec4 color = texture(tex, fragUV);
+
+    float light = float(lightLevel) / 15.0;
+    color.rgb *= light;
+
     color = addFog(color, dist);
 
     outColor = color;

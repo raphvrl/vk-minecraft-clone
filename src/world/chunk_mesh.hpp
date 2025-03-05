@@ -34,7 +34,7 @@ public:
     {
         glm::vec3 pos;
         glm::vec2 uv;
-        u32 data;
+        u32 lightLevel;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -63,7 +63,7 @@ public:
             attributeDescriptions[2].binding = 0;
             attributeDescriptions[2].location = 2;
             attributeDescriptions[2].format = VK_FORMAT_R32_UINT;
-            attributeDescriptions[2].offset = offsetof(Vertex, data);
+            attributeDescriptions[2].offset = offsetof(Vertex, lightLevel);
 
             return attributeDescriptions;
         }
@@ -132,6 +132,7 @@ private:
     static const std::array<glm::vec3, 4> FACE_BOTTOM;
 
     void addFace(
+        const Chunk &chunk,
         const glm::vec3 &pos,
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,

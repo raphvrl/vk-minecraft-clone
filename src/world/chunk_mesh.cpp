@@ -57,6 +57,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x - 1, y, z, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_WEST,
                         getUVs(block, Face::WEST),
@@ -66,6 +67,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x + 1, y, z, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_EAST,
                         getUVs(block, Face::EAST),
@@ -75,6 +77,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x, y - 1, z, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_BOTTOM,
                         getUVs(block, Face::BOTTOM),
@@ -84,6 +87,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x, y + 1, z, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_TOP,
                         getUVs(block, Face::TOP),
@@ -93,6 +97,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x, y, z + 1, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_NORTH,
                         getUVs(block, Face::NORTH),
@@ -102,6 +107,7 @@ void ChunkMesh::generate(
 
                 if (isFaceVisible(chunk, neighbors, x, y, z - 1, block)) {
                     addFace(
+                        chunk,
                         pos,
                         ChunkMesh::FACE_SOUTH,
                         getUVs(block, Face::SOUTH),
@@ -340,6 +346,7 @@ const std::array<glm::vec3, 4> ChunkMesh::FACE_BOTTOM = {
 };
 
 void ChunkMesh::addFace(
+    const Chunk &chunk,
     const glm::vec3 &pos,
     const std::array<glm::vec3, 4> &vertices,
     const std::array<glm::vec2, 4> &uvs,
@@ -359,17 +366,6 @@ void ChunkMesh::addFace(
 
     u32 indexOffset = verticesData->size();
 
-    u32 r, g, b;
-    r = 255,
-    g = 255,
-    b = 255;
-
-    u32 encodedData =
-        (u32(r)) |
-        (u32(g) << 8) |
-        (u32(b) << 16) |
-        (u32(0) << 24);
-
     std::array<glm::vec3, 4> adjustedVerts = vertices;
 
     if (block == BlockType::WATER) {
@@ -383,7 +379,7 @@ void ChunkMesh::addFace(
         Vertex vertex;
         vertex.pos = pos + adjustedVerts[i];
         vertex.uv = uvs[i];
-        vertex.data = encodedData;
+        vertex.lightLevel = chunk.getLight(pos.x, pos.y, pos.z);
         verticesData->push_back(vertex);
     }
 
