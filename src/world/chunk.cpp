@@ -90,7 +90,7 @@ void Chunk::calulateSkyLight()
                     setLight(x, y, z, currentLight);
 
                     if (block == BlockType::WATER) {
-                        currentLight = std::max(currentLight - 2, 0);
+                        currentLight = std::max(currentLight - 3, 0);
                     }
                 }
             }
@@ -149,7 +149,7 @@ void Chunk::propagateLight()
             u8 propagatedLight = std::max(node.level - 1, 0);
             
             if (neightborBlock == BlockType::WATER) {
-                propagatedLight = std::max(propagatedLight - 2, 0);
+                propagatedLight = std::max(propagatedLight - 3, 0);
             }
 
             if (propagatedLight > currentLight) {

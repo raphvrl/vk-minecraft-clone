@@ -13,9 +13,9 @@ vec3 addShadow(vec3 color)
 {
     float intensityFactors[16] = float[](
         0.005, 0.02, 0.04, 0.07,
-        0.11,  0.15, 0.20, 0.27,
-        0.34,  0.42, 0.50, 0.58,
-        0.66,  0.76, 0.86, 1.0
+        0.11,  0.16, 0.22, 0.29,
+        0.36,  0.44, 0.52, 0.61,
+        0.70,  0.78, 0.88, 1.0
     );
 
     float light = intensityFactors[lightLevel];
@@ -23,7 +23,7 @@ vec3 addShadow(vec3 color)
     float ambientLight = 0.01;
     vec3 litColor = mix(color * ambientLight, color, light);
 
-    return pow(litColor, vec3(0.75));
+    return litColor;
 }
 
 vec3 addFog(vec3 color, float dist)
