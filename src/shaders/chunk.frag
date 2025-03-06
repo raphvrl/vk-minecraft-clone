@@ -12,7 +12,7 @@ layout(set = 0, binding = 1) uniform sampler2D tex;
 vec3 addShadow(vec3 color)
 {
     float intensityFactors[16] = float[](
-        0.005, 0.02, 0.04, 0.07,
+        0.01, 0.02, 0.04, 0.07,
         0.11,  0.16, 0.22, 0.29,
         0.36,  0.44, 0.52, 0.61,
         0.70,  0.78, 0.88, 1.0
@@ -20,7 +20,7 @@ vec3 addShadow(vec3 color)
 
     float light = intensityFactors[lightLevel];
 
-    float ambientLight = 0.01;
+    float ambientLight = 0.05;
     vec3 litColor = mix(color * ambientLight, color, light);
 
     return litColor;

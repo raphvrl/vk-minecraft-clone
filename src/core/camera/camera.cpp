@@ -15,7 +15,7 @@ Camera::Camera()
 
     m_fov = 63.0f;
     m_aspect = 1280.0f / 720.0f;
-    m_near = 0.1f;
+    m_near = 0.01f;
     m_far = 1000.0f;
 
     m_view = glm::lookAt(m_pos, m_pos + m_front, m_up);
