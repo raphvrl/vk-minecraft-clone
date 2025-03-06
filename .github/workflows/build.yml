@@ -44,28 +44,26 @@ jobs:
       run: |
         make release
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: |
-          app.exe
-          assets/**
-
-    - name: Install Windows SDK components
-      shell: pwsh
-      run: |
-        choco install windows-sdk-10-version-2004-all -y
-
-    - name: Create self-signed certificate and sign app
+    - name: Create and sign certificate
+      if: github.event_name != 'pull_request'
       shell: pwsh
       run: |
         $cert = New-SelfSignedCertificate -Subject "CN=VulkanMinecraft" -Type CodeSigning -CertStoreLocation Cert:\CurrentUser\My
-        $certPassword = ConvertTo-SecureString -String "tempPassword123!" -Force -AsPlainText
-        Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath "certificate.pfx" -Password $certPassword
 
-        $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" | 
-                  Where-Object { $_.Directory.Name -match "x64" } | 
-                  Select-Object -First 1 -ExpandProperty FullName
+        $signtool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1 -ExpandProperty FullName
         
-        & $signtool sign /f certificate.pfx /p "tempPassword123!" /fd sha256 /t http://timestamp.digicert.com /d "Vulkan Minecraft" app.exe
+        if (-Not $signtool) {
+          $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" | 
+                    Where-Object { $_.Directory.Name -match "x64" } | 
+                    Select-Object -First 1 -ExpandProperty FullName
+        }
+
+        & $signtool sign /sha1 $cert.Thumbprint /fd sha256 /t http://timestamp.digicert.com /d "Vulkan Minecraft Clone" app.exe
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: vulkan-minecraft
+        path: |
+          app.exe
+          assets/
