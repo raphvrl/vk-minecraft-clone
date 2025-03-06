@@ -42,7 +42,7 @@ void Player::tick(f32 dt)
         return;
     }
 
-    if (m_window.isKeyPressed(core::Key::W)) {
+    if (m_window.isKeyPressed(GLFW_KEY_W)) {
         glm::vec3 front = m_camera.getFront();
         front.y = 0.0f;
 
@@ -51,7 +51,7 @@ void Player::tick(f32 dt)
         velocity->position += front * player->moveSpeed;
     }
 
-    if (m_window.isKeyPressed(core::Key::S)) {
+    if (m_window.isKeyPressed(GLFW_KEY_S)) {
         glm::vec3 front = m_camera.getFront();
         front.y = 0.0f;
 
@@ -60,7 +60,7 @@ void Player::tick(f32 dt)
         velocity->position -= front * player->moveSpeed;
     }
 
-    if (m_window.isKeyPressed(core::Key::A)) {
+    if (m_window.isKeyPressed(GLFW_KEY_A)) {
         glm::vec3 right = m_camera.getRight();
         right.y = 0.0f;
 
@@ -69,7 +69,7 @@ void Player::tick(f32 dt)
         velocity->position -= right * player->moveSpeed;
     }
 
-    if (m_window.isKeyPressed(core::Key::D)) {
+    if (m_window.isKeyPressed(GLFW_KEY_D)) {
         glm::vec3 right = m_camera.getRight();
         right.y = 0.0f;
 
@@ -101,7 +101,7 @@ void Player::tick(f32 dt)
 
     m_overlay.setWater(headBlock == wld::BlockType::WATER);
 
-    bool spacePressed = m_window.isKeyPressed(core::Key::SPACE);
+    bool spacePressed = m_window.isKeyPressed(GLFW_KEY_SPACE);
     if (spacePressed && m_jumpCooldown <= 0.0f) {
         if (collider->isGrounded) {
             velocity->position.y = player->jumpForce;
@@ -110,12 +110,12 @@ void Player::tick(f32 dt)
         }
     }
 
-    if (m_window.isKeyPressed(core::Key::LSHIFT) && player->isInWater) {
+    if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) && player->isInWater) {
         velocity->position.y = -player->swimSpeed * 0.8f;
     } 
 
     if (
-        m_window.isMouseButtonPressed(core::MouseButton::LEFT) &&
+        m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&
         player->breakCooldown <= 0.0f
     ) {
         wld::Ray ray;
@@ -133,7 +133,7 @@ void Player::tick(f32 dt)
     }
 
     if (
-        m_window.isMouseButtonPressed(core::MouseButton::RIGHT) &&
+        m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT) &&
         player->placeCooldown <= 0.0f
     ) {
         wld::Ray ray;

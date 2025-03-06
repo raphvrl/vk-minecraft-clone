@@ -87,11 +87,15 @@ void GUI::render()
 
     m_ubo.update(&ubo, sizeof(ubo));
 
-    switch (m_mode)
+    switch (m_gameStat.state)
     {
 
-    case Mode::GAME:
+    case game::GameState::RUNNING:
         drawGameElements();
+        break;
+
+    case game::GameState::PAUSED:
+        drawPauseElements();
         break;
 
     default:
@@ -185,6 +189,15 @@ void GUI::drawGameElements()
     stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";
 
     m_text.draw(stat, {10.0f, 10.0f}, 24.0f);
+
+    for (auto &[name, element] : m_elements) {
+        draw(element);
+    }
+}
+
+void GUI::drawPauseElements()
+{
+    m_text.draw("Game menu", {0.0f, -200.0f}, 24.0f, TextAlign::CENTER);
 
     for (auto &[name, element] : m_elements) {
         draw(element);

@@ -96,12 +96,36 @@ void TextRenderer::draw(
     }
 
     int x = pos.x;
+    int y = pos.y;
 
-    if (align == TextAlign::CENTER) {
-        x -= textWidth / 2;
-    } else if (align == TextAlign::RIGHT) {
-        x -= textWidth;
+    switch (align)
+    {
+    case TextAlign::TOP_LEFT:
+        x = pos.x;
+        y = pos.y;
+        break;
+
+    case TextAlign::TOP_RIGHT:
+        x = extent.width - textWidth - pos.x;
+        y = pos.y;
+        break;
+
+    case TextAlign::BOTTOM_LEFT:
+        x = pos.x;
+        y = extent.height - size - pos.y;
+        break;
+
+    case TextAlign::BOTTOM_RIGHT:
+        x = extent.width - textWidth - pos.x;
+        y = extent.height - size - pos.y;
+        break;
+
+    case TextAlign::CENTER:
+        x = (extent.width / 2 - textWidth - size / 2) + pos.x;
+        y = (extent.height / 2 - size / 2) + pos.y;
+        break;
     }
+        
 
     x = std::floor(x);
 
@@ -114,7 +138,7 @@ void TextRenderer::draw(
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(
             x + pixelOffset,
-            pos.y + pixelOffset,
+            y + pixelOffset,
             0.0f
         ));
         model = glm::scale(model, glm::vec3(size, size, 1.0f));
@@ -137,7 +161,7 @@ void TextRenderer::draw(
         vkCmdDraw(cmd, 6, 1, 0, 0);
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(x, pos.y, 0.0f));
+        model = glm::translate(model, glm::vec3(x, y, 0.0f));
         model = glm::scale(model, glm::vec3(size, size, 1.0f));
 
         pc.model = model;

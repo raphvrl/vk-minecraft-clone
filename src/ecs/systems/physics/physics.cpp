@@ -21,21 +21,17 @@ void Physics::tick(f32 dt)
 
         if (player && !player->isFlying) {
             if (player->isInWater) {
-                velocity->acceleration.y = GRAVITY * 0.3f;
+                velocity->position.y += GRAVITY * 0.3f * dt;
 
                 velocity->position.x *= 0.8f;
                 velocity->position.y *= 0.9f;
                 velocity->position.z *= 0.8f;
             } else {
-                velocity->acceleration.y = GRAVITY;
+                velocity->position.y += GRAVITY * dt;
             }
         } else if (!player) {
-            velocity->acceleration.y = GRAVITY;
-        } else {
-            velocity->acceleration.y = 0.0f;
+            velocity->position.y += GRAVITY * dt;
         }
-
-        velocity->position += velocity->acceleration * dt;
 
         if (collider && !collider->isGhost) {
             resolveCollisions(transform, velocity, collider, dt);

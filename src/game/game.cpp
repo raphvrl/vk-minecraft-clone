@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "gui/gui.hpp"
 
 namespace game
 {
@@ -12,7 +13,6 @@ Game::Game() :
 void Game::init()
 {
     m_window.init(1600, 900, "Minecraft Clone");
-    m_window.setCursorVisible(false);
     
     m_ctx.init(m_window);
 
@@ -56,7 +56,6 @@ void Game::destroy()
 
 void Game::run()
 {
-    constexpr f64 MS_PER_TICK = 0.05;
     f64 lastTime = m_window.getCurrentTime();
     f64 accumulator = 0.0;
     
@@ -67,6 +66,10 @@ void Game::run()
     m_ecs.storePositions();
     
     while (m_running) {
+        if (!m_window.isOpen()) {
+            m_running = false;
+        }
+
         f64 currentTime = m_window.getCurrentTime();
         f64 frameTime = currentTime - lastTime;
         lastTime = currentTime;
@@ -85,7 +88,9 @@ void Game::run()
             frameTime = 0.25;
         }
 
-        accumulator += frameTime;
+        if (m_state == GameState::RUNNING) {
+            accumulator += frameTime;
+        }
 
         m_window.update();
         handleInput();
@@ -98,28 +103,48 @@ void Game::run()
 
         f32 alpha = static_cast<f32>(accumulator / MS_PER_TICK);
 
-        m_ecs.interpolate(alpha);
-
-        m_playerSystem.updateCamera();
-
-        m_camera.updateView();
-        m_camera.updateProj(m_window.getAspect());
-
-        updateGui();
-
+        update(alpha);
+        
         render();
     }
 }
 
 void Game::handleInput()
 {
-    if (m_window.isKeyPressed(core::Key::ESCAPE)) {
-        m_running = false;
+    if (m_window.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
+        m_state = (m_state == GameState::RUNNING) ?
+            GameState::PAUSED : GameState::RUNNING;
     }
+
+    if (m_state == GameState::RUNNING) {
+        m_window.setCursorMode(GLFW_CURSOR_DISABLED);
+    } else {
+        m_window.setCursorMode(GLFW_CURSOR_NORMAL);
+    }
+}
+
+void Game::update(f32 dt)
+{
+    updateGui();
+    
+    if (m_state != GameState::RUNNING) {
+        return;
+    }
+
+    m_ecs.interpolate(dt);
+
+    m_playerSystem.updateCamera();
+
+    m_camera.updateView();
+    m_camera.updateProj(m_window.getAspect());
 }
 
 void Game::tick(f32 dt)
 {
+    if (m_state != GameState::RUNNING) {
+        return;
+    }
+
     m_world.update(m_camera.getPos(), dt);
     m_clouds.update(dt);
 
@@ -150,6 +175,7 @@ void Game::updateGui()
     gui::GameStat gameStat;
     gameStat.fps = static_cast<u32>(m_fps);
     gameStat.updatedChunks = m_world.getUpdatedChunks();
+    gameStat.state = m_state;
 
     m_gui.updateStat(gameStat);
     m_gui.update();

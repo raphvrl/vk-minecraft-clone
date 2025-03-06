@@ -68,15 +68,6 @@ void Window::update()
     glfwPollEvents();
 }
 
-void Window::setCursorVisible(bool visible)
-{
-    glfwSetInputMode(
-        m_handle,
-        GLFW_CURSOR,
-        visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED
-    );
-}
-
 void Window::keyCallback(
     GLFWwindow *window,
     int key,
