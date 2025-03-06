@@ -3,9 +3,10 @@
 namespace gui
 {
 
-void GUI::init(gfx::VulkanCtx &ctx)
+void GUI::init(gfx::VulkanCtx &ctx, core::Window &window)
 {
     m_ctx = &ctx;
+    m_window = &window;
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "gui.vert.spv")
@@ -33,24 +34,8 @@ void GUI::init(gfx::VulkanCtx &ctx)
         .build();
 
     m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
-    m_texture.init(*m_ctx, "gui/icons.png");
-
-    std::vector<gfx::DescriptorData> descriptorData = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo,
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_texture,
-        }
-    };
-
-    m_descriptorSet = m_pipeline.createDescriptorSet(descriptorData);
+    loadTexture("icons", "gui/icons.png");
+    loadTexture("gui", "gui/gui.png");
 
     m_text.init(*m_ctx);
 
@@ -61,7 +46,11 @@ void GUI::destroy()
 {
     m_text.destroy();
     m_ubo.destroy();
-    m_texture.destroy();
+
+    for (auto &[_, texture] : m_textures) {
+        texture.destroy();
+    }
+
     m_pipeline.destroy();
 }
 
@@ -136,7 +125,7 @@ void GUI::draw(const Element &element)
     }
 
     m_pipeline.bind();
-    m_pipeline.bindDescriptorSet(m_descriptorSet);
+    m_pipeline.bindDescriptorSet(m_descriptorSets[element.texture]);
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(
@@ -170,6 +159,28 @@ void GUI::draw(const Element &element)
     vkCmdDraw(cmd, 6, 1, 0, 0);
 }
 
+void GUI::loadTexture(const std::string &name, const std::string &path)
+{
+    m_textures[name].init(*m_ctx, path);
+
+    std::vector<gfx::DescriptorData> descriptorData = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .binding = 0,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .ubo = &m_ubo,
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .binding = 1,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .texture = &m_textures[name],
+        }
+    };
+
+    m_descriptorSets[name] = m_pipeline.createDescriptorSet(descriptorData);
+}
+
 void GUI::initGameElements()
 {
     Element crosshair = {
@@ -177,6 +188,7 @@ void GUI::initGameElements()
         .position = {500.0f, 500.0f},
         .size = {64.0f, 64.0f},
         .uv = {0.0f, 0.0f, 16.0f, 16.0f},
+        .texture = "icons",
     };
 
     m_elements["crosshair"] = crosshair;

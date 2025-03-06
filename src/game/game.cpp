@@ -23,7 +23,7 @@ void Game::init()
 
     m_overlay.init(m_ctx);
 
-    m_gui.init(m_ctx);
+    m_gui.init(m_ctx, m_window);
 
     EntityID playerEntity = m_ecs.creatEntity();
     m_ecs.addComponent<cmp::Transform>(playerEntity)

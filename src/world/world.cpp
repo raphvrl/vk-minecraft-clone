@@ -341,6 +341,7 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
         };
 
         it->second->setBlock(localPos, type);
+
         it->second->update();
 
         updateMeshe(chunkPos);
@@ -495,6 +496,7 @@ void World::loadChunks(const ChunkPos &pos)
     auto chunk = std::make_unique<Chunk>();
 
     m_generator.generateChunk(*chunk, pos);
+
     chunk->update();
 
     m_chunks[pos] = std::move(chunk);
