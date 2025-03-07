@@ -12,10 +12,8 @@ namespace gui
 
 enum class TextAlign
 {
-    TOP_LEFT,
-    TOP_RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM_RIGHT,
+    LEFT,
+    RIGHT,
     CENTER,
 };
 
@@ -30,7 +28,7 @@ public:
         const std::string &text,
         const glm::vec2 &pos,
         u32 size = 16,
-        TextAlign align = TextAlign::TOP_LEFT
+        TextAlign align = TextAlign::LEFT
     );
 
 private:

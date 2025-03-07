@@ -3,10 +3,9 @@
 namespace gui
 {
 
-void GUI::init(gfx::VulkanCtx &ctx, core::Window &window)
+void GUI::init(gfx::VulkanCtx &ctx)
 {
     m_ctx = &ctx;
-    m_window = &window;
 
     m_pipeline = gfx::Pipeline::Builder(*m_ctx)
         .setShader(VK_SHADER_STAGE_VERTEX_BIT, "gui.vert.spv")
@@ -38,9 +37,6 @@ void GUI::init(gfx::VulkanCtx &ctx, core::Window &window)
     loadTexture("gui", "gui/gui.png");
 
     m_text.init(*m_ctx);
-
-    initGameElements();
-    initPauseElements();
 }
 
 void GUI::destroy()
@@ -55,9 +51,18 @@ void GUI::destroy()
     m_pipeline.destroy();
 }
 
-void GUI::update()
+void GUI::update(const glm::vec2 &point)
 {
-    // Update elements
+    for (auto &[_, button] : m_buttons) {
+        button->update(point);
+    }
+}
+
+void GUI::handleMouseClick()
+{
+    for (auto &[_, button] : m_buttons) {
+        button->handleMouseClick();
+    }
 }
 
 void GUI::render()
@@ -93,35 +98,84 @@ void GUI::render()
     }
 }
 
+void GUI::initGameElements()
+{
+    Element crosshair = {
+        .anchor = Anchor::CENTER,
+        .pos = {500.0f, 500.0f},
+        .size = {64.0f, 64.0f},
+        .uv = {0.0f, 0.0f, 16.0f, 16.0f},
+        .texture = "icons",
+    };
+
+    m_elements["crosshair"] = crosshair;
+}
+
+void GUI::initPauseElements()
+{
+    Element background = {
+        .anchor = Anchor::CENTER,
+        .pos = {0.0f, -100.0f},
+        .size = {600.0f, 60.0f},
+        .uv = {0.0f, 0.0f, 0.0f, 0.0f},
+        .texture = "gui",
+    };
+
+    auto resumeButton = std::make_unique<Button>(
+        this,
+        "Back to game",
+        background,
+        m_resumeCallback
+    );
+
+    m_buttons["resume"] = std::move(resumeButton);
+
+    background.pos.y += 100.0f;
+
+    auto quitButton = std::make_unique<Button>(
+        this,
+        "Save and quit to title",
+        background,
+        m_quitCallback
+    );
+
+    m_buttons["quit"] = std::move(quitButton);
+}
+
 void GUI::draw(const Element &element)
 {
     VkCommandBuffer cmd = m_ctx->getCommandBuffer();
     VkExtent2D extent = m_ctx->getSwapChainExtent();
 
-    glm::vec2 pos = element.position;
+    glm::vec2 pos = element.pos;
 
-    switch (element.anchor)
-    {
-
+    switch (element.anchor) {
     case Anchor::TOP_LEFT:
+        pos = element.pos;
         break;
-
+        
     case Anchor::TOP_RIGHT:
-        pos.x = extent.width - pos.x - element.size.x;
+        pos.x = extent.width - element.pos.x - element.size.x;
+        pos.y = element.pos.y;
         break;
-
+        
     case Anchor::BOTTOM_LEFT:
-        pos.y = extent.height - pos.y - element.size.y;
+        pos.x = element.pos.x;
+        pos.y = extent.height - element.pos.y - element.size.y;
         break;
-
+        
     case Anchor::BOTTOM_RIGHT:
-        pos.x = extent.width - pos.x - element.size.x;
-        pos.y = extent.height - pos.y - element.size.y;
+        pos.x = extent.width - element.pos.x - element.size.x;
+        pos.y = extent.height - element.pos.y - element.size.y;
         break;
-
+        
     case Anchor::CENTER:
-        pos.x = extent.width / 2.0f - element.size.x / 2.0f;
-        pos.y = extent.height / 2.0f - element.size.y / 2.0f;
+        pos.x = (extent.width - element.size.x) / 2.0f + element.pos.x;
+        pos.y = (extent.height - element.size.y) / 2.0f + element.pos.y;
+        break;
+        
+    default:
+        pos = element.pos;
         break;
     }
 
@@ -184,38 +238,6 @@ void GUI::loadTexture(const std::string &name, const std::string &path)
     m_descriptorSets[name] = m_pipeline.createDescriptorSet(descriptorData);
 }
 
-void GUI::initGameElements()
-{
-    Element crosshair = {
-        .anchor = Anchor::CENTER,
-        .position = {500.0f, 500.0f},
-        .size = {64.0f, 64.0f},
-        .uv = {0.0f, 0.0f, 16.0f, 16.0f},
-        .texture = "icons",
-    };
-
-    m_elements["crosshair"] = crosshair;
-}
-
-void GUI::initPauseElements()
-{
-    Element background = {
-        .anchor = Anchor::CENTER,
-        .position = {0.0f, 0.0f},
-        .size = {600.0f, 60.0f},
-        .uv = {0.0f, 0.0f, 0.0f, 0.0f},
-        .texture = "gui",
-    };
-
-    auto resumeButton = std::make_unique<Button>(
-        this,
-        "resume",
-        background
-    );
-
-    m_buttons["resume"] = std::move(resumeButton);
-}
-
 void GUI::drawGameElements()
 {
     std::string stat = "Minecraft Vulkan Clone ";
@@ -224,21 +246,27 @@ void GUI::drawGameElements()
 
     m_text.draw(stat, {10.0f, 10.0f}, 24.0f);
 
-    for (auto &[name, element] : m_elements) {
+    for (auto &[_, element] : m_elements) {
         draw(element);
     }
 }
 
 void GUI::drawPauseElements()
 {
-    m_text.draw("Game menu", {0.0f, -200.0f}, 24.0f, TextAlign::CENTER);
+    VkExtent2D extent = m_ctx->getSwapChainExtent();
+    glm::vec2 textPos(
+        extent.width / 2.0f,
+        extent.height / 2.0f - 200.0f
+    );
 
-    for (auto &[name, element] : m_elements) {
+    m_text.draw("Game menu", textPos, 24.0f, TextAlign::CENTER);
+
+    for (auto &[_, element] : m_elements) {
         draw(element);
     }
 
-    for (auto &[name, button] : m_buttons) {
-        button->render(m_window->getMousePos());
+    for (auto &[_, button] : m_buttons) {
+        button->render();
     }
 }
 

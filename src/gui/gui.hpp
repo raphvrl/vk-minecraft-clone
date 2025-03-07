@@ -31,13 +31,22 @@ class GUI
 {
 
 public:
-    void init(gfx::VulkanCtx &ctx, core::Window &window);
+    using CallBackFn = std::function<void()>;
+
+    void init(gfx::VulkanCtx &ctx);
     void destroy();
 
-    void update();
+    void update(const glm::vec2 &point);
+    void handleMouseClick();
     void updateStat(const GameStat &gameStat) { m_gameStat = gameStat; }
 
     void render();
+
+    void initGameElements();
+    void initPauseElements();
+
+    void setQuitCallback(CallBackFn callback) { m_quitCallback = callback; }
+    void setResumeCallback(CallBackFn callback) { m_resumeCallback = callback; }
 
     void draw(const Element &element);
 
@@ -45,7 +54,7 @@ public:
         const std::string &text,
         const glm::vec2 &pos,
         f32 size,
-        TextAlign align = TextAlign::TOP_LEFT
+        TextAlign align = TextAlign::LEFT
     )
     {
         m_text.draw(text, pos, size, align);
@@ -55,7 +64,6 @@ public:
 
 private:
     gfx::VulkanCtx *m_ctx;
-    core::Window *m_window;
 
     gfx::Pipeline m_pipeline;
 
@@ -86,11 +94,11 @@ private:
 
     void loadTexture(const std::string &name, const std::string &path);
 
-    void initGameElements();
-    void initPauseElements();
-
     void drawGameElements();
     void drawPauseElements();
+
+    CallBackFn m_quitCallback = nullptr;
+    CallBackFn m_resumeCallback = nullptr;
 };
 
 } // namespace gui

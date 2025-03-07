@@ -21,10 +21,13 @@ public:
     Button(
         GUI *gui,
         const std::string &text,
-        Element element
+        Element element,
+        CallBackFn callback
     );        
 
-    void render(const glm::vec2 &point);
+    void update(const glm::vec2 &point);
+    void handleMouseClick();
+    void render();
 
     bool countain(const glm::vec2 &point) const;
 

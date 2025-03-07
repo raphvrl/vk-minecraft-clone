@@ -7,26 +7,50 @@ namespace gui
 Button::Button(
     GUI *gui,
     const std::string &text,
-    Element element
+    Element element,
+    CallBackFn callback
 )
     : m_gui(gui), m_text(text)
 {
     m_element = element;
     m_element.uv = NORMAL_UV;
+
+    m_callback = callback;
 }
 
-void Button::render(const glm::vec2 &point)
+void Button::update(const glm::vec2 &point)
 {
-    bool wasHovered = m_hovered;
     m_hovered = countain(point);
 
-    if (wasHovered != m_hovered) {
-        m_element.uv = m_hovered ? HOVER_UV : NORMAL_UV;
+    if (m_pressed) {
+        m_pressed = false;
+    }
+}
+
+void Button::handleMouseClick()
+{
+    if (m_hovered && !m_pressed) {
+        m_callback();
+        m_pressed = true;
+    }
+}
+
+void Button::render()
+{
+    if (m_hovered) {
+        m_element.uv = HOVER_UV;
+    } else {
+        m_element.uv = NORMAL_UV;
     }
 
     m_gui->draw(m_element);
 
-    m_gui->drawText(m_text, m_element.position, 24.0f, TextAlign::CENTER);
+    glm::vec2 textPos = getAbsolutePos();
+
+    textPos.x += m_element.size.x / 2.0f;
+    textPos.y += m_element.size.y / 2.0f - 12.0f;
+
+    m_gui->drawText(m_text, textPos, 24.0f, TextAlign::CENTER);
 }
 
 bool Button::countain(const glm::vec2 &point) const
@@ -42,7 +66,7 @@ bool Button::countain(const glm::vec2 &point) const
 
 glm::vec2 Button::getAbsolutePos() const
 {
-    glm::vec2 pos = m_element.position;
+    glm::vec2 pos = m_element.pos;
     glm::vec2 size = m_element.size;
 
     VkExtent2D extent = m_gui->getExtent();
@@ -66,11 +90,10 @@ glm::vec2 Button::getAbsolutePos() const
         pos.y = extent.height - pos.y - size.y;
         break;
 
-    case Anchor::CENTER:
-        pos.x = extent.width / 2.0f - size.x / 2.0f;
-        pos.y = extent.height / 2.0f - size.y / 2.0f;
+        case Anchor::CENTER:
+        pos.x = extent.width / 2.0f - size.x / 2.0f + m_element.pos.x;
+        pos.y = extent.height / 2.0f - size.y / 2.0f + m_element.pos.y;
         break;
-
     }
 
     return pos;

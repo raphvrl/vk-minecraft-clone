@@ -90,9 +90,11 @@ void TextRenderer::draw(
 
     m_ubo.update(&ubo, sizeof(ubo));
 
+    const f32 pixelOffset = static_cast<float>(size) / 8.0f;
+
     int textWidth = 0;
     for (unsigned char c : text) {
-        textWidth += m_charWidths[c];
+        textWidth += m_charWidths[c] * pixelOffset;
     }
 
     int x = pos.x;
@@ -100,36 +102,20 @@ void TextRenderer::draw(
 
     switch (align)
     {
-    case TextAlign::TOP_LEFT:
-        x = pos.x;
-        y = pos.y;
+    case TextAlign::LEFT:
         break;
 
-    case TextAlign::TOP_RIGHT:
-        x = extent.width - textWidth - pos.x;
-        y = pos.y;
-        break;
-
-    case TextAlign::BOTTOM_LEFT:
-        x = pos.x;
-        y = extent.height - size - pos.y;
-        break;
-
-    case TextAlign::BOTTOM_RIGHT:
-        x = extent.width - textWidth - pos.x;
-        y = extent.height - size - pos.y;
+    case TextAlign::RIGHT:
+        x -= textWidth;
         break;
 
     case TextAlign::CENTER:
-        x = (extent.width / 2 - textWidth - size / 2) + pos.x;
-        y = (extent.height / 2 - size / 2) + pos.y;
+        x -= textWidth / 2;
         break;
     }
         
 
     x = std::floor(x);
-
-    const f32 pixelOffset = static_cast<float>(size) / 8.0f;
 
     for (unsigned char c : text) {
         int col = c % 16;

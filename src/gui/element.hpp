@@ -17,7 +17,7 @@ enum class Anchor
 struct Element
 {
     Anchor anchor;
-    glm::vec2 position;
+    glm::vec2 pos;
     glm::vec2 size;
     glm::vec4 uv;
     std::string texture;
