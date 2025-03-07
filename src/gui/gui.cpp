@@ -40,6 +40,7 @@ void GUI::init(gfx::VulkanCtx &ctx, core::Window &window)
     m_text.init(*m_ctx);
 
     initGameElements();
+    initPauseElements();
 }
 
 void GUI::destroy()
@@ -143,11 +144,13 @@ void GUI::draw(const Element &element)
     PushConstant pc;
     pc.model = model;
     pc.uv = {
-        element.uv.x / ATLAS_SIZE,
-        element.uv.y / ATLAS_SIZE,
-        element.uv.z / ATLAS_SIZE,
-        element.uv.w / ATLAS_SIZE
+        element.uv.x,
+        element.uv.y,
+        element.uv.x + element.uv.z,
+        element.uv.y + element.uv.w
     };
+
+    pc.uv /= ATLAS_SIZE;
 
     m_pipeline.push(
         VK_SHADER_STAGE_VERTEX_BIT,
@@ -194,6 +197,25 @@ void GUI::initGameElements()
     m_elements["crosshair"] = crosshair;
 }
 
+void GUI::initPauseElements()
+{
+    Element background = {
+        .anchor = Anchor::CENTER,
+        .position = {0.0f, 0.0f},
+        .size = {600.0f, 60.0f},
+        .uv = {0.0f, 0.0f, 0.0f, 0.0f},
+        .texture = "gui",
+    };
+
+    auto resumeButton = std::make_unique<Button>(
+        this,
+        "resume",
+        background
+    );
+
+    m_buttons["resume"] = std::move(resumeButton);
+}
+
 void GUI::drawGameElements()
 {
     std::string stat = "Minecraft Vulkan Clone ";
@@ -213,6 +235,10 @@ void GUI::drawPauseElements()
 
     for (auto &[name, element] : m_elements) {
         draw(element);
+    }
+
+    for (auto &[name, button] : m_buttons) {
+        button->render(m_window->getMousePos());
     }
 }
 

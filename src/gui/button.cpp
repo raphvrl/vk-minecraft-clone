@@ -7,19 +7,12 @@ namespace gui
 Button::Button(
     GUI *gui,
     const std::string &text,
-    const glm::vec2 &pos,
-    const glm::vec2 &size,
-    Anchor anchor
+    Element element
 )
     : m_gui(gui), m_text(text)
 {
-    m_element = {
-        .anchor = anchor,
-        .position = pos,
-        .size = size,
-        .uv = NORMAL_UV,
-        .texture = "gui",
-    };
+    m_element = element;
+    m_element.uv = NORMAL_UV;
 }
 
 void Button::render(const glm::vec2 &point)
@@ -31,9 +24,9 @@ void Button::render(const glm::vec2 &point)
         m_element.uv = m_hovered ? HOVER_UV : NORMAL_UV;
     }
 
-    if (!m_text.empty()) {
-        m_gui->drawText(m_text, getAbsolutePos(), 24.0f, TextAlign::CENTER);
-    }
+    m_gui->draw(m_element);
+
+    m_gui->drawText(m_text, m_element.position, 24.0f, TextAlign::CENTER);
 }
 
 bool Button::countain(const glm::vec2 &point) const

@@ -80,13 +80,14 @@ private:
     TextRenderer m_text;
 
     std::unordered_map<std::string, Element> m_elements;
-    std::unordered_map<std::string, Button> m_buttons;
+    std::unordered_map<std::string, std::unique_ptr<Button>> m_buttons;
 
     GameStat m_gameStat;
 
     void loadTexture(const std::string &name, const std::string &path);
 
     void initGameElements();
+    void initPauseElements();
 
     void drawGameElements();
     void drawPauseElements();

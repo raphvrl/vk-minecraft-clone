@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include <string>
+#include <functional>
 
 #include "element.hpp"
 
@@ -15,13 +16,13 @@ class Button
 {
 
 public:
+    using CallBackFn = std::function<void()>;
+
     Button(
         GUI *gui,
         const std::string &text,
-        const glm::vec2 &pos,
-        const glm::vec2 &size,
-        Anchor anchor = Anchor::CENTER
-    );
+        Element element
+    );        
 
     void render(const glm::vec2 &point);
 
@@ -35,8 +36,10 @@ private:
     bool m_hovered = false;
     bool m_pressed = false;
 
-    static constexpr glm::vec4 NORMAL_UV = {0.0f, 67.0f, 200.0f, 20.0f};
-    static constexpr glm::vec4 HOVER_UV = {0.0f, 87.0f, 200.0f, 20.0f};
+    CallBackFn m_callback = nullptr;
+
+    static constexpr glm::vec4 NORMAL_UV = {0.0f, 66.0f, 200.0f, 20.0f};
+    static constexpr glm::vec4 HOVER_UV = {0.0f, 86.0f, 200.0f, 20.0f};
 
     glm::vec2 getAbsolutePos() const;
 };
