@@ -48,15 +48,17 @@ jobs:
       if: github.event_name != 'pull_request'
       shell: pwsh
       run: |
-        # Créer un certificat auto-signé avec plus d'informations
         $cert = New-SelfSignedCertificate `
           -Subject "CN=VulkanMinecraftClone, O=tmpOrganisation, OU=raphvrl, E=tmp@gmail.com" `
           -Type CodeSigning `
           -CertStoreLocation Cert:\CurrentUser\My `
           -FriendlyName "Vulkan Minecraft Certificate" `
           -NotAfter (Get-Date).AddYears(3)
-          
-        # Trouver signtool.exe
+
+        $pwd = ConvertTo-SecureString -String "password" -Force -AsPlainText
+        $certPath = "$env:TEMP\cert.pfx"
+        Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath $certPath -Password $pwd
+
         $signtool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1 -ExpandProperty FullName
         
         if (-Not $signtool) {
@@ -65,14 +67,17 @@ jobs:
                     Select-Object -First 1 -ExpandProperty FullName
         }
         
-        # Signer l'exécutable avec plus de détails
-        & $signtool sign /sha1 $cert.Thumbprint `
+        Write-Host "Certificat créé avec le thumbprint: $($cert.Thumbprint)"
+        Write-Host "SignTool trouvé à: $signtool"
+        Write-Host "Liste des certificats disponibles:"
+        Get-ChildItem -Path Cert:\CurrentUser\My | Where-Object { $_.HasPrivateKey } | Format-List
+
+        & $signtool sign /f $certPath /p "password" `
           /fd sha256 `
           /tr http://timestamp.digicert.com `
           /td sha256 `
           /d "Vulkan Minecraft Clone" `
           /du "https://github.com/raphvrl/vk-minecraft-clone" `
-          /n "RaphVrl" `
           app.exe
 
     - name: Upload artifacts
