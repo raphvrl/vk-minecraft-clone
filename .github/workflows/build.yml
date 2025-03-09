@@ -48,8 +48,15 @@ jobs:
       if: github.event_name != 'pull_request'
       shell: pwsh
       run: |
-        $cert = New-SelfSignedCertificate -Subject "CN=VulkanMinecraft" -Type CodeSigning -CertStoreLocation Cert:\CurrentUser\My
-
+        # Créer un certificat auto-signé avec plus d'informations
+        $cert = New-SelfSignedCertificate `
+          -Subject "CN=VulkanMinecraftClone, O=tmpOrganisation, OU=raphvrl, E=tmp@gmail.com `
+          -Type CodeSigning `
+          -CertStoreLocation Cert:\CurrentUser\My `
+          -FriendlyName "Vulkan Minecraft Certificate" `
+          -NotAfter (Get-Date).AddYears(3)
+          
+        # Trouver signtool.exe
         $signtool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1 -ExpandProperty FullName
         
         if (-Not $signtool) {
@@ -57,8 +64,16 @@ jobs:
                     Where-Object { $_.Directory.Name -match "x64" } | 
                     Select-Object -First 1 -ExpandProperty FullName
         }
-
-        & $signtool sign /sha1 $cert.Thumbprint /fd sha256 /t http://timestamp.digicert.com /d "Vulkan Minecraft Clone" app.exe
+        
+        # Signer l'exécutable avec plus de détails
+        & $signtool sign /sha1 $cert.Thumbprint `
+          /fd sha256 `
+          /tr http://timestamp.digicert.com `
+          /td sha256 `
+          /d "Vulkan Minecraft Clone" `
+          /du "https://github.com/raphvrl/vk-minecraft-clone" `
+          /n "RaphVrl" `
+          app.exe
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

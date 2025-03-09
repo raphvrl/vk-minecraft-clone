@@ -51,7 +51,9 @@ void main()
     float alpha = texture(tex, fragUV).a;
 
     color = addShadow(color);
+
     color = addFog(color, dist);
+
 
     outColor = vec4(color, alpha);
 }

@@ -50,7 +50,6 @@ private:
         return y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x;
     }
 
-    void calculateLight();
     void calulateSkyLight();
     void propagateLight();
 };

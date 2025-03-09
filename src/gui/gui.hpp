@@ -5,12 +5,16 @@
 #include <vector>
 #include <memory>
 
+#include "core/window/window.hpp"
 #include "graphics/vulkan_ctx.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
 #include "graphics/uniform_buffer.hpp"
 #include "text_renderer.hpp"
 #include "game/game_state.hpp"
+
+#include "element.hpp"
+#include "button.hpp"
 
 namespace gui
 {
@@ -23,35 +27,40 @@ struct GameStat
 
 };
 
-enum class Anchor
-{
-    TOP_LEFT,
-    TOP_RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM_RIGHT,
-    CENTER,
-};
-
-struct Element
-{
-    Anchor anchor;
-    glm::vec2 position;
-    glm::vec2 size;
-    glm::vec4 uv;
-};
-
 class GUI
 {
 
 public:
+    using CallBackFn = std::function<void()>;
+
     void init(gfx::VulkanCtx &ctx);
     void destroy();
 
-    void update();
+    void update(const glm::vec2 &point);
+    void handleMouseClick();
     void updateStat(const GameStat &gameStat) { m_gameStat = gameStat; }
 
     void render();
 
+    void initGameElements();
+    void initPauseElements();
+
+    void setQuitCallback(CallBackFn callback) { m_quitCallback = callback; }
+    void setResumeCallback(CallBackFn callback) { m_resumeCallback = callback; }
+
+    void draw(const Element &element);
+
+    void drawText(
+        const std::string &text,
+        const glm::vec2 &pos,
+        f32 size,
+        TextAlign align = TextAlign::LEFT
+    )
+    {
+        m_text.draw(text, pos, size, align);
+    }
+
+    VkExtent2D getExtent() const { return m_ctx->getSwapChainExtent(); }
 
 private:
     gfx::VulkanCtx *m_ctx;
@@ -73,21 +82,23 @@ private:
 
     constexpr static u32 ATLAS_SIZE = 256;
 
-    gfx::Texture m_texture;
-    VkDescriptorSet m_descriptorSet;
+    std::unordered_map<std::string, gfx::Texture> m_textures;
+    std::unordered_map<std::string, VkDescriptorSet> m_descriptorSets;
 
     TextRenderer m_text;
 
     std::unordered_map<std::string, Element> m_elements;
+    std::unordered_map<std::string, std::unique_ptr<Button>> m_buttons;
 
     GameStat m_gameStat;
 
-    void draw(const Element &element);
-
-    void initGameElements();
+    void loadTexture(const std::string &name, const std::string &path);
 
     void drawGameElements();
     void drawPauseElements();
+
+    CallBackFn m_quitCallback = nullptr;
+    CallBackFn m_resumeCallback = nullptr;
 };
 
 } // namespace gui

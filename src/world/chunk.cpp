@@ -8,12 +8,13 @@ Chunk::Chunk()
 {
     m_blocks.fill(BlockType::AIR);
     m_lights.fill(15);
-    calculateLight();
 }
 
 void Chunk::update()
 {
-    calculateLight();
+    m_lights.fill(0);
+    calulateSkyLight();
+    propagateLight();
 }
 
 void Chunk::setBlock(int x, int y, int z, BlockType type)
@@ -66,13 +67,6 @@ u8 Chunk::getLight(int x, int y, int z) const
     }
 
     return m_lights[getIndex(x, y, z)];
-}
-
-void Chunk::calculateLight()
-{
-    m_lights.fill(0);
-    calulateSkyLight();
-    propagateLight();
 }
 
 void Chunk::calulateSkyLight()
@@ -129,32 +123,30 @@ void Chunk::propagateLight()
         for (const auto &dir : directions) {
             glm::ivec3 adjPos = glm::ivec3(node.x, node.y, node.z) + dir;
 
-            if (
-                adjPos.x < 0 || adjPos.x >= CHUNK_SIZE ||
-                adjPos.y < 0 || adjPos.y >= CHUNK_HEIGHT ||
-                adjPos.z < 0 || adjPos.z >= CHUNK_SIZE
-            ) {
-                continue;
-            }
+            bool isInChunk = adjPos.x >= 0 && adjPos.x < CHUNK_SIZE &&
+                             adjPos.y >= 0 && adjPos.y < CHUNK_HEIGHT &&
+                             adjPos.z >= 0 && adjPos.z < CHUNK_SIZE;
 
-            BlockType neightborBlock = getBlock(adjPos.x, adjPos.y, adjPos.z);
-            if (
-                neightborBlock != BlockType::AIR &&
-                neightborBlock != BlockType::WATER
-            ) {
-                continue;
-            }
+            if (isInChunk) {
+                BlockType neighborBlock = getBlock(adjPos.x, adjPos.y, adjPos.z);
+                if (
+                    neighborBlock != BlockType::AIR &&
+                    neighborBlock != BlockType::WATER
+                ) {
+                    continue;
+                }
 
-            u8 currentLight = getLight(adjPos.x, adjPos.y, adjPos.z);
-            u8 propagatedLight = std::max(node.level - 1, 0);
-            
-            if (neightborBlock == BlockType::WATER) {
-                propagatedLight = std::max(propagatedLight - 3, 0);
-            }
+                u8 currentLight = getLight(adjPos.x, adjPos.y, adjPos.z);
+                u8 propagatedLight = std::max(node.level - 1, 0);
 
-            if (propagatedLight > currentLight) {
-                setLight(adjPos.x, adjPos.y, adjPos.z, propagatedLight);
-                lightQueue.push({adjPos.x, adjPos.y, adjPos.z, propagatedLight});
+                if (neighborBlock == BlockType::WATER) {
+                    propagatedLight = std::max(propagatedLight - 3, 0);
+                }
+
+                if (propagatedLight > currentLight) {
+                    setLight(adjPos.x, adjPos.y, adjPos.z, propagatedLight);
+                    lightQueue.push({adjPos.x, adjPos.y, adjPos.z, propagatedLight});
+                }
             }
         }
     }
