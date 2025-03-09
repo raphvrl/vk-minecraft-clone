@@ -50,7 +50,7 @@ jobs:
       run: |
         # Créer un certificat auto-signé avec plus d'informations
         $cert = New-SelfSignedCertificate `
-          -Subject "CN=VulkanMinecraftClone, O=tmpOrganisation, OU=raphvrl, E=tmp@gmail.com `
+          -Subject "CN=VulkanMinecraftClone, O=tmpOrganisation, OU=raphvrl, E=tmp@gmail.com" `
           -Type CodeSigning `
           -CertStoreLocation Cert:\CurrentUser\My `
           -FriendlyName "Vulkan Minecraft Certificate" `

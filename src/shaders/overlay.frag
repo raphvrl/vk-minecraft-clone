@@ -8,5 +8,8 @@ layout(location = 0) in vec2 fragUV;
 
 void main()
 {
-    outColor = texture(tex, fragUV);
+    vec3 color = texture(tex, fragUV).rgb;
+    float alpha = texture(tex, fragUV).a;
+
+    outColor = vec4(color, alpha);
 }
