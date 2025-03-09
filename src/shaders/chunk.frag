@@ -50,6 +50,10 @@ void main()
     vec3 color = texture(tex, fragUV).rgb;
     float alpha = texture(tex, fragUV).a;
 
+    if (alpha > 0.1 && alpha < 0.9) {
+        alpha = 0.8;
+    }
+
     color = addShadow(color);
 
     color = addFog(color, dist);
