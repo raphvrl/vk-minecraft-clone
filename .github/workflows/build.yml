@@ -82,6 +82,14 @@ jobs:
             libvulkan-dev \
             vulkan-tools \
             glslang-tools \
+            libgl1-mesa-dev \
+            xorg-dev \
+            libwayland-dev \
+            wayland-protocols \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
             zip
       
       - name: Build project
