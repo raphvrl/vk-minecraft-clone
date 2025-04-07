@@ -29,9 +29,9 @@ DEPFLAGS = -MMD -MP
 CXXFLAGS = -Wall -Wextra -Werror -I$(SRC_DIR)
 
 ifeq ($(OS), Windows_NT)
-	TARGET = app.exe
+	TARGET = vulkan-minecraft.exe
 else
-	TARGET = app
+	TARGET = vulkan-minecraft
 endif
 
 GLFW_DIR = $(LIB_DIR)/glfw
