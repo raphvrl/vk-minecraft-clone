@@ -90,6 +90,7 @@ jobs:
             libxinerama-dev \
             libxcursor-dev \
             libxi-dev \
+            libxkbcommon-dev \
             zip
       
       - name: Build project
