@@ -20,7 +20,6 @@
 #include "graphics/pipeline.hpp"
 #include "graphics/texture.hpp"
 #include "graphics/uniform_buffer.hpp"
-#include "utils/thread/thread_pool.hpp"
 #include "core/frustum.hpp"
 
 namespace wld
