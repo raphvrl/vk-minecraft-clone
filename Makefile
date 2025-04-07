@@ -12,7 +12,14 @@ ifeq ($(OS), Windows_NT)
 		$(error "Please run this makefile from MSYS2")
 	endif
 else
-	$(error "This makefile is only for Windows")
+	CXX = g++
+
+	RM = rm -rf
+	MKDIR = mkdir -p
+	TOUCH = touch
+	PRINT = echo
+
+	CMAKE = cmake
 endif
 
 SRC_DIR = src
@@ -78,6 +85,14 @@ VMA_INC = $(VMA_DIR)/include
 
 CXXFLAGS += -I$(VMA_INC)
 
+ifeq ($(OS), Windows_NT)
+	CXXFLAGS += -I$(VULKAN_INC)
+	LDFLAGS += -L$(VULKAN_LIB) -lvulkan-1
+else
+	CXXFLAGS += $(shell pkg-config --cflags vulkan)
+	LDFLAGS += $(shell pkg-config --libs vulkan)
+endif
+
 CXXFLAGS += -I$(VULKAN_INC)
 LDFLAGS += -L$(VULKAN_LIB) -lvulkan-1
 
@@ -96,8 +111,6 @@ else
 	GLSLC = glslc
 endif
 
-LDFLAGS += -static-libgcc -static-libstdc++ -static
-
 MODE ?= debug
 
 ifeq ($(MODE), debug)
@@ -107,17 +120,20 @@ else
 endif
 
 ifeq ($(OS), Windows_NT)
+	LDFLAGS += -static-libgcc -static-libstdc++ -static
 	ifeq ($(MODE), release)
 		LDFLAGS += -mwindows
 	endif
+else
+	LDFLAGS += -ldl -pthread
 endif
 
-all: glfw fastnoise shaders $(TARGET)
+all: $(TARGET)
 
 release:
 	@$(MAKE) MODE=release all
 
-$(TARGET): $(OBJ)
+$(TARGET): $(OBJ) | $(SHADER_DST) $(GLFW_STAMP)
 	@$(PRINT) "Linking $@"
 	@$(CXX) -o $(TARGET) $(OBJ) $(LDFLAGS)
 
@@ -170,4 +186,4 @@ clean-all:
 
 re: clean all
 
-.PHONY: all release clean re clean-all glfw clean-glfw fastnoise clean-fastnoise
+.PHONY: all release clean re clean-all glfw clean-glfw

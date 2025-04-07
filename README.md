@@ -8,7 +8,7 @@ A Minecraft Clone built with Vulkan.
 
 1. Go to the [Releases page](https://github.com/raphvrl/vk-minecraft-clone/releases)
 2. Find the latest release version (e.g., v0.1.0)
-3. Download the `build.zip` file under "Assets"
+3. Download the zip file for your platform (e.g., `vulkan-minecraft-windows-x64.zip`)
 4. Extract the zip file and run `vulkan-minecraft.exe` to play the game
 
 ### Option 2: Building from Source

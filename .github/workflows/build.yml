@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-windows:
     name: Build Windows Release
     runs-on: windows-latest
     defaults:
@@ -54,14 +54,92 @@ jobs:
           cp vulkan-minecraft.exe release-package/
           cp -r assets release-package/
           cd release-package
-          zip -r ../vulkan-minecraft-${GITHUB_REF_NAME}.zip .
+          zip -r ../vulkan-minecraft-windows-${GITHUB_REF_NAME}.zip .
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: vulkan-minecraft-windows-${{ github.ref_name }}.zip
+          retention-days: 1
+
+  build-linux:
+    name: Build Linux Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            libvulkan-dev \
+            vulkan-tools \
+            libglfw3-dev \
+            libglm-dev \
+            glslang-tools \
+            zip
+      
+      - name: Build project
+        run: |
+          export VULKAN_SDK=/usr
+          make release -j$(nproc)
+      
+      - name: Prepare artifacts
+        run: |
+          mkdir -p release-package
+          cp vulkan-minecraft release-package/
+          cp -r assets release-package/
+          cd release-package
+          zip -r ../vulkan-minecraft-linux-${GITHUB_REF_NAME}.zip .
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-build
+          path: vulkan-minecraft-linux-${{ github.ref_name }}.zip
+          retention-days: 1
+
+  create-release:
+    name: Create Release
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Extract release notes
+        id: extract_notes
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Extracting release notes for version $VERSION"
+          awk -v ver="$VERSION" '
+          BEGIN { section=0; notes=""; }
+          $0 ~ "^## \\["ver"\\]" { section=1; notes=notes $0 "\n"; next }
+          section==1 && $0 ~ "^## " { section=0; next }
+          section==1 { notes=notes $0 "\n" }
+          END { print notes }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
       
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           name: Vulkan Minecraft ${{ github.ref_name }}
-          files: vulkan-minecraft-${{ github.ref_name }}.zip
-          body_path: CHANGELOG.md
+          files: |
+            windows-build/vulkan-minecraft-windows-${{ github.ref_name }}.zip
+            linux-build/vulkan-minecraft-linux-${{ github.ref_name }}.zip
+          body_path: RELEASE_NOTES.md
           draft: false
           prerelease: false
