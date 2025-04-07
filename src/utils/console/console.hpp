@@ -5,7 +5,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <cstdio>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #endif
 
 #include "core/types.hpp"

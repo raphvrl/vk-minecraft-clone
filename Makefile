@@ -172,6 +172,8 @@ $(GLFW_STAMP):
 	@$(MAKE) -C $(GLFW_BIN)
 	@$(TOUCH) $(GLFW_STAMP)
 
+.NOTPARALLEL: $(GLFW_LIB)
+
 clean-glfw:
 	@$(PRINT) "Cleaning GLFW"
 	@$(RM) $(GLFW_BIN)
