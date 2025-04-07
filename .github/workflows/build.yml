@@ -57,7 +57,7 @@ jobs:
           zip -r ../vulkan-minecraft-windows-${GITHUB_REF_NAME}.zip .
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: vulkan-minecraft-windows-${{ github.ref_name }}.zip
@@ -81,8 +81,6 @@ jobs:
             cmake \
             libvulkan-dev \
             vulkan-tools \
-            libglfw3-dev \
-            libglm-dev \
             glslang-tools \
             zip
       
@@ -100,7 +98,7 @@ jobs:
           zip -r ../vulkan-minecraft-linux-${GITHUB_REF_NAME}.zip .
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: vulkan-minecraft-linux-${{ github.ref_name }}.zip
@@ -116,7 +114,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       
       - name: Extract release notes
         id: extract_notes
