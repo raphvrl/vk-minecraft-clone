@@ -102,7 +102,7 @@ void GUI::initGameElements()
 {
     Element crosshair = {
         .anchor = Anchor::CENTER,
-        .pos = {500.0f, 500.0f},
+        .pos = {0.0f, 0.0f},
         .size = {64.0f, 64.0f},
         .uv = {0.0f, 0.0f, 16.0f, 16.0f},
         .texture = "icons",
