@@ -5,20 +5,21 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
+- Upcoming features...
+
+### Changed
+- Upcoming changes...
+
+### Fixed
+- Upcoming fixes...
+
+## [0.1.0] - 2025-04-08
+
+### Added
 - Initial project setup
 - Basic Vulkan implementation
 - Rendering pipeline foundation
 - Basic world generation
-
-### Changed
-- None
-
-### Fixed
-- None
-
-## [0.1.0] - 2025-04-08
-- Initial release with basic functionality
-- Vulkan renderer implementation
 - Simple block rendering
 - Basic movement controls
 
