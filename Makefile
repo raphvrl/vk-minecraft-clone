@@ -132,20 +132,16 @@ all: $(TARGET) $(SHADER_DST)
 release:
 	@$(MAKE) MODE=release all
 
-$(TARGET): $(OBJ) | $(GLFW_LIB)
+$(TARGET): $(OBJ) $(GLFW_LIB)
 	@$(PRINT) "Linking $@"
 	@$(CXX) -o $(TARGET) $(OBJ) $(LDFLAGS)
 
 -include $(DEP)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BIN_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(PRINT) "Compiling $< -> $@"
 	@$(MKDIR) $(dir $@)
 	@$(CXX) -c $< -o $@ $(DEPFLAGS) $(CXXFLAGS)
-
-$(BIN_DIR):
-	@$(PRINT) "Creating $(BIN_DIR)"
-	@$(MKDIR) $(BIN_DIR)
 
 shaders: $(SHADER_DST)
 

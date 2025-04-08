@@ -76,8 +76,10 @@ jobs:
           msystem: MINGW64
           update: true
           install: >-
-            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-clang
+            mingw-w64-x86_64-cmake
             make
+            git
       
       - name: Cache Vulkan SDK
         id: vulkan-sdk-cache

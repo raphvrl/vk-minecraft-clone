@@ -45,7 +45,7 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
   - Pause menu
 - Performance optimizations
   - Face culling for meshes
-  - Frustum culling for chunks
+  - Frustum culling for chunks and clouds
 
 [Unreleased]: https://github.com/username/vulkan-minecraft/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/username/vulkan-minecraft/releases/tag/v0.1.0
