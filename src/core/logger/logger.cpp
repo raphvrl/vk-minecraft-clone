@@ -72,6 +72,7 @@ void Logger::consoleLog(const std::string &msg, Level level)
 
 void Logger::winLog(const std::string &msg, Level level)
 {
+
 #ifdef _WIN32
     std::string title;
 
@@ -88,6 +89,8 @@ void Logger::winLog(const std::string &msg, Level level)
     }
 
     MessageBoxA(NULL, msg.c_str(), title.c_str(), MB_OK);
+#else
+    consoleLog(msg, level);
 #endif
 
 }
