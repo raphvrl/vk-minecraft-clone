@@ -47,7 +47,7 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
    make
    ```
 
-4. Run the game:
+3. Run the game:
    - **Windows**: `./vulkan-minecraft.exe`
    - **Linux**: `./vulkan-minecraft`
 
@@ -73,3 +73,10 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
 - Block system with different textures
 - First-person controls
 
+## Disclaimer
+
+This project is a fan-made clone created for educational purposes only. It is not affiliated with, endorsed by, or connected to Mojang or Microsoft in any way.
+
+All Minecraft textures, sounds, and other assets used in this project belong to Mojang AB. This project does not distribute any copyrighted assets.
+
+"Minecraft" is a trademark of Mojang Synergies AB.
