@@ -139,19 +139,19 @@ $(TARGET): $(OBJ) $(GLFW_LIB)
 -include $(DEP)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@$(PRINT) "Compiling $< -> $@"
+	@$(PRINT) "Compiling $<"
 	@$(MKDIR) $(dir $@)
 	@$(CXX) -c $< -o $@ $(DEPFLAGS) $(CXXFLAGS)
 
 shaders: $(SHADER_DST)
 
 $(SHADERS_BIN)/%.vert.spv: $(SHADERS_DIR)/%.vert | $(SHADERS_BIN)
-	@$(PRINT) "Compiling $< -> $@"
+	@$(PRINT) "Compiling $<"
 	@$(MKDIR) $(dir $@)
 	@$(GLSLC) $< -o $@
 
 $(SHADERS_BIN)/%.frag.spv: $(SHADERS_DIR)/%.frag | $(SHADERS_BIN)
-	@$(PRINT) "Compiling $< -> $@"
+	@$(PRINT) "Compiling $<"
 	@$(MKDIR) $(dir $@)
 	@$(GLSLC) $< -o $@
 
