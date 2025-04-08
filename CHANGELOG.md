@@ -5,7 +5,8 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- Upcoming features...
+- Custom application icon for Windows executable (.exe)
+- Windows resource configuration for better integration with File Explorer
 
 ### Changed
 - Upcoming changes...
