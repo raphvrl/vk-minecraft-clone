@@ -13,7 +13,9 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
 #else
     setlocale(LC_ALL, ".UTF-8");
-#endif    
+#endif
+
+// to justify a commit message
 
     try {
         game::Game game;
