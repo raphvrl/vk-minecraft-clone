@@ -44,8 +44,8 @@ endif
 GLFW_DIR = $(LIB_DIR)/glfw
 GLFW_INC = $(GLFW_DIR)/include
 GLFW_BIN = $(BIN_DIR)/lib/glfw
-GLFW_LIB = $(GLFW_BIN)/src
-GLFW_STAMP = $(GLFW_BIN)/.stamp
+GLFW_LIB_DIR = $(GLFW_BIN)/src
+GLFW_LIB = $(GLFW_LIB_DIR)/libglfw3.a
 
 GLFW_FLAGS = -DBUILD_SHARED_LIBS=OFF \
 			 -DGLFW_BUILD_EXAMPLES=OFF \
@@ -53,7 +53,7 @@ GLFW_FLAGS = -DBUILD_SHARED_LIBS=OFF \
 			 -DGLFW_BUILD_DOCS=OFF
 
 CXXFLAGS += -I$(GLFW_INC)
-LDFLAGS += -L$(GLFW_LIB) -lglfw3
+LDFLAGS += -L$(GLFW_LIB_DIR) -lglfw3
 
 ifeq ($(OS), Windows_NT)
 	LDFLAGS += -lgdi32
@@ -77,8 +77,10 @@ FASTNOISE_INC = $(FASTNOISE_DIR)/Cpp
 
 CXXFLAGS += -I$(FASTNOISE_INC)
 
-VULKAN_INC = $(VULKAN_SDK)/Include
-VULKAN_LIB = $(VULKAN_SDK)/Lib
+ifeq ($(OS), Windows_NT)
+	VULKAN_INC = $(VULKAN_SDK)/Include
+	VULKAN_LIB = $(VULKAN_SDK)/Lib
+endif
 
 VMA_DIR = $(LIB_DIR)/vma
 VMA_INC = $(VMA_DIR)/include
@@ -125,12 +127,12 @@ else
 	LDFLAGS += -ldl -pthread
 endif
 
-all: $(TARGET)
+all: $(TARGET) $(SHADER_DST)
 
 release:
 	@$(MAKE) MODE=release all
 
-$(TARGET): $(OBJ) | $(SHADER_DST) $(GLFW_STAMP)
+$(TARGET): $(OBJ) | $(GLFW_LIB)
 	@$(PRINT) "Linking $@"
 	@$(CXX) -o $(TARGET) $(OBJ) $(LDFLAGS)
 
@@ -161,13 +163,12 @@ $(SHADERS_BIN):
 	@$(PRINT) "Creating $(SHADERS_BIN)"
 	@$(MKDIR) $(SHADERS_BIN)
 
-glfw: $(GLFW_STAMP)
+glfw: $(GLFW_LIB)
 	
-$(GLFW_STAMP):
+$(GLFW_LIB):
 	@$(PRINT) "Building GLFW"
 	@$(CMAKE) -S $(GLFW_DIR) -B $(GLFW_BIN) $(GLFW_FLAGS)
 	@$(MAKE) -C $(GLFW_BIN)
-	@$(TOUCH) $(GLFW_STAMP)
 
 .NOTPARALLEL: $(GLFW_LIB)
 
@@ -181,7 +182,7 @@ clean:
 
 clean-all:
 	@$(PRINT) "Cleaning all"
-	@$(RM) $(BIN_DIR)
+	@$(RM) $(BIN_DIR) $(TARGET)
 
 re: clean all
 

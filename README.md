@@ -2,6 +2,8 @@
 
 A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
 
+![Game Screenshot](img/gameplay.png)
+
 ## Installation
 
 ### Option 1: Prebuilt Release (Recommended)
@@ -40,17 +42,7 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
    cd vulkan-minecraft
    ```
 
-2. Set up the environment:
-   - **Windows**: Open MSYS2 MinGW 64-bit and set `VULKAN_SDK`:
-     ```bash
-     export VULKAN_SDK=/c/VulkanSDK/1.3.239.0  # Adjust to your installation
-     ```
-   - **Linux**: Set `VULKAN_SDK`:
-     ```bash
-     export VULKAN_SDK=/usr
-     ```
-
-3. Build the project:
+2. Build the project:
    ```bash
    make
    ```
@@ -71,12 +63,13 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
 - Mouse: Look around
 - Left click: Destroy block
 - Right click: Place block
-- Escape: Pause menu / Quit
+- Escape: Pause menu
 
 ## Features
 
 - Procedural terrain generation
-- Dynamic lighting system
+- lighting system
 - Sky and cloud rendering
 - Block system with different textures
 - First-person controls
+
