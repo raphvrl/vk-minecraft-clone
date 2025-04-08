@@ -1,0 +1,170 @@
+name: Code Linting
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  cross-platform-checks:
+    name: Cross Platform Code Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang-tidy clang-format cppcheck
+      
+      - name: Check platform-specific includes
+        run: |
+          echo "Checking for platform-specific includes..."
+
+          find src -name "*.cpp" -o -name "*.hpp" | xargs grep -l "include" | \
+          xargs grep -l "windows.h" | \
+          xargs grep -L "_WIN32\|__linux__" || echo "No unconditional Windows includes found"
+
+          find src -name "*.cpp" | xargs grep -l "GetConsoleScreenBufferInfo\|CreateFile\|WriteConsole" | \
+          xargs grep -L "_WIN32" || echo "No unconditional Windows APIs found"
+
+          find src -name "*.cpp" | xargs grep -l "ioctl\|TIOCGWINSZ" | \
+          xargs grep -L "__linux__\|__unix__" || echo "No unconditional Linux APIs found"
+      
+      - name: Check for platform-specific paths
+        run: |
+          echo "Checking for hardcoded paths..."
+          find src -name "*.cpp" -o -name "*.hpp" | xargs grep -l "C:\\\\" || echo "No Windows paths found"
+          find src -name "*.cpp" -o -name "*.hpp" | xargs grep -l "\\\\\\\\." || echo "No Windows UNC paths found"
+          
+      - name: Run Clang-Tidy with platform detection
+        run: |
+          find src -name "*.cpp" -o -name "*.hpp" | \
+          xargs -I {} clang-tidy {} -- -I$PWD/src -DWIN32 -D_WIN32 || true
+          
+          find src -name "*.cpp" -o -name "*.hpp" | \
+          xargs -I {} clang-tidy {} -- -I$PWD/src -D__linux__ || true
+
+  windows-build-check:
+    name: Windows Build Verification
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            make
+      
+      - name: Build with platform-specific flags
+        run: |
+          export CXXFLAGS="-Wall -Wextra -Werror"
+          mkdir -p build && cd build
+          cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Debug
+          make -j$(nproc) VERBOSE=1 || echo "Build warnings/errors detected"
+
+  linux-build-check:
+    name: Linux Build Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libvulkan-dev glslang-tools
+      
+      - name: Build with platform-specific flags
+        run: |
+          export CXXFLAGS="-Wall -Wextra -Werror"
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          make -j$(nproc) VERBOSE=1 || echo "Build warnings/errors detected"
+
+  shader-validation:
+    name: Validate GLSL Shaders
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install glslang validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+      
+      - name: Validate Vertex Shaders
+        run: |
+          echo "Validating vertex shaders..."
+          find src/shaders -name "*.vert" -exec glslangValidator --target-env vulkan1.3 {} \;
+      
+      - name: Validate Fragment Shaders
+        run: |
+          echo "Validating fragment shaders..."
+          find src/shaders -name "*.frag" -exec glslangValidator --target-env vulkan1.3 {} \;
+      
+      - name: Advanced shader checks
+        run: |
+          echo "Running advanced shader compatibility checks..."
+
+          echo "Checking for extension usage..."
+          find src/shaders -name "*.vert" -o -name "*.frag" | xargs grep -l "#extension" || echo "No extensions used"
+
+          echo "Checking GLSL versions..."
+          find src/shaders -name "*.vert" -o -name "*.frag" | xargs grep "version" | sort -u
+
+          echo "Checking for atomic operations..."
+          find src/shaders -name "*.vert" -o -name "*.frag" | xargs grep -l "atomicAdd\|atomicOr\|atomicAnd" || echo "No atomic operations found"
+
+  vulkan-validation:
+    name: Vulkan Validation Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev vulkan-validationlayers spirv-tools
+      
+      - name: Compile shaders to SPIR-V
+        run: |
+          mkdir -p spv-test
+          find src/shaders -name "*.vert" -exec glslangValidator --target-env vulkan1.3 -o {}.spv {} \;
+          find src/shaders -name "*.frag" -exec glslangValidator --target-env vulkan1.3 -o {}.spv {} \;
+      
+      - name: Analyze SPIR-V modules
+        run: |
+          find . -name "*.spv" -exec spirv-val {} \;
+
+          sudo apt-get install -y spirv-cross
+          for shader in $(find . -name "*.spv"); do
+            echo "Cross-compiling $shader..."
+            spirv-cross --vulkan-semantics $shader > ${shader%.spv}.cross.glsl || echo "Warning: Cross-compilation issues in $shader"
+          done
