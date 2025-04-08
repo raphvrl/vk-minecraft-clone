@@ -127,6 +127,10 @@ else
 	LDFLAGS += -ldl -pthread
 endif
 
+RES_DIR = $(BIN_DIR)/res
+RES_SRC = $(SRC_DIR)/resources.rc
+RES_OBJ = $(RES_DIR)/resources.o
+
 all: $(TARGET) $(SHADER_DST)
 
 release:
@@ -134,14 +138,26 @@ release:
 
 $(TARGET): $(OBJ) $(GLFW_LIB)
 	@$(PRINT) "Linking $@"
+ifeq ($(OS), Windows_NT)
+	@$(MAKE) -f $(lastword $(MAKEFILE_LIST)) build-windows-target
+else
 	@$(CXX) -o $(TARGET) $(OBJ) $(LDFLAGS)
+endif
 
--include $(DEP)
+build-windows-target: $(RES_OBJ)
+	@$(CXX) -o $(TARGET) $(OBJ) $(RES_OBJ) $(LDFLAGS)
+
+$(RES_OBJ): $(RES_SRC)
+	@$(PRINT) "Compiling resources"
+	@$(MKDIR) $(dir $@)
+	@windres $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(PRINT) "Compiling $<"
 	@$(MKDIR) $(dir $@)
 	@$(CXX) -c $< -o $@ $(DEPFLAGS) $(CXXFLAGS)
+
+-include $(DEP)
 
 shaders: $(SHADER_DST)
 
