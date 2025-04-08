@@ -93,9 +93,6 @@ else
 	LDFLAGS += $(shell pkg-config --libs vulkan)
 endif
 
-CXXFLAGS += -I$(VULKAN_INC)
-LDFLAGS += -L$(VULKAN_LIB) -lvulkan-1
-
 SHADERS_DIR = $(SRC_DIR)/shaders
 SHADERS_BIN = assets/shaders
 
