@@ -108,7 +108,7 @@ SHADER_DST = $(patsubst $(SHADERS_DIR)/%.vert, $(SHADERS_BIN)/%.vert.spv, $(SHAD
 ifeq ($(OS), Windows_NT)
 	GLSLC = $(VULKAN_SDK)/Bin/glslc.exe
 else
-	GLSLC = glslc
+	GLSLC = glslangValidator -V
 endif
 
 MODE ?= debug
