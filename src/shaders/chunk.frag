@@ -21,15 +21,10 @@ layout(push_constant) uniform PushConstantObject {
 
 vec3 addShadow(vec3 color)
 {
-    float faceLight = 1.0;
-    switch (faceDirection) {
-        case 0: faceLight = 0.7; break;
-        case 1: faceLight = 0.7; break;
-        case 2: faceLight = 0.8; break;
-        case 3: faceLight = 0.8; break;
-        case 4: faceLight = 1.0; break;
-        case 5: faceLight = 0.5; break;
-    }
+
+    float faceLights[6] = float[](
+        0.7, 0.7, 0.8, 0.8, 1.0, 0.5
+    );
 
     float intensityFactors[16] = float[](
         0.01, 0.02, 0.04, 0.07,
@@ -38,10 +33,10 @@ vec3 addShadow(vec3 color)
         0.70,  0.78, 0.88, 1.0
     );
 
-    float light = intensityFactors[lightLevel];
+    float light = intensityFactors[lightLevel] * faceLights[faceDirection];
 
     float ambientLight = 0.05;
-    vec3 litColor = mix(color * ambientLight, color * faceLight, light);
+    vec3 litColor = mix(color * ambientLight, color, light);
 
     return litColor;
 }
