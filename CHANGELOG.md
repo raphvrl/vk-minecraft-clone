@@ -9,6 +9,12 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 - Windows resource configuration for better integration with File Explorer
 
 ### Changed
+- Upgraded to Vulkan 1.3
+- Implemented dynamic rendering for improved performance
+- Implemented bindless descriptor sets for more efficient resource binding
+- Completely restructured graphics core architecture
+
+### Changed
 - Upcoming changes...
 
 ### Fixed
