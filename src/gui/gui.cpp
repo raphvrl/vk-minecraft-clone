@@ -16,11 +16,7 @@ void GUI::init(gfx::Device &device)
     m_pipeline = gfx::Pipeline::Builder(device)
         .setShader("gui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .setShader("gui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(PushConstant)
-        })
+        .setPushConstant(sizeof(PushConstant))
         .setDepthTest(false)
         .setDepthWrite(false)
         .setBlending(true)
@@ -179,12 +175,7 @@ void GUI::draw(VkCommandBuffer cmd, const Element &element)
 
     pc.uv /= ATLAS_SIZE;
 
-    m_pipeline.push(
-        cmd,
-        static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-        sizeof(pc),
-        &pc
-    );
+    m_pipeline.push(cmd, pc);
 
     vkCmdDraw(cmd, 6, 1, 0, 0);
 }

@@ -13,11 +13,7 @@ void Clouds::init(gfx::Device &device)
     m_pipeline = gfx::Pipeline::Builder(device)
         .setShader("cloud.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .setShader("cloud.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0,
-            .size = sizeof(glm::mat4)
-        })
+        .setPushConstant(sizeof(glm::mat4))
         .setBlending(true)
         .setDepthTest(true)
         .build();
@@ -107,12 +103,7 @@ void Clouds::render(VkCommandBuffer cmd, const core::Camera &camera)
                                 glm::mat4 model = glm::mat4(1.0f);
                                 model = glm::translate(model, cloudPos);
 
-                                m_pipeline.push(
-                                    cmd,
-                                    VK_SHADER_STAGE_VERTEX_BIT,
-                                    sizeof(model),
-                                    &model
-                                );
+                                m_pipeline.push(cmd, model);
 
                                 vkCmdDraw(cmd, 6, 1, 0, 0);
                                 renderedClouds++;

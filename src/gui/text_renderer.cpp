@@ -18,11 +18,7 @@ void TextRenderer::init(gfx::Device &device)
     m_pipeline = gfx::Pipeline::Builder(device)
         .setShader("text.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .setShader("text.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(PushConstant)
-        })
+        .setPushConstant(sizeof(PushConstant))
         .setBlending(true)
         .setDepthTest(false)
         .setDepthWrite(false)
@@ -95,12 +91,7 @@ void TextRenderer::draw(
         pc.color = glm::vec4(0.15f, 0.15f, 0.15f, 1.0f);
         pc.textureID = m_textureID;
 
-        m_pipeline.push(
-            cmd,
-            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-            sizeof(pc),
-            &pc
-        );
+        m_pipeline.push(cmd, pc);
 
         vkCmdDraw(cmd, 6, 1, 0, 0);
 
@@ -111,12 +102,7 @@ void TextRenderer::draw(
         pc.model = model;
         pc.color = glm::vec4(1.0f);
 
-        m_pipeline.push(
-            cmd,
-            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-            sizeof(pc),
-            &pc
-        );
+        m_pipeline.push(cmd, pc);
 
         vkCmdDraw(cmd, 6, 1, 0, 0);
 

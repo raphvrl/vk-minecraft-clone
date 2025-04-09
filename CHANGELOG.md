@@ -14,9 +14,11 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 - Added shading on block faces to enhance visual appearance
 - Implemented bindless descriptor sets for more efficient resource binding
 - Completely restructured graphics core architecture
+- Simplified push constants implementation for pipeline configuration
 
 ### Fixed
-- Upcoming fixes...
+- Fixed water blocks appearing as half-blocks when another water block was directly above
+
 
 ## [0.1.0] - 2025-04-08
 

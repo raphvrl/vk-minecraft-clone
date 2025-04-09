@@ -41,11 +41,13 @@ Pipeline::Builder &Pipeline::Builder::setColorFormat(VkFormat format)
     return *this;
 }
 
-Pipeline::Builder &Pipeline::Builder::addPushConstantRange(
-    VkPushConstantRange range
-)
+Pipeline::Builder &Pipeline::Builder::setPushConstant(u32 size)
 {
-    m_pushConstantRanges.push_back(range);
+    m_pushConstantRanges.size = size;
+    m_pushConstantRanges.offset = 0;
+    m_pushConstantRanges.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+    m_pushConstantSet = true;
+
     return *this;
 }
 
@@ -87,6 +89,12 @@ Pipeline::Builder &Pipeline::Builder::setTopology(
     return *this;
 }
 
+Pipeline::Builder &Pipeline::Builder::setLineWidth(f32 width)
+{
+    m_lineWidth = width;
+    return *this;
+}
+
 Pipeline Pipeline::Builder::build()
 {
     VkPipeline pipeline;
@@ -120,7 +128,7 @@ Pipeline Pipeline::Builder::build()
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
+    rasterizer.lineWidth = m_lineWidth;
     if (m_cull) {
         rasterizer.cullMode = m_cullMode;
     } else {
@@ -166,7 +174,8 @@ Pipeline Pipeline::Builder::build()
 
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_LINE_WIDTH,
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -181,10 +190,8 @@ Pipeline Pipeline::Builder::build()
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = static_cast<u32>(
-        m_pushConstantRanges.size()
-    );
-    pipelineLayoutInfo.pPushConstantRanges = m_pushConstantRanges.data();
+    pipelineLayoutInfo.pushConstantRangeCount = m_pushConstantSet ? 1 : 0;
+    pipelineLayoutInfo.pPushConstantRanges = &m_pushConstantRanges;
 
     VkResult res = vkCreatePipelineLayout(
         m_device.getDevice(),
@@ -234,6 +241,7 @@ Pipeline Pipeline::Builder::build()
     pipelineObj.m_pipeline = pipeline;
     pipelineObj.m_pipelineLayout = pipelineLayout;
     pipelineObj.m_descriptorSet = bindlessManager.getDescriptorSet();
+    pipelineObj.m_lineWidth = m_lineWidth;
 
     return pipelineObj;
 }
@@ -299,23 +307,8 @@ void Pipeline::bind(VkCommandBuffer cmd)
         0,
         nullptr
     );
-}
 
-void Pipeline::push(
-    VkCommandBuffer cmd,
-    VkShaderStageFlagBits stage,
-    VkDeviceSize size,
-    void *data
-)
-{
-    vkCmdPushConstants(
-        cmd,
-        m_pipelineLayout,
-        stage,
-        0,
-        size,
-        data
-    );
+    vkCmdSetLineWidth(cmd, m_lineWidth);
 }
 
 } // namespace gfx

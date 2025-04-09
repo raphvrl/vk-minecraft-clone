@@ -8,12 +8,9 @@ void Outline::init(gfx::Device &device, World &world)
     m_pipeline = gfx::Pipeline::Builder(device)
         .setShader("outline.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .setShader("outline.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0,
-            .size = sizeof(glm::mat4)
-        })
+        .setPushConstant(sizeof(glm::mat4))
         .setTopology(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+        .setLineWidth(2.0f)
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
         .setDepthTest(true)
@@ -46,12 +43,7 @@ void Outline::drawOutline(VkCommandBuffer cmd, const glm::ivec3 &pos)
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), {pos.x, pos.y, pos.z});
 
-    m_pipeline.push(
-        cmd,
-        VK_SHADER_STAGE_VERTEX_BIT,
-        sizeof(model),
-        &model
-    );
+    m_pipeline.push(cmd, model);
 
     vkCmdDraw(cmd, 36, 1, 0, 0);
 }

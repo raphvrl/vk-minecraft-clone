@@ -18,11 +18,7 @@ void OverlayRenderer::init(Device &device)
     m_pipeline = Pipeline::Builder(*m_device)
         .setShader("overlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .setShader("overlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(u32)
-        })
+        .setPushConstant(sizeof(u32))
         .setDepthTest(false)
         .setDepthWrite(false)
         .setBlending(true)
@@ -40,12 +36,7 @@ void OverlayRenderer::render(VkCommandBuffer cmd)
     if (m_water) {
         m_pipeline.bind(cmd);
 
-        m_pipeline.push(
-            cmd,
-            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-            sizeof(u32),
-            &m_textureID
-        );
+        m_pipeline.push(cmd, m_textureID);
 
         vkCmdDraw(cmd, 6, 1, 0, 0);
     }

@@ -29,11 +29,7 @@ void World::init(gfx::Device &device)
             attributes.data(),
             attributes.size()
         })
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(PushConstants)
-        })
+        .setPushConstant(sizeof(PushConstants))
         .setDepthTest(true)
         .setDepthWrite(true)
         .build();
@@ -46,11 +42,7 @@ void World::init(gfx::Device &device)
             attributes.data(),
             attributes.size()
         })
-        .addPushConstantRange({
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = 0,
-            .size = sizeof(PushConstants)
-        })
+        .setPushConstant(sizeof(PushConstants))
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
         .setDepthTest(true)
@@ -216,12 +208,7 @@ void World::render(const core::Camera &camera, VkCommandBuffer cmd)
             .textureID = m_textureID
         };
 
-        m_pipelines[P_OPAQUE].push(
-            cmd,
-            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-            sizeof(pc),
-            &pc
-        );
+        m_pipelines[P_OPAQUE].push(cmd, pc);
 
         mesh->drawOpaque(cmd);
     }
@@ -248,12 +235,7 @@ void World::render(const core::Camera &camera, VkCommandBuffer cmd)
             .textureID = m_textureID
         };
 
-        m_pipelines[P_TRANSPARENT].push(
-            cmd,
-            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-            sizeof(pc),
-            &pc
-        );
+        m_pipelines[P_TRANSPARENT].push(cmd, pc);
 
         mesh->drawTransparent(cmd);
     }

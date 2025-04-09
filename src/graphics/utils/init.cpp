@@ -207,6 +207,8 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surfa
     VkPhysicalDeviceFeatures2 deviceFeatures{};
     deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     deviceFeatures.features.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.features.geometryShader = VK_TRUE;
+    deviceFeatures.features.wideLines = VK_TRUE;
     deviceFeatures.pNext = &vulkan12Features;
     
     std::vector<const char*> deviceExtensions = {

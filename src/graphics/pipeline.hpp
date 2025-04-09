@@ -38,13 +38,14 @@ public:
         Builder &setShader(const fs::path &filename, VkShaderStageFlagBits stage);
         Builder &setVertexInput(const VertexInput &vertexInput);
         Builder &setColorFormat(VkFormat format);
-        Builder &addPushConstantRange(VkPushConstantRange range);
+        Builder &setPushConstant(u32 size);
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
         Builder &setCullMode(VkCullModeFlags mode);
         Builder &setCull(bool enable);
         Builder &setBlending(bool enable);
         Builder &setTopology(VkPrimitiveTopology topology);
+        Builder &setLineWidth(f32 width);
 
         Pipeline build();
 
@@ -58,7 +59,8 @@ public:
 
         VkFormat m_colorFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
-        std::vector<VkPushConstantRange> m_pushConstantRanges;
+        VkPushConstantRange m_pushConstantRanges;
+        bool m_pushConstantSet = false;
 
         bool m_depthTest = false;
         bool m_depthWrite = false;
@@ -69,6 +71,7 @@ public:
         bool m_blending = false;
 
         VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        f32 m_lineWidth = 1.0f;
 
         std::vector<char> readFile(const fs::path &filename);
         VkShaderModule createShaderModule(const std::vector<char> &code);
@@ -80,12 +83,8 @@ public:
 
     void bind(VkCommandBuffer cmd);
 
-    void push(
-        VkCommandBuffer cmd,
-        VkShaderStageFlagBits stage,
-        VkDeviceSize size,
-        void *data
-    );
+    template<typename T>
+    void push(VkCommandBuffer cmd, T &data);
 
 private:
     friend class Builder;
@@ -95,6 +94,21 @@ private:
     VkPipelineLayout m_pipelineLayout;
     VkDescriptorSet m_descriptorSet;
 
+    f32 m_lineWidth = 1.0f;
+
 };
+
+template<typename T>
+void Pipeline::push(VkCommandBuffer cmd, T &data)
+{
+    vkCmdPushConstants(
+        cmd,
+        m_pipelineLayout,
+        VK_SHADER_STAGE_ALL_GRAPHICS,
+        0,
+        sizeof(T),
+        reinterpret_cast<void *>(&data)
+    );
+}
 
 } // namespace gfx
