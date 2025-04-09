@@ -3,92 +3,49 @@
 namespace gui
 {
 
-void TextRenderer::init(gfx::VulkanCtx &ctx)
+void TextRenderer::init(gfx::Device &device)
 {
-    m_ctx = &ctx;
+    m_device = &device;
 
-    m_pipeline = gfx::Pipeline::Builder(ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "text.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "text.frag.spv")
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
+    m_texture = m_device->loadImage(
+        "assets/textures/font.png",
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+    );
+
+    m_textureID = m_device->addTexture(m_texture);
+
+    m_pipeline = gfx::Pipeline::Builder(device)
+        .setShader("text.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("text.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .addPushConstantRange({
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = 0,
+            .size = sizeof(PushConstant)
         })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
-        })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(PushConstant)
-        )
         .setBlending(true)
         .setDepthTest(false)
         .setDepthWrite(false)
         .build();
-
-    m_font.init(*m_ctx, "font.png", false);
-    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
-
-    std::vector<gfx::DescriptorData> descriptors = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_font
-        },
-    };
-
-    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
 
     calculateCharWidths();
 }
 
 void TextRenderer::destroy()
 {
-    m_ubo.destroy();
-    m_font.destroy();
+    m_texture.destroy();
     m_pipeline.destroy();
 }
 
 void TextRenderer::draw(
+    VkCommandBuffer cmd,
     const std::string &text,
     const glm::vec2 &pos,
     u32 size,
     TextAlign align
 )
 {
-    VkExtent2D extent = m_ctx->getSwapChainExtent();
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
-
-    m_pipeline.bind();
-    m_pipeline.bindDescriptorSet(m_descriptorSet);
-
-    glm::mat4 ortho = glm::ortho(
-        -0.5f,
-        static_cast<f32>(extent.width),
-        -0.5f,
-        static_cast<f32>(extent.height),
-        -1.0f,
-        1.0f
-    );
-
-    UniformBufferObject ubo{
-        .ortho = ortho
-    };
-
-    m_ubo.update(&ubo, sizeof(ubo));
+    m_pipeline.bind(cmd);
 
     const f32 pixelOffset = static_cast<float>(size) / 8.0f;
 
@@ -136,10 +93,11 @@ void TextRenderer::draw(
             static_cast<f32>(row) / 16.0f
         );
         pc.color = glm::vec4(0.15f, 0.15f, 0.15f, 1.0f);
+        pc.textureID = m_textureID;
 
         m_pipeline.push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
+            cmd,
+            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
             sizeof(pc),
             &pc
         );
@@ -154,8 +112,8 @@ void TextRenderer::draw(
         pc.color = glm::vec4(1.0f);
 
         m_pipeline.push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
+            cmd,
+            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
             sizeof(pc),
             &pc
         );

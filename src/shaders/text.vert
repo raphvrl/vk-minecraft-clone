@@ -1,4 +1,8 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_nonuniform_qualifier : require
+
+#include "global.glsl"
 
 const vec2 positions[6] = vec2[](
     vec2(0.0, 0.0),
@@ -10,14 +14,15 @@ const vec2 positions[6] = vec2[](
     vec2(1.0, 1.0)
 );
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {
-    mat4 ortho;
-} ubo;
+layout(binding = 0) uniform UBOArray {
+    CameraUBO camera;
+} uboArray[];
 
 layout(push_constant) uniform PushConstantsObject {
     mat4 model;
     vec2 uv;
     vec4 color;
+    uint textureID;
 } pco;
 
 layout(location = 0) out vec2 fragUV;
@@ -25,8 +30,11 @@ layout(location = 1) out vec4 fragColor;
 
 void main()
 {
+    mat4 ortho = uboArray[CAMERA_UBO_IDX].camera.ortho;
+    mat4 model = pco.model;
+
     vec2 pos = positions[gl_VertexIndex];
-    gl_Position = ubo.ortho * pco.model * vec4(pos, 0.0, 1.0);
+    gl_Position = ortho * model * vec4(pos, 0.0, 1.0);
 
     fragUV = pco.uv + positions[gl_VertexIndex] * (1.0 / 16.0);
     fragUV.y = 1.0 - fragUV.y;

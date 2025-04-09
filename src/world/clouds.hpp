@@ -5,9 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/uniform_buffer.hpp"
 #include "core/camera/camera.hpp"
 #include "core/frustum.hpp"
 
@@ -18,25 +17,14 @@ class Clouds
 {
 
 public:
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device);
     void destroy();
 
     void update(f32 dt);
-    void render(const core::Camera &camera);
+    void render(VkCommandBuffer cmd, const core::Camera &camera);
 
 private:
-    gfx::VulkanCtx *m_ctx;
     gfx::Pipeline m_pipeline;
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::vec3 camPos;
-    };
-
-    gfx::UniformBuffer m_ubo;
-    VkDescriptorSet m_descriptorSet;
 
     i32 m_width;
     i32 m_height;

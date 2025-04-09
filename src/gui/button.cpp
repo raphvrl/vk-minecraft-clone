@@ -35,7 +35,7 @@ void Button::handleMouseClick()
     }
 }
 
-void Button::render()
+void Button::draw(VkCommandBuffer cmd)
 {
     if (m_hovered) {
         m_element.uv = HOVER_UV;
@@ -43,14 +43,14 @@ void Button::render()
         m_element.uv = NORMAL_UV;
     }
 
-    m_gui->draw(m_element);
+    m_gui->draw(cmd, m_element);
 
     glm::vec2 textPos = getAbsolutePos();
 
     textPos.x += m_element.size.x / 2.0f;
     textPos.y += m_element.size.y / 2.0f - 12.0f;
 
-    m_gui->drawText(m_text, textPos, 24.0f, TextAlign::CENTER);
+    m_gui->drawText(cmd, m_text, textPos, 24.0f, TextAlign::CENTER);
 }
 
 bool Button::countain(const glm::vec2 &point) const

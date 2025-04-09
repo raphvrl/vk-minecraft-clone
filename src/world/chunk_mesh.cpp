@@ -5,39 +5,20 @@
 namespace wld
 {
 
-void ChunkMesh::init(gfx::VulkanCtx &ctx, BlockRegistry &registry)
+void ChunkMesh::init(gfx::Device &device, BlockRegistry &registry)
 {
-    m_ctx = &ctx;
+    m_device = &device;
     m_registry = &registry;
 }
 
 void ChunkMesh::destroy()
 {
-    vkDeviceWaitIdle(m_ctx->getDevice());
+    m_device->waitIdle();
 
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_vertexBuffer,
-        m_vertexAllocation
-    );
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_indexBuffer,
-        m_indexAllocation
-    );
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_vertexBufferTransparent,
-        m_vertexAllocationTransparent
-    );
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_indexBufferTransparent,
-        m_indexAllocationTransparent
-    );
+    m_indexBuffer.destroy();
+    m_vertexBuffer.destroy();
+    m_transparentIndexBuffer.destroy();
+    m_transparentVertexBuffer.destroy();
 }
 
 void ChunkMesh::generate(
@@ -122,22 +103,39 @@ void ChunkMesh::generate(
                 }
             }
         }
-    };   
+    };
 
-    createVertexBuffer(m_vertexBuffer, m_vertexAllocation, m_vertices);
-    createIndexBuffer(m_indexBuffer, m_indexAllocation, m_indices);
-
-    createVertexBuffer(
-        m_vertexBufferTransparent,
-        m_vertexAllocationTransparent,
-        m_transparentVertices
+    m_vertexBuffer = m_device->createBuffer(
+        m_vertices.size() * sizeof(Vertex),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
     );
 
-    createIndexBuffer(
-        m_indexBufferTransparent,
-        m_indexAllocationTransparent,
-        m_transparentIndices
+    m_vertexBuffer.uploadData(m_vertices);
+
+    m_indexBuffer = m_device->createBuffer(
+        m_indices.size() * sizeof(u32),
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
     );
+
+    m_indexBuffer.uploadData(m_indices);
+
+    m_transparentVertexBuffer = m_device->createBuffer(
+        m_transparentVertices.size() * sizeof(Vertex),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
+    );
+
+    m_transparentVertexBuffer.uploadData(m_transparentVertices);
+
+    m_transparentIndexBuffer = m_device->createBuffer(
+        m_transparentIndices.size() * sizeof(u32),
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
+    );
+
+    m_transparentIndexBuffer.uploadData(m_transparentIndices);
 }
 
 void ChunkMesh::update(
@@ -150,163 +148,69 @@ void ChunkMesh::update(
     m_transparentVertices.clear();
     m_transparentIndices.clear();
 
-    vkDeviceWaitIdle(m_ctx->getDevice());
+    m_device->waitIdle();
 
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_vertexBuffer,
-        m_vertexAllocation
-    );
+    m_vertexBuffer.destroy();
+    m_indexBuffer.destroy();
 
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_indexBuffer,
-        m_indexAllocation
-    );
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_vertexBufferTransparent,
-        m_vertexAllocationTransparent
-    );
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        m_indexBufferTransparent,
-        m_indexAllocationTransparent
-    );
+    m_transparentVertexBuffer.destroy();
+    m_transparentIndexBuffer.destroy();
 
     generate(chunk, neighbors);
 }
 
-void ChunkMesh::drawOpaque()
+void ChunkMesh::drawOpaque(VkCommandBuffer cmd)
 {
     if (m_vertices.empty()) {
         return;
     }
 
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
     VkDeviceSize offsets[] = {0};
+    
+    VkBuffer vertexBuffer = m_vertexBuffer.getBuffer();
+    vkCmdBindVertexBuffers(
+        cmd,
+        0,
+        1,
+        &vertexBuffer,
+        offsets
+    );
 
-    vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, offsets);
-    vkCmdBindIndexBuffer(cmd, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(
+        cmd,
+        m_indexBuffer.getBuffer(),
+        0,
+        VK_INDEX_TYPE_UINT32
+    );
 
     vkCmdDrawIndexed(cmd, m_indices.size(), 1, 0, 0, 0);
 }
 
-void ChunkMesh::drawTransparent()
+void ChunkMesh::drawTransparent(VkCommandBuffer cmd)
 {
     if (m_transparentVertices.empty()) {
         return;
     }
 
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
     VkDeviceSize offsets[] = {0};
 
-    vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBufferTransparent, offsets);
+    VkBuffer vertexBuffer = m_transparentVertexBuffer.getBuffer();
+    vkCmdBindVertexBuffers(
+        cmd,
+        0,
+        1,
+        &vertexBuffer,
+        offsets
+    );
 
     vkCmdBindIndexBuffer(
         cmd,
-        m_indexBufferTransparent,
+        m_transparentIndexBuffer.getBuffer(),
         0,
         VK_INDEX_TYPE_UINT32
     );
 
     vkCmdDrawIndexed(cmd, m_transparentIndices.size(), 1, 0, 0, 0);
-}
-
-void ChunkMesh::createVertexBuffer(
-    VkBuffer &buffer,
-    VmaAllocation &allocation,
-    const std::vector<Vertex> &vertices
-)
-{
-    if (vertices.empty()) {
-        buffer = VK_NULL_HANDLE;
-        allocation = VK_NULL_HANDLE;
-        return;
-    }
-
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingAllocation;
-
-    m_ctx->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_CPU_ONLY,
-        stagingBuffer,
-        stagingAllocation
-    );
-
-    void *data;
-    vmaMapMemory(m_ctx->getAllocator(), stagingAllocation, &data);
-    memcpy(data, vertices.data(), bufferSize);
-    vmaUnmapMemory(m_ctx->getAllocator(), stagingAllocation);
-
-    m_ctx->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY,
-        buffer,
-        allocation
-    );
-
-    m_ctx->copyBuffer(stagingBuffer, buffer, bufferSize);
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        stagingBuffer,
-        stagingAllocation
-    );
-}
-
-void ChunkMesh::createIndexBuffer(
-    VkBuffer &buffer,
-    VmaAllocation &allocation,
-    const std::vector<u32> &indices
-)
-{
-    if (indices.empty()) {
-        buffer = VK_NULL_HANDLE;
-        allocation = VK_NULL_HANDLE;
-        return;
-    }
-
-    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingAllocation;
-
-    m_ctx->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_CPU_ONLY,
-        stagingBuffer,
-        stagingAllocation
-    );
-
-    void *data;
-    vmaMapMemory(m_ctx->getAllocator(), stagingAllocation, &data);
-    memcpy(data, indices.data(), bufferSize);
-    vmaUnmapMemory(m_ctx->getAllocator(), stagingAllocation);
-
-    m_ctx->createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY,
-        buffer,
-        allocation
-    );
-
-    m_ctx->copyBuffer(stagingBuffer, buffer, bufferSize);
-
-    vmaDestroyBuffer(
-        m_ctx->getAllocator(),
-        stagingBuffer,
-        stagingAllocation
-    );
 }
 
 const std::array<glm::vec3, 4> ChunkMesh::FACE_NORTH = {

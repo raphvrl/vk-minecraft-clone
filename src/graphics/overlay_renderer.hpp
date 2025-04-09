@@ -1,8 +1,7 @@
 #pragma once
 
 #include "pipeline.hpp"
-#include "texture.hpp"
-#include "vulkan_ctx.hpp"
+#include "device.hpp"
 
 namespace gfx
 {
@@ -11,24 +10,22 @@ class OverlayRenderer
 {
 
 public:
-    void init(VulkanCtx &ctx);
+    void init(Device &device);
     void destroy();
 
-    void render();
+    void render(VkCommandBuffer cmd);
 
     void setWater(bool water) { m_water = water; }
 
 private:
-    VulkanCtx *m_ctx = nullptr;
+    Device *m_device = nullptr;
 
     Pipeline m_pipeline;
-    Texture m_waterTexture;
 
-    VkDescriptorSet m_waterSet;
+    gfx::Image m_texture;
+    u32 m_textureID = 0;
 
     bool m_water = false;
-
-    void createWater();
 
 };
 

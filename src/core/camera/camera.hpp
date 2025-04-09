@@ -19,6 +19,7 @@ public:
 
     void updateView();
     void updateProj(f32 aspect);
+    void updateOrtho(u32 width, u32 height);
 
     void rotate(f32 xoffset, f32 yoffset);
 
@@ -31,6 +32,7 @@ public:
 
     glm::mat4 getView() const { return m_view; }
     glm::mat4 getProj() const { return m_proj; }
+    glm::mat4 getOrtho() const { return m_ortho; }
 
 private:
     glm::vec3 m_pos;
@@ -48,6 +50,7 @@ private:
 
     glm::mat4 m_view;
     glm::mat4 m_proj;
+    glm::mat4 m_ortho;
 };
 
 } // namespace core

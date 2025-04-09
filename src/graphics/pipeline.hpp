@@ -1,37 +1,27 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <string_view>
-#include <fstream>
-#include <stdexcept>
+#include <vulkan/vulkan.h>
 
-#include "vulkan_ctx.hpp"
-#include "texture.hpp"
-#include "uniform_buffer.hpp"
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <fstream>
+
+#include "device.hpp"
+#include "utils/utils.hpp"
+
+namespace fs = std::filesystem;
+
+constexpr const char* SHADER_DIR_STR = "assets/shaders/";
 
 namespace gfx
 {
 
-static constexpr std::string_view SHADER_PATH = "assets/shaders/";
-
-struct DescriptorLayout
+struct VertexInput
 {
-    u32 binding;
-    VkDescriptorType type;
-    u32 count;
-    VkShaderStageFlags stage;
-};
-
-struct DescriptorData
-{
-    VkDescriptorType type;
-    u32 binding;
-    VkShaderStageFlags stage;
-    union {
-        Texture *texture;
-        UniformBuffer *ubo;
-    };
+    VkVertexInputBindingDescription *binding = {};
+    VkVertexInputAttributeDescription *attribute = {};
+    u32 attributeCount = 0;
 };
 
 class Pipeline
@@ -42,92 +32,69 @@ public:
     {
 
     public:
-        Builder(VulkanCtx &ctx);
+        Builder(Device &device);
+        ~Builder() = default;
 
-        Builder &setShader(VkShaderStageFlags stage, const std::string &path);
-        Builder &addPushConstant(
-            VkShaderStageFlags stage,
-            u32 offset,
-            u32 size
-        );
-        Builder &setVertexInput(
-            const VkVertexInputBindingDescription *bindingDescription,
-            const VkVertexInputAttributeDescription *attributeDescriptions,
-            u32 attributeCount  
-        );
-        Builder &addDescriptorBinding(const DescriptorLayout &layout);
+        Builder &setShader(const fs::path &filename, VkShaderStageFlagBits stage);
+        Builder &setVertexInput(const VertexInput &vertexInput);
+        Builder &setColorFormat(VkFormat format);
+        Builder &addPushConstantRange(VkPushConstantRange range);
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
         Builder &setCullMode(VkCullModeFlags mode);
-        Builder &setTopology(VkPrimitiveTopology topology);
-        Builder &setLineWidth(f32 width);
+        Builder &setCull(bool enable);
         Builder &setBlending(bool enable);
-        Builder &setPolygonMode(VkPolygonMode mode);
+        Builder &setTopology(VkPrimitiveTopology topology);
 
         Pipeline build();
 
     private:
-        VulkanCtx& m_ctx;
+        Device &m_device;
 
-        std::map<int, std::string> m_shaderPaths;
-        std::vector<VkPushConstantRange> m_pushConstants;
+        std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
 
-        bool m_hasVertexInput = false;
-        VkVertexInputBindingDescription m_bindingDescription = {};
-        std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
+        VertexInput m_vertexInput = {};
+        bool m_vertexInputSet = false;
 
-        std::vector<DescriptorLayout> m_descriptorLayouts;
+        VkFormat m_colorFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
-        bool m_depthTest = true;
-        bool m_depthWrite = true;
+        std::vector<VkPushConstantRange> m_pushConstantRanges;
 
+        bool m_depthTest = false;
+        bool m_depthWrite = false;
+
+        bool m_cull = false;
         VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;
-
-        VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-        f32 m_lineWidth = 1.0f;
 
         bool m_blending = false;
 
-        VkPolygonMode m_polygonMode = VK_POLYGON_MODE_FILL;
+        VkPrimitiveTopology m_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-        std::vector<char> readFile(const std::string &path);
+        std::vector<char> readFile(const fs::path &filename);
         VkShaderModule createShaderModule(const std::vector<char> &code);
+
     };
 
     Pipeline() = default;
-
     void destroy();
 
-    VkDescriptorSet createDescriptorSet(
-        const std::vector<DescriptorData> &descriptors
-    );
+    void bind(VkCommandBuffer cmd);
 
-    void bindDescriptorSet(VkDescriptorSet set);
-    void bindDescriptorSets(
-        const std::vector<VkDescriptorSet> &sets,
-        u32 offset = 0
-    );
-
-    void bind();
     void push(
-        VkShaderStageFlags stage,
-        u32 offset,
-        u32 size,
-        const void *data
+        VkCommandBuffer cmd,
+        VkShaderStageFlagBits stage,
+        VkDeviceSize size,
+        void *data
     );
 
 private:
     friend class Builder;
 
-    VulkanCtx *m_ctx;
+    Device *m_device;
+    VkPipeline m_pipeline;
+    VkPipelineLayout m_pipelineLayout;
+    VkDescriptorSet m_descriptorSet;
 
-    VkPipeline m_handle;
-    VkPipelineLayout m_layout;
-    VkDescriptorSetLayout m_descriptorLayout;
-    VkDescriptorPool m_descriptorPool;
-
-    f32 m_lineWidth;
 };
-    
+
 } // namespace gfx

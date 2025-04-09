@@ -14,16 +14,17 @@ void Game::init()
 {
     m_window.init(1600, 900, "Minecraft Clone");
     
-    m_ctx.init(m_window);
+    m_device.init(m_window, "Minecraft Clone", {0, 1, 0});
+    m_gpuData.init(m_device);
 
-    m_world.init(m_ctx);
-    m_sky.init(m_ctx);
-    m_outline.init(m_ctx, m_world);
-    m_clouds.init(m_ctx);
+    m_world.init(m_device);
+    m_sky.init(m_device);
+    m_outline.init(m_device, m_world);
+    m_clouds.init(m_device);
 
-    m_overlay.init(m_ctx);
+    m_overlay.init(m_device);
 
-    m_gui.init(m_ctx);
+    m_gui.init(m_device);
     m_gui.setQuitCallback([&] {
         m_running = false;
     });
@@ -50,6 +51,8 @@ void Game::init()
 
 void Game::destroy()
 {
+    m_device.waitIdle();
+
     m_gui.destroy();
 
     m_overlay.destroy();
@@ -58,7 +61,10 @@ void Game::destroy()
     m_outline.destroy();
     m_sky.destroy();
     m_world.destroy();
-    m_ctx.destroy();
+
+    m_gpuData.destroy();
+    m_device.destroy();
+
     m_window.destroy();
 }
 
@@ -149,6 +155,12 @@ void Game::update(f32 dt)
 
     m_camera.updateView();
     m_camera.updateProj(m_window.getAspect());
+
+    VkExtent2D extent = m_device.getExtent();
+    m_camera.updateOrtho(extent.width, extent.height);
+
+    m_gpuData.updateCamera(m_camera);
+    m_gpuData.update();
 }
 
 void Game::tick(f32 dt)
@@ -166,20 +178,21 @@ void Game::tick(f32 dt)
 
 void Game::render()
 {
-    if (!m_ctx.beginFrame()) {
+    auto cmd = m_device.beginFrame();
+    if (!cmd) {
         return;
     }
 
-    m_sky.render(m_camera);
-    m_world.render(m_camera);
-    m_outline.render(m_camera);
-    m_clouds.render(m_camera);
+    m_sky.render(cmd);
+    m_world.render(m_camera, cmd);
+    m_outline.render(cmd, m_camera);
+    m_clouds.render(cmd, m_camera);
 
-    m_overlay.render();
+    m_overlay.render(cmd);
 
-    m_gui.render();
+    m_gui.render(cmd);
 
-    m_ctx.endFrame();
+    m_device.endFrame();
 }
 
 void Game::updateGui()

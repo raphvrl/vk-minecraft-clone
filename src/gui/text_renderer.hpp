@@ -2,10 +2,8 @@
 
 #include <stb_image.h>
 
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/texture.hpp"
-#include "graphics/uniform_buffer.hpp"
 
 namespace gui
 {
@@ -21,10 +19,11 @@ class TextRenderer
 {
 
 public:
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device);
     void destroy();
 
     void draw(
+        VkCommandBuffer cmd,
         const std::string &text,
         const glm::vec2 &pos,
         u32 size = 16,
@@ -32,25 +31,20 @@ public:
     );
 
 private:
-    gfx::VulkanCtx *m_ctx;
-
-    struct UniformBufferObject
-    {
-        glm::mat4 ortho;
-    };
+    gfx::Device *m_device = nullptr;
 
     struct PushConstant
     {
         alignas(16) glm::mat4 model;
         alignas(16) glm::vec2 uv;
         alignas(16) glm::vec4 color;
+        alignas(4) u32 textureID;
     };
 
     gfx::Pipeline m_pipeline;
-    gfx::Texture m_font;
-    gfx::UniformBuffer m_ubo;
 
-    VkDescriptorSet m_descriptorSet;
+    gfx::Image m_texture;
+    u32 m_textureID = 0;
 
     std::array<u32, 256> m_charWidths;
 

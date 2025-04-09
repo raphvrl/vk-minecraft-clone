@@ -4,9 +4,8 @@
 
 #include <array>
 
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/uniform_buffer.hpp"
 #include "core/camera/camera.hpp"
 
 namespace wld
@@ -16,21 +15,13 @@ class Sky
 {
 
 public:
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device);
     void destroy();
 
-    void render(const core::Camera &camera);
+    void render(VkCommandBuffer cmd);
 private:
-    gfx::VulkanCtx *m_ctx;
     gfx::Pipeline m_pipeline;
 
-    struct UniformBufferObject
-    {
-        glm::mat4 view;
-        glm::mat4 proj;
-    };
-
-    gfx::UniformBuffer m_ubo;
     VkDescriptorSet m_descriptorSet;
 };
 

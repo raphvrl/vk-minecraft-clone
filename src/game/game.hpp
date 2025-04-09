@@ -2,9 +2,9 @@
 
 #include "core/window/window.hpp"
 #include "core/camera/camera.hpp"
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/texture.hpp"
+#include "graphics/gpu_data.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"
@@ -46,7 +46,8 @@ private:
     core::Window m_window;
     core::Camera m_camera;
 
-    gfx::VulkanCtx m_ctx;
+    gfx::Device m_device;
+    gfx::GPUData m_gpuData;
 
     wld::World m_world;
     wld::Sky m_sky;

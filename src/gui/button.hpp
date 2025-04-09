@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 
 #include <string>
@@ -27,7 +28,7 @@ public:
 
     void update(const glm::vec2 &point);
     void handleMouseClick();
-    void render();
+    void draw(VkCommandBuffer cmd);
 
     bool countain(const glm::vec2 &point) const;
 

@@ -16,10 +16,8 @@
 #include "block_registry.hpp"
 #include "world_generator.hpp"
 #include "core/camera/camera.hpp"
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/texture.hpp"
-#include "graphics/uniform_buffer.hpp"
 #include "core/frustum.hpp"
 
 namespace wld
@@ -68,11 +66,11 @@ struct RaycastResult
 
 class World {
 public:
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device);
     void destroy();
 
     void update(const glm::vec3 &playerPos, f32 dt);
-    void render(const core::Camera &camera);
+    void render(const core::Camera &camera, VkCommandBuffer cmd);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3 &pos) const {
@@ -115,15 +113,8 @@ private:
 
     usize m_updatedChunks = 0;
 
-    gfx::VulkanCtx *m_ctx;
+    gfx::Device *m_device;
     BlockRegistry m_blockRegistry;
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::vec3 camPos;
-    };
 
     enum PipelineType
     {
@@ -132,9 +123,15 @@ private:
     };
 
     std::array<gfx::Pipeline, 2> m_pipelines;
-    gfx::Texture m_texture;
-    gfx::UniformBuffer m_ubo;
-    std::array<VkDescriptorSet, 2> m_descriptorSets;
+
+    gfx::Image m_textureAtlas;
+    u32 m_textureID;
+
+    struct PushConstants
+    {
+        alignas(16) glm::mat4 model;
+        alignas(4) u32 textureID;
+    };
 
     core::Frustum m_frustum;
 

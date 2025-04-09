@@ -3,93 +3,59 @@
 namespace wld
 {
 
-void World::init(gfx::VulkanCtx &ctx)
+void World::init(gfx::Device &device)
 {
-    m_ctx = &ctx;
+    m_device = &device;
     m_blockRegistry.load("assets/config/blocks.toml");
 
     m_playerChunkPos = {-1, -1};
 
+    m_textureAtlas = m_device->loadImage(
+        "assets/textures/terrain.png",
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+    );
+
+    m_textureID = m_device->addTexture(m_textureAtlas);
+
     auto binding = ChunkMesh::Vertex::getBindingDescription();
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
-    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
-        .setVertexInput(
+    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
             &binding,
             attributes.data(),
             attributes.size()
-        )
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
         })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
+        .addPushConstantRange({
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = 0,
+            .size = sizeof(PushConstants)
         })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(glm::mat4)
-        )
+        .setDepthTest(true)
+        .setDepthWrite(true)
         .build();
 
-    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
-        .setVertexInput(
+    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
             &binding,
             attributes.data(),
             attributes.size()
-        )
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
         })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
+        .addPushConstantRange({
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = 0,
+            .size = sizeof(PushConstants)
         })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(glm::mat4)
-        )
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
+        .setDepthTest(true)
+        .setDepthWrite(false)
         .build();
-
-    m_texture.init(*m_ctx, "terrain.png");
-    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
-
-    std::vector<gfx::DescriptorData> descriptors = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_texture
-        }
-    };
-
-    for (usize i = 0; i < m_pipelines.size(); i++) {
-        m_descriptorSets[i] = m_pipelines[i].createDescriptorSet(descriptors);
-    }
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
@@ -99,9 +65,8 @@ void World::init(gfx::VulkanCtx &ctx)
 
 void World::destroy()
 {
-    m_ubo.destroy();
-    m_texture.destroy();
-    
+    m_textureAtlas.destroy();
+
     for (auto &pipeline : m_pipelines) {
         pipeline.destroy();
     }
@@ -222,23 +187,14 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
     }
 }
 
-void World::render(const core::Camera &camera)
+void World::render(const core::Camera &camera, VkCommandBuffer cmd)
 {
     m_frustum = core::Frustum::fromViewProj(
         camera.getView(),
         camera.getProj()
     );
 
-    m_pipelines[P_OPAQUE].bind();
-    m_pipelines[P_OPAQUE].bindDescriptorSet(m_descriptorSets[P_OPAQUE]);
-
-    UniformBufferObject uniformBuffer = {
-        .view = camera.getView(),
-        .proj = camera.getProj(),
-        .camPos = camera.getPos()
-    };
-
-    m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
+    m_pipelines[P_OPAQUE].bind(cmd);
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
@@ -255,23 +211,22 @@ void World::render(const core::Camera &camera)
             continue;
         }
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, {x, 0.0f, z});
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
 
         m_pipelines[P_OPAQUE].push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(model),
-            &model
+            cmd,
+            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+            sizeof(pc),
+            &pc
         );
 
-        mesh->drawOpaque();
+        mesh->drawOpaque(cmd);
     }
 
-    m_pipelines[P_TRANSPARENT].bind();
-    m_pipelines[P_TRANSPARENT].bindDescriptorSet(
-        m_descriptorSets[P_TRANSPARENT]
-    );
+    m_pipelines[P_TRANSPARENT].bind(cmd);
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
@@ -288,17 +243,19 @@ void World::render(const core::Camera &camera)
             continue;
         }
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, {x, 0.0f, z});
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
 
         m_pipelines[P_TRANSPARENT].push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(model),
-            &model
+            cmd,
+            static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+            sizeof(pc),
+            &pc
         );
 
-        mesh->drawTransparent();
+        mesh->drawTransparent(cmd);
     }
 }
 
@@ -539,11 +496,13 @@ void World::updateMeshe(const ChunkPos &pos)
         getChunk({pos.x, pos.z + 1})
     };
 
+    UNUSED(neighbors);
+
     if (auto it = m_meshes.find(pos); it != m_meshes.end()) {
         it->second->update(*chunk, neighbors);
     } else {
         auto mesh = std::make_unique<ChunkMesh>();
-        mesh->init(*m_ctx, m_blockRegistry);
+        mesh->init(*m_device, m_blockRegistry);
         mesh->generate(*chunk, neighbors);
         m_meshes[pos] = std::move(mesh);
     }

@@ -3,7 +3,8 @@
 #include <glm/ext.hpp>
 #include <toml++/toml.hpp>
 
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
+#include "graphics/buffer.hpp"
 
 namespace wld
 {
@@ -75,7 +76,7 @@ public:
     ChunkMesh(const ChunkMesh &) = delete;
     ChunkMesh &operator=(const ChunkMesh &) = delete;
 
-    void init(gfx::VulkanCtx &ctx, BlockRegistry &registry);
+    void init(gfx::Device &device, BlockRegistry &registry);
     void destroy();
 
     void generate(
@@ -88,40 +89,24 @@ public:
         const std::array<const Chunk *, 4> &neighbors
     );
 
-    void drawOpaque();
-    void drawTransparent();
+    void drawOpaque(VkCommandBuffer cmd);
+    void drawTransparent(VkCommandBuffer cmd);
 
 private:
-    gfx::VulkanCtx *m_ctx;
+    gfx::Device *m_device;
     BlockRegistry *m_registry;
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
 
-    VkBuffer m_vertexBuffer;
-    VmaAllocation m_vertexAllocation;
-    VkBuffer m_indexBuffer;
-    VmaAllocation m_indexAllocation;
+    gfx::Buffer m_vertexBuffer;
+    gfx::Buffer m_indexBuffer;
 
     std::vector<Vertex> m_transparentVertices;
     std::vector<u32> m_transparentIndices;
 
-    VkBuffer m_vertexBufferTransparent;
-    VmaAllocation m_vertexAllocationTransparent;
-    VkBuffer m_indexBufferTransparent;
-    VmaAllocation m_indexAllocationTransparent;
-
-    void createVertexBuffer(
-        VkBuffer &buffer,
-        VmaAllocation &allocation,
-        const std::vector<Vertex> &vertices
-    );
-
-    void createIndexBuffer(
-        VkBuffer &buffer,
-        VmaAllocation &allocation,
-        const std::vector<u32> &indices
-    );
+    gfx::Buffer m_transparentVertexBuffer;
+    gfx::Buffer m_transparentIndexBuffer;
 
     // mesh generation
     static const std::array<glm::vec3, 4> FACE_NORTH;

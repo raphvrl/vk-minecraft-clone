@@ -105,9 +105,9 @@ SHADER_DST = $(patsubst $(SHADERS_DIR)/%.vert, $(SHADERS_BIN)/%.vert.spv, $(SHAD
 			 $(patsubst $(SHADERS_DIR)/%.frag, $(SHADERS_BIN)/%.frag.spv, $(SHADER_SRC))
 
 ifeq ($(OS), Windows_NT)
-	GLSLC = $(VULKAN_SDK)/Bin/glslc.exe
+	GLSLC = $(VULKAN_SDK)/Bin/glslc.exe -I$(SHADERS_DIR)
 else
-	GLSLC = glslangValidator -V
+	GLSLC = glslangValidator -V -I$(SHADERS_DIR)
 endif
 
 MODE ?= debug
@@ -136,21 +136,13 @@ all: $(TARGET) $(SHADER_DST)
 release:
 	@$(MAKE) MODE=release all
 
-$(TARGET): $(OBJ) $(GLFW_LIB)
+$(TARGET): $(OBJ) $(GLFW_LIB) $(RES_OBJ)
 	@$(PRINT) "Linking $@"
 ifeq ($(OS), Windows_NT)
-	@$(MAKE) -f $(lastword $(MAKEFILE_LIST)) build-windows-target
+	@$(CXX) -o $(TARGET) $(OBJ) $(RES_OBJ) $(LDFLAGS)
 else
 	@$(CXX) -o $(TARGET) $(OBJ) $(LDFLAGS)
 endif
-
-build-windows-target: $(RES_OBJ)
-	@$(CXX) -o $(TARGET) $(OBJ) $(RES_OBJ) $(LDFLAGS)
-
-$(RES_OBJ): $(RES_SRC)
-	@$(PRINT) "Compiling resources"
-	@$(MKDIR) $(dir $@)
-	@windres $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(PRINT) "Compiling $<"
@@ -158,6 +150,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(CXX) -c $< -o $@ $(DEPFLAGS) $(CXXFLAGS)
 
 -include $(DEP)
+
+$(RES_OBJ): $(RES_SRC)
+	@$(PRINT) "Compiling $<"
+	@$(MKDIR) $(dir $@)
+	windres $< -o $@
 
 shaders: $(SHADER_DST)
 
