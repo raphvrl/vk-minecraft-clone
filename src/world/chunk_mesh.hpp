@@ -36,6 +36,7 @@ public:
         glm::vec3 pos;
         glm::vec2 uv;
         u32 lightLevel;
+        u32 faceDirection;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -47,9 +48,9 @@ public:
             return bindingDescription;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions()
         {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
+            std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
@@ -65,6 +66,11 @@ public:
             attributeDescriptions[2].location = 2;
             attributeDescriptions[2].format = VK_FORMAT_R32_UINT;
             attributeDescriptions[2].offset = offsetof(Vertex, lightLevel);
+
+            attributeDescriptions[3].binding = 0;
+            attributeDescriptions[3].location = 3;
+            attributeDescriptions[3].format = VK_FORMAT_R32_UINT;
+            attributeDescriptions[3].offset = offsetof(Vertex, faceDirection);
 
             return attributeDescriptions;
         }
@@ -122,7 +128,8 @@ private:
         const glm::vec3 &pos,
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
-        BlockType block
+        BlockType block,
+        Face fac3
     );
 
     std::array<glm::vec2, 4> getUVs(
@@ -133,9 +140,9 @@ private:
     bool isFaceVisible(
         const Chunk &chunk,
         std::array<const Chunk *, 4> neighbors,
-        int x,
-        int y,
-        int z,
+        i32 x,
+        i32 y,
+        i32 z,
         BlockType block
     );
 

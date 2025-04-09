@@ -11,11 +11,9 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ### Changed
 - Upgraded to Vulkan 1.3
 - Implemented dynamic rendering for improved performance
+- Added shading on block faces to enhance visual appearance
 - Implemented bindless descriptor sets for more efficient resource binding
 - Completely restructured graphics core architecture
-
-### Changed
-- Upcoming changes...
 
 ### Fixed
 - Upcoming fixes...

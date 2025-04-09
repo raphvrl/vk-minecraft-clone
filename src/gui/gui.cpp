@@ -90,7 +90,7 @@ void GUI::initPauseElements()
     Element background = {
         .anchor = Anchor::CENTER,
         .pos = {0.0f, -100.0f},
-        .size = {600.0f, 60.0f},
+        .size = {800.0f, 80.0f},
         .uv = {0.0f, 0.0f, 0.0f, 0.0f},
         .texture = "gui",
     };
@@ -208,7 +208,7 @@ void GUI::drawGameElements(VkCommandBuffer cmd)
     stat += "(" + std::to_string(m_gameStat.fps) + " fps";
     stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";
 
-    m_text.draw(cmd, stat, {10.0f, 10.0f}, 24.0f);
+    m_text.draw(cmd, stat, {10.0f, 10.0f}, 32.0f);
 
     for (auto &[_, element] : m_elements) {
         draw(cmd, element);
@@ -220,10 +220,10 @@ void GUI::drawPauseElements(VkCommandBuffer cmd)
     VkExtent2D extent = m_device->getExtent();
     glm::vec2 textPos(
         extent.width / 2.0f,
-        extent.height / 2.0f - 200.0f
+        extent.height / 2.0f - 350.0f
     );
 
-    m_text.draw(cmd, "Game menu", textPos, 24.0f, TextAlign::CENTER);
+    m_text.draw(cmd, "Game menu", textPos, 32.0f, TextAlign::CENTER);
 
     for (auto &[_, element] : m_elements) {
         draw(cmd, element);

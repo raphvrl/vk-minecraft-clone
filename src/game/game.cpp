@@ -107,6 +107,11 @@ void Game::run()
         }
 
         m_window.update();
+        if (m_window.isMinimized()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
         handleInput();
 
         while (accumulator >= MS_PER_TICK) {
@@ -144,14 +149,6 @@ void Game::handleInput()
 void Game::update(f32 dt)
 {
     updateGui();
-    
-    if (m_state != GameState::RUNNING) {
-        return;
-    }
-
-    m_ecs.interpolate(dt);
-
-    m_playerSystem.updateCamera();
 
     m_camera.updateView();
     m_camera.updateProj(m_window.getAspect());
@@ -161,6 +158,14 @@ void Game::update(f32 dt)
 
     m_gpuData.updateCamera(m_camera);
     m_gpuData.update();
+    
+    if (m_state != GameState::RUNNING) {
+        return;
+    }
+
+    m_ecs.interpolate(dt);
+
+    m_playerSystem.updateCamera();
 }
 
 void Game::tick(f32 dt)

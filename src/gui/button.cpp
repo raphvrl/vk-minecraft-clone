@@ -48,9 +48,9 @@ void Button::draw(VkCommandBuffer cmd)
     glm::vec2 textPos = getAbsolutePos();
 
     textPos.x += m_element.size.x / 2.0f;
-    textPos.y += m_element.size.y / 2.0f - 12.0f;
+    textPos.y += m_element.size.y / 2.0f - 16.0f;
 
-    m_gui->drawText(cmd, m_text, textPos, 24.0f, TextAlign::CENTER);
+    m_gui->drawText(cmd, m_text, textPos, 32.0f, TextAlign::CENTER);
 }
 
 bool Button::countain(const glm::vec2 &point) const

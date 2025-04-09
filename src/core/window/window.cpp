@@ -66,6 +66,10 @@ void Window::update()
     m_lastFrame = currentFrame;
 
     glfwPollEvents();
+
+    int width, height;
+    glfwGetFramebufferSize(m_handle, &width, &height);
+    m_minimized = (width == 0 || height == 0);
 }
 
 void Window::keyCallback(

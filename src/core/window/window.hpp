@@ -43,6 +43,8 @@ public:
 
     bool isMouseButtonPressed(int b) const { return m_mouseButtons[b]; }
 
+public:
+
     GLFWwindow *get() const { return m_handle; }
 
     u32 getWidth() const { return m_width; }
@@ -54,6 +56,9 @@ public:
 
     glm::vec2 getMousePos() const { return m_mousePos; }
     glm::vec2 getMouseRel() const { return m_mouseRel; }
+
+    bool isResized() const { return m_resized; }
+    bool isMinimized() const { return m_minimized; }
 
 private:
     GLFWwindow *m_handle;
@@ -73,6 +78,8 @@ private:
     bool m_firstMouse = true;
 
     bool m_resized = false;
+
+    bool m_minimized = false;
 
     static void keyCallback(
         GLFWwindow *window,

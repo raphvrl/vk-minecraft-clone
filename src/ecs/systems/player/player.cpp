@@ -83,15 +83,15 @@ void Player::tick(f32 dt)
     }
 
     wld::BlockType headBlock = m_world.getBlock(
-        transform->position.x,
-        transform->position.y + player->eyeHeight,
-        transform->position.z
+        std::floor(transform->position.x),
+        std::floor(transform->position.y + player->eyeHeight),
+        std::floor(transform->position.z)
     );
 
     wld::BlockType bodyBlock = m_world.getBlock(
-        transform->position.x,
-        transform->position.y + player->eyeHeight * 0.5f,
-        transform->position.z
+        std::floor(transform->position.x),
+        std::floor(transform->position.y + player->eyeHeight * 0.5f),
+        std::floor(transform->position.z)
     );
 
     player->isInWater = (
