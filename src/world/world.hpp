@@ -23,34 +23,6 @@
 namespace wld
 {
 
-struct ChunkPos
-{
-    int x, z;
-
-    ChunkPos() : x(0), z(0) {}
-
-    ChunkPos(int x, int z) : x(x), z(z) {}
-
-    ChunkPos(const ChunkPos &other) : x(other.x), z(other.z) {}
-
-    bool operator==(const ChunkPos &other) const
-    {
-        return x == other.x && z == other.z;
-    }
-
-    bool operator!=(const ChunkPos &other) const
-    {
-        return x != other.x || z != other.z;
-    }
-
-    ChunkPos &operator=(const ChunkPos &other)
-    {
-        x = other.x;
-        z = other.z;
-        return *this;
-    }
-};
-
 struct Ray
 {
     glm::vec3 origin;
@@ -64,7 +36,9 @@ struct RaycastResult
     Face face;
 };
 
-class World {
+class World
+{
+
 public:
     void init(gfx::Device &device);
     void destroy();
@@ -85,6 +59,10 @@ public:
 
     usize getUpdatedChunks() const { return m_updatedChunks; }
 
+public:
+    Chunk *getChunk(const ChunkPos &pos) const;
+
+
 private:
     struct ChunkPosHash
     {
@@ -100,13 +78,11 @@ private:
     void loadChunks(const ChunkPos &pos);
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
-    const Chunk *getChunk(const ChunkPos &pos) const;
 
     void updateMeshe(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_TICK = 1;
-    static constexpr int MESHES_PER_TICK = 2;
 
     std::queue<ChunkPos> m_pendingChunks;
     std::queue<ChunkPos> m_pendingMeshes;

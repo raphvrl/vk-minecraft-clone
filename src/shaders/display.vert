@@ -1,8 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
 
-#include "global.glsl"
+#include "binding.glsl"
 
 const vec2 positions[6] = vec2[](
     vec2(-1.0, -1.0),

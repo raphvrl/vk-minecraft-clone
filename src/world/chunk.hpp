@@ -8,7 +8,35 @@
 namespace wld
 {
 
-struct ChunkPos;
+class World;
+
+struct ChunkPos
+{
+    int x, z;
+
+    ChunkPos() : x(0), z(0) {}
+
+    ChunkPos(int x, int z) : x(x), z(z) {}
+
+    ChunkPos(const ChunkPos &other) : x(other.x), z(other.z) {}
+
+    bool operator==(const ChunkPos &other) const
+    {
+        return x == other.x && z == other.z;
+    }
+
+    bool operator!=(const ChunkPos &other) const
+    {
+        return x != other.x || z != other.z;
+    }
+
+    ChunkPos &operator=(const ChunkPos &other)
+    {
+        x = other.x;
+        z = other.z;
+        return *this;
+    }
+};
 
 struct LightNode
 {
@@ -23,9 +51,10 @@ public:
     static constexpr int CHUNK_SIZE = 16;
     static constexpr int CHUNK_HEIGHT = 128;
 
-    Chunk();
+    Chunk(World &world, const ChunkPos &pos);
 
     void update();
+    void propagateLight();
 
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(glm::ivec3 &pos, BlockType type) {
@@ -43,6 +72,9 @@ public:
 
     
 private:
+    World &m_world;
+    ChunkPos m_pos;
+
     std::array<BlockType, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE> m_blocks;
     std::array<u8, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE> m_lights;
 
@@ -51,7 +83,6 @@ private:
     }
 
     void calulateSkyLight();
-    void propagateLight();
 };
 
 } // namespace wld

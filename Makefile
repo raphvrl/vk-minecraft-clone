@@ -97,6 +97,7 @@ endif
 
 SHADERS_DIR = $(SRC_DIR)/shaders
 SHADERS_BIN = assets/shaders
+SHADERS_INC = $(SHADERS_DIR)/include
 
 SHADER_SRC = $(shell find $(SHADERS_DIR) -name "*.vert") \
 			 $(shell find $(SHADERS_DIR) -name "*.frag")
@@ -105,9 +106,9 @@ SHADER_DST = $(patsubst $(SHADERS_DIR)/%.vert, $(SHADERS_BIN)/%.vert.spv, $(SHAD
 			 $(patsubst $(SHADERS_DIR)/%.frag, $(SHADERS_BIN)/%.frag.spv, $(SHADER_SRC))
 
 ifeq ($(OS), Windows_NT)
-	GLSLC = $(VULKAN_SDK)/Bin/glslc.exe -I$(SHADERS_DIR)
+	GLSLC = $(VULKAN_SDK)/Bin/glslc.exe -I$(SHADERS_INC)
 else
-	GLSLC = glslangValidator -V -I$(SHADERS_DIR)
+	GLSLC = glslangValidator -V -I$(SHADERS_INC)
 endif
 
 MODE ?= debug

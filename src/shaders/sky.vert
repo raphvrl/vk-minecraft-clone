@@ -1,8 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
 
-#include "global.glsl"
+#include "binding.glsl"
 
 const vec3 vertices[] = vec3[36](
     // Front face (+Z)
@@ -53,10 +52,6 @@ const vec3 vertices[] = vec3[36](
     vec3(-1.0, -1.0,  1.0),
     vec3(-1.0, -1.0, -1.0)
 );
-
-layout(binding = 0) uniform UBOArray {
-    CameraUBO camera;
-} uboArray[];
 
 layout(location = 0) out vec3 fragPos;
 

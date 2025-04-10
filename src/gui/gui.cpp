@@ -38,8 +38,12 @@ void GUI::destroy()
 
 void GUI::update(const glm::vec2 &point)
 {
-    for (auto &[_, button] : m_buttons) {
-        button->update(point);
+    auto state = m_gameStat.state;
+
+    if (state == game::GameState::PAUSED) {
+        for (auto &[_, button] : m_buttons) {
+            button->update(point);
+        }
     }
 }
 

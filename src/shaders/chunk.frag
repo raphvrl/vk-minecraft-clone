@@ -1,8 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
 
-#include "global.glsl"
+#include "binding.glsl"
 
 layout(location = 0) out vec4 outColor;
 
@@ -11,8 +10,6 @@ layout(location = 1) in vec3 camPos;
 layout(location = 2) in vec3 worldPos;
 layout(location = 3) in flat uint lightLevel;
 layout(location = 4) in flat uint faceDirection;
-
-layout(binding = 2) uniform sampler2D texArr[];
 
 layout(push_constant) uniform PushConstantObject {
     mat4 model;
@@ -23,7 +20,7 @@ vec3 addShadow(vec3 color)
 {
 
     float faceLights[6] = float[](
-        0.7, 0.7, 0.8, 0.8, 1.0, 0.5
+        0.6, 0.6, 0.8, 0.8, 1.0, 0.4
     );
 
     float intensityFactors[16] = float[](

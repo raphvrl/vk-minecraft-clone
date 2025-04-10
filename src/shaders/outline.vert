@@ -1,8 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
 
-#include "global.glsl"
+#include "binding.glsl"
 
 const float outlineOffset = 0.002;
 const vec3 positions[] = vec3[24](
@@ -36,10 +35,6 @@ const vec3 positions[] = vec3[24](
     vec3(-outlineOffset, 1.0 + outlineOffset, -outlineOffset),
     vec3(-outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset)
 );
-
-layout(binding = 0) uniform UBOArray {
-    CameraUBO camera;
-} uboArray[];
 
 layout(push_constant) uniform PushConstantObject {
     mat4 model;

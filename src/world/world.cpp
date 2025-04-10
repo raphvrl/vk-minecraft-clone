@@ -143,7 +143,10 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
         ChunkPos pos = m_pendingChunks.front();
         m_pendingChunks.pop();
 
-        if (!isChunkLoaded(pos) && m_chunksNeeded.find(pos) != m_chunksNeeded.end()) {
+        if (
+            !isChunkLoaded(pos) &&
+            m_chunksNeeded.find(pos) != m_chunksNeeded.end()
+        ) {
             loadChunks(pos);
             
             m_pendingMeshes.push(pos);
@@ -168,14 +171,12 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
         }
     }
 
-    int meshesUpdated = 0;
-    while (!m_pendingMeshes.empty() && meshesUpdated < MESHES_PER_TICK) {
+    while (!m_pendingMeshes.empty()) {
         ChunkPos pos = m_pendingMeshes.front();
         m_pendingMeshes.pop();
 
         if (isChunkLoaded(pos)) {
             updateMeshe(pos);
-            meshesUpdated++;
         }
     }
 }
@@ -431,9 +432,18 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
     return false;
 }
 
+Chunk *World::getChunk(const ChunkPos &pos) const
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        return it->second.get();
+    }
+
+    return nullptr;
+}
+
 void World::loadChunks(const ChunkPos &pos)
 {
-    auto chunk = std::make_unique<Chunk>();
+    auto chunk = std::make_unique<Chunk>(*this, pos);
 
     m_generator.generateChunk(*chunk, pos);
 
@@ -455,15 +465,6 @@ void World::unloadChunks(const ChunkPos &pos)
 bool World::isChunkLoaded(const ChunkPos &pos)
 {
     return m_chunks.find(pos) != m_chunks.end();
-}
-
-const Chunk *World::getChunk(const ChunkPos &pos) const
-{
-    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
-        return it->second.get();
-    }
-
-    return nullptr;
 }
 
 void World::updateMeshe(const ChunkPos &pos)

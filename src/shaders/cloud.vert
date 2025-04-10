@@ -1,8 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
 
-#include "global.glsl"
+#include "binding.glsl"
 
 vec3 positions[] = vec3[6](
     vec3( 0.0, 0.0,  0.0),
@@ -16,10 +15,6 @@ vec3 positions[] = vec3[6](
 
 layout(location = 1) out vec3 camPos;
 layout(location = 2) out vec3 worldPos;
-
-layout(binding = 0) uniform UBOArray {
-    CameraUBO camera;
-} uboArray[];
 
 layout(push_constant) uniform PushConstantObject {
     mat4 model;
