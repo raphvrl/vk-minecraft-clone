@@ -3,12 +3,12 @@
 namespace gui
 {
 
-void GUI::init(gfx::Device &device)
+void GUI::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
     m_device = &device;
 
-    loadTexture("icons", "assets/textures/gui/icons.png");
-    loadTexture("gui", "assets/textures/gui/gui.png");
+    m_textureIDs["gui"] = textureCache.getTextureID("gui");
+    m_textureIDs["icons"] = textureCache.getTextureID("icons");
 
     initGameElements();
     initPauseElements();
@@ -22,15 +22,11 @@ void GUI::init(gfx::Device &device)
         .setBlending(true)
         .build();
 
-    m_text.init(device);
+    m_text.init(device, textureCache);
 }
 
 void GUI::destroy()
 {
-    for (auto &[_, texture] : m_textures) {
-        texture.first.destroy();
-    }
-
     m_text.destroy();
 
     m_pipeline.destroy();
@@ -175,26 +171,13 @@ void GUI::draw(VkCommandBuffer cmd, const Element &element)
         element.uv.x + element.uv.z,
         element.uv.y + element.uv.w
     };
-    pc.textureID = m_textures[element.texture].second;
+    pc.textureID = m_textureIDs[element.texture];
 
     pc.uv /= ATLAS_SIZE;
 
     m_pipeline.push(cmd, pc);
 
     vkCmdDraw(cmd, 6, 1, 0, 0);
-}
-
-void GUI::loadTexture(const std::string &name, const std::string &path)
-{
-    m_textures[name].first = m_device->loadImage(
-        path,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-    );
-
-    m_textures[name].second = m_device->addTexture(m_textures[name].first);
-
-    m_device->update();
 }
 
 void GUI::drawGameElements(VkCommandBuffer cmd)

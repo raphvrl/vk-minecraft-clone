@@ -4,6 +4,7 @@
 
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
+#include "graphics/texture_cache.hpp"
 
 namespace gui
 {
@@ -19,7 +20,7 @@ class TextRenderer
 {
 
 public:
-    void init(gfx::Device &device);
+    void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
     void draw(
@@ -43,7 +44,6 @@ private:
 
     gfx::Pipeline m_pipeline;
 
-    gfx::Image m_texture;
     u32 m_textureID = 0;
 
     std::array<u32, 256> m_charWidths;

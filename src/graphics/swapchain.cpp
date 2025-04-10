@@ -21,9 +21,9 @@ void Swapchain::init(
         surface,
         width,
         height,
-        VK_FORMAT_B8G8R8A8_UNORM,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-        VK_PRESENT_MODE_MAILBOX_KHR,
+        VK_PRESENT_MODE_IMMEDIATE_KHR,
         0,
         &m_imageFormat,
         &m_extent

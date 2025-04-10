@@ -5,6 +5,7 @@
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/gpu_data.hpp"
+#include "graphics/texture_cache.hpp"
 #include "graphics/display.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
@@ -49,6 +50,7 @@ private:
 
     gfx::Device m_device;
     gfx::GPUData m_gpuData;
+    gfx::TextureCache m_textureCache;
     gfx::Display m_display;
 
     wld::World m_world;

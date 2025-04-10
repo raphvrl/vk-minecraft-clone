@@ -16,5 +16,7 @@ void main()
     vec3 color = texture(texArr[pco.textureID], fragUV).rgb;
     float alpha = texture(texArr[pco.textureID], fragUV).a;
 
+    alpha = min(alpha, 0.3);
+
     outColor = vec4(color, alpha);
 }

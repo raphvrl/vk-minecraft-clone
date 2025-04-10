@@ -3,17 +3,11 @@
 namespace gfx
 {
 
-void OverlayRenderer::init(Device &device)
+void OverlayRenderer::init(Device &device, TextureCache &TextureCache)
 {
     m_device = &device;
 
-    m_texture = m_device->loadImage(
-        "assets/textures/water.png",
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-    );
-
-    m_textureID = m_device->addTexture(m_texture);
+    m_textureID = TextureCache.getTextureID("water");
 
     m_pipeline = Pipeline::Builder(*m_device)
         .setShader("overlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
@@ -27,7 +21,6 @@ void OverlayRenderer::init(Device &device)
 
 void OverlayRenderer::destroy()
 {
-    m_texture.destroy();
     m_pipeline.destroy();
 }
 

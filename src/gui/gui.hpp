@@ -8,6 +8,7 @@
 #include "core/window/window.hpp"
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
+#include "graphics/texture_cache.hpp"
 #include "text_renderer.hpp"
 #include "game/game_state.hpp"
 
@@ -31,7 +32,7 @@ class GUI
 public:
     using CallBackFn = std::function<void()>;
 
-    void init(gfx::Device &device);
+    void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
     void update(const glm::vec2 &point);
@@ -79,7 +80,7 @@ private:
 
     constexpr static u32 ATLAS_SIZE = 256;
 
-    std::unordered_map<std::string, std::pair<gfx::Image, u32>> m_textures;
+    std::unordered_map<std::string, u32> m_textureIDs;
 
     TextRenderer m_text;
 
@@ -87,8 +88,6 @@ private:
     std::unordered_map<std::string, std::unique_ptr<Button>> m_buttons;
 
     GameStat m_gameStat;
-
-    void loadTexture(const std::string &name, const std::string &path);
 
     void drawGameElements(VkCommandBuffer cmd);
     void drawPauseElements(VkCommandBuffer cmd);

@@ -23,14 +23,9 @@ vec3 addShadow(vec3 color)
         0.6, 0.6, 0.8, 0.8, 1.0, 0.4
     );
 
-    float intensityFactors[16] = float[](
-        0.01, 0.02, 0.04, 0.07,
-        0.11,  0.16, 0.22, 0.29,
-        0.36,  0.44, 0.52, 0.61,
-        0.70,  0.78, 0.88, 1.0
-    );
+    float brightness = pow(lightLevel / 15.0, 2.2);
 
-    float light = intensityFactors[lightLevel] * faceLights[faceDirection];
+    float light = brightness * faceLights[faceDirection];
 
     float ambientLight = 0.05;
     vec3 litColor = mix(color * ambientLight, color, light);

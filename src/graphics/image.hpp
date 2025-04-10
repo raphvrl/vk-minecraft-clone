@@ -43,6 +43,8 @@ public:
 
     void copyFromBuffer(Buffer &buffer);
 
+    bool isValid() const { return m_image != VK_NULL_HANDLE; }
+
 public:
     VkImage getImage() const { return m_image; }
     VkImageView getImageView() const { return m_imageView; }

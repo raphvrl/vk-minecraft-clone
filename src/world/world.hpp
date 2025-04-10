@@ -18,6 +18,7 @@
 #include "core/camera/camera.hpp"
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
+#include "graphics/texture_cache.hpp"
 #include "core/frustum.hpp"
 
 namespace wld
@@ -40,7 +41,7 @@ class World
 {
 
 public:
-    void init(gfx::Device &device);
+    void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
     void update(const glm::vec3 &playerPos, f32 dt);
@@ -100,7 +101,6 @@ private:
 
     std::array<gfx::Pipeline, 2> m_pipelines;
 
-    gfx::Image m_textureAtlas;
     u32 m_textureID;
 
     struct PushConstants

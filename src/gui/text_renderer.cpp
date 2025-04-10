@@ -3,17 +3,11 @@
 namespace gui
 {
 
-void TextRenderer::init(gfx::Device &device)
+void TextRenderer::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
     m_device = &device;
 
-    m_texture = m_device->loadImage(
-        "assets/textures/font.png",
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-    );
-
-    m_textureID = m_device->addTexture(m_texture);
+    m_textureID = textureCache.getTextureID("font");
 
     m_pipeline = gfx::Pipeline::Builder(device)
         .setShader("text.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
@@ -29,7 +23,6 @@ void TextRenderer::init(gfx::Device &device)
 
 void TextRenderer::destroy()
 {
-    m_texture.destroy();
     m_pipeline.destroy();
 }
 

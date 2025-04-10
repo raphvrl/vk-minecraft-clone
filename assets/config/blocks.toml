@@ -6,11 +6,11 @@ count = 256
 [blocks]
 	[blocks.stone]
 	id = 1
-	textures.all = { x = 0, y = 0 }
+	textures.all = { x = 1, y = 0 }
 
 	[blocks.grass]
 	id = 2
-	textures.top = { x = 1, y = 0 }
+	textures.top = { x = 0, y = 0 }
 	textures.bottom = { x = 2, y = 0 }
 	textures.sides = { x = 3, y = 0 }
 
@@ -20,30 +20,30 @@ count = 256
 
 	[blocks.cobblestone]
 	id = 4
-	textures.all = { x = 4, y = 0 }
+	textures.all = { x = 0, y = 1 }
 
 	[blocks.bedrock]
 	id = 7
-	textures.all = { x = 0, y = 1 }
+	textures.all = { x = 1, y = 1 }
 
 	[blocks.water]
 	id = 9
-	textures.all = { x = 0, y = 2 }
+	textures.all = { x = 13, y = 12 }
 	transparency = true
 	collision = false
 
 	[blocks.sand]
 	id = 12
-	textures.all = { x = 5, y = 0 }
+	textures.all = { x = 2, y = 1 }
 
 	[blocks.log]
 	id = 17
-	textures.top = { x = 8, y = 0 }
-	textures.bottom = { x = 8, y = 0 }
-	textures.sides = { x = 7, y = 0 }
+	textures.top = { x = 5, y = 1 }
+	textures.bottom = { x = 5, y = 1 }
+	textures.sides = { x = 4, y = 1 }
 
 	[blocks.leaves]
 	id = 18
-	textures.all = { x = 9, y = 0}
+	textures.all = { x = 4, y = 3}
 	transparency = true
 	

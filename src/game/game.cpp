@@ -16,16 +16,24 @@ void Game::init()
     
     m_device.init(m_window, "Minecraft Clone", {0, 1, 0});
     m_gpuData.init(m_device);
+    m_textureCache.init(m_device);
+
+    m_textureCache.loadTexture("terrain.png", "terrain");
+    m_textureCache.loadTexture("font.png", "font");
+    m_textureCache.loadTexture("water.png", "water");
+    m_textureCache.loadTexture("gui/gui.png", "gui");
+    m_textureCache.loadTexture("gui/icons.png", "icons");
+
     m_display.init(m_device);
 
-    m_world.init(m_device);
+    m_world.init(m_device, m_textureCache);
     m_sky.init(m_device);
     m_outline.init(m_device, m_world);
     m_clouds.init(m_device);
 
-    m_overlay.init(m_device);
+    m_overlay.init(m_device, m_textureCache);
 
-    m_gui.init(m_device);
+    m_gui.init(m_device, m_textureCache);
     m_gui.setQuitCallback([&] {
         m_running = false;
     });
@@ -65,6 +73,7 @@ void Game::destroy()
     m_world.destroy();
 
     m_display.destroy();
+    m_textureCache.destroy();
     m_gpuData.destroy();
     m_device.destroy();
 

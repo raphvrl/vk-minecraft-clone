@@ -16,8 +16,9 @@ layout(binding = 0) uniform UBOArray {
     CameraUBO camera;
 } uboArray[];
 
-layout(binding = 1) uniform SSBOArray {
-} ssboArray[];
+// layout(binding = 1) uniform SSBOArray {
+    
+// } ssboArray[];
 
 layout(binding = 2) uniform sampler2D texArr[];
 

@@ -66,7 +66,7 @@ public:
     );
 
     Image loadImage(
-        const std::string& filepath,
+        const fs::path &filepath,
         VkFormat format = VK_FORMAT_R8G8B8A8_SRGB,
         VkImageUsageFlags additionalUsage = 0,
         bool mipmaps = true,

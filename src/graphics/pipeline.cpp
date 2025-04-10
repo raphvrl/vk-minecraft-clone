@@ -5,6 +5,7 @@ namespace gfx
 
 Pipeline::Builder::Builder(Device &device) : m_device(device)
 {
+    m_colorFormat = device.getSwapchain().getFormat();
 }
 
 Pipeline::Builder &Pipeline::Builder::setShader(

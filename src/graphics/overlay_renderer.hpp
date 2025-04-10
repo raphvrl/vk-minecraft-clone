@@ -2,6 +2,7 @@
 
 #include "pipeline.hpp"
 #include "device.hpp"
+#include "texture_cache.hpp"
 
 namespace gfx
 {
@@ -10,7 +11,7 @@ class OverlayRenderer
 {
 
 public:
-    void init(Device &device);
+    void init(Device &device, TextureCache &textureCache);
     void destroy();
 
     void render(VkCommandBuffer cmd);
@@ -22,7 +23,6 @@ private:
 
     Pipeline m_pipeline;
 
-    gfx::Image m_texture;
     u32 m_textureID = 0;
 
     bool m_water = false;

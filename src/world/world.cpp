@@ -3,20 +3,14 @@
 namespace wld
 {
 
-void World::init(gfx::Device &device)
+void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
     m_device = &device;
     m_blockRegistry.load("assets/config/blocks.toml");
 
     m_playerChunkPos = {-1, -1};
 
-    m_textureAtlas = m_device->loadImage(
-        "assets/textures/terrain.png",
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-    );
-
-    m_textureID = m_device->addTexture(m_textureAtlas);
+    m_textureID = textureCache.getTextureID("terrain");
 
     auto binding = ChunkMesh::Vertex::getBindingDescription();
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
@@ -58,8 +52,6 @@ void World::init(gfx::Device &device)
 
 void World::destroy()
 {
-    m_textureAtlas.destroy();
-
     for (auto &pipeline : m_pipelines) {
         pipeline.destroy();
     }

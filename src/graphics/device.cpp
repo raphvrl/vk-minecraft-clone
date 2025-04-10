@@ -374,7 +374,7 @@ Image Device::createImage(
 }
 
 Image Device::loadImage(
-    const std::string &filepath,
+    const fs::path &filepath,
     VkFormat format,
     VkImageUsageFlags additionalUsage,
     bool mipmaps,
