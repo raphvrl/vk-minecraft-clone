@@ -7,14 +7,16 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ### Added
 - Custom application icon for Windows executable (.exe)
 - Windows resource configuration for better integration with File Explorer
+- Post-processing capability with framebuffers for storing rendering outputs
+- Shading on block faces to enhance visual appearance
 
 ### Changed
 - Upgraded to Vulkan 1.3
 - Implemented dynamic rendering for improved performance
-- Added shading on block faces to enhance visual appearance
 - Implemented bindless descriptor sets for more efficient resource binding
 - Completely restructured graphics core architecture
 - Simplified push constants implementation for pipeline configuration
+- Increased gravity to better match Minecraft's physics
 
 ### Fixed
 - Fixed water blocks appearing as half-blocks when another water block was directly above

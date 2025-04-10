@@ -5,6 +5,7 @@
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/gpu_data.hpp"
+#include "graphics/display.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"
@@ -48,6 +49,7 @@ private:
 
     gfx::Device m_device;
     gfx::GPUData m_gpuData;
+    gfx::Display m_display;
 
     wld::World m_world;
     wld::Sky m_sky;

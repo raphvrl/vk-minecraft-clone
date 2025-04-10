@@ -7,6 +7,7 @@
 #include <string>
 #include <array>
 #include <stdexcept>
+#include <functional>
 
 #include "core/types.hpp"
 

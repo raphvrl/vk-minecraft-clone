@@ -48,9 +48,9 @@ void Camera::updateProj(f32 aspect)
 void Camera::updateOrtho(u32 width, u32 height) 
 {
     m_ortho = glm::ortho(
-        -0.5f,
+        0.0f,
         static_cast<f32>(width),
-        -0.5f,
+        0.0f,
         static_cast<f32>(height)
     );
 }

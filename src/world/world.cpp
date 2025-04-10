@@ -32,6 +32,7 @@ void World::init(gfx::Device &device)
         .setPushConstant(sizeof(PushConstants))
         .setDepthTest(true)
         .setDepthWrite(true)
+        .setCull(true)
         .build();
 
     m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_device)

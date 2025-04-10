@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/types.hpp"
 #include "core/window/window.hpp"
 #include "utils/init.hpp"
 #include "global.hpp"
@@ -27,7 +28,14 @@ public:
     void destroy();
 
     VkCommandBuffer beginFrame();
-    void endFrame();
+    void endFrame(VkCommandBuffer cmd);
+
+
+    void beginRenderClear(VkCommandBuffer cmd);
+    void beginRenderLoad(VkCommandBuffer cmd);
+
+    void beginRender(VkCommandBuffer cmd, VkAttachmentLoadOp loadOp);
+    void endRender(VkCommandBuffer cmd);
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -98,6 +106,11 @@ public:
         return m_bindlessManager.addTexture(image, sampler);
     }
 
+    void removeResource(u32 id)
+    {
+        m_bindlessManager.removeResource(id);
+    }
+
     void update()
     {
         m_bindlessManager.update();
@@ -126,6 +139,9 @@ public:
 
     VkQueue getGraphicsQueue() const { return m_graphicsQueue; }
     VkQueue getPresentQueue() const { return m_presentQueue; }
+
+    u32 getCurrentFrame() const { return m_currentFrame; }
+    u32 getImageIndex() const { return m_imageIndex; }
 
 private:
     struct FrameData

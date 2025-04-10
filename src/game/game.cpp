@@ -16,6 +16,7 @@ void Game::init()
     
     m_device.init(m_window, "Minecraft Clone", {0, 1, 0});
     m_gpuData.init(m_device);
+    m_display.init(m_device);
 
     m_world.init(m_device);
     m_sky.init(m_device);
@@ -35,8 +36,9 @@ void Game::init()
     m_gui.initPauseElements();
 
     EntityID playerEntity = m_ecs.creatEntity();
-    m_ecs.addComponent<cmp::Transform>(playerEntity)
-        ->position.y = 80.0f;
+    auto transform = m_ecs.addComponent<cmp::Transform>(playerEntity);
+    transform->position = glm::vec3(0.0f, 80.0f, 0.0f);
+
     m_ecs.addComponent<cmp::Velocity>(playerEntity);
     m_ecs.addComponent<cmp::Player>(playerEntity);
     auto *playerCollider = m_ecs.addComponent<cmp::Collider>(playerEntity);
@@ -62,6 +64,7 @@ void Game::destroy()
     m_sky.destroy();
     m_world.destroy();
 
+    m_display.destroy();
     m_gpuData.destroy();
     m_device.destroy();
 
@@ -160,7 +163,10 @@ void Game::update(f32 dt)
     m_gpuData.update();
     
     if (m_state != GameState::RUNNING) {
+        m_display.setColor({0.6f, 0.6f, 0.6f, 1.0f});
         return;
+    } else {
+        m_display.setColor({1.0f, 1.0f, 1.0f, 1.0f});
     }
 
     m_ecs.interpolate(dt);
@@ -188,16 +194,25 @@ void Game::render()
         return;
     }
 
+    m_display.begin(cmd);
+
     m_sky.render(cmd);
     m_world.render(m_camera, cmd);
     m_outline.render(cmd, m_camera);
     m_clouds.render(cmd, m_camera);
-
     m_overlay.render(cmd);
 
-    m_gui.render(cmd);
+    m_display.end(cmd);
 
-    m_device.endFrame();
+    m_device.beginRenderClear(cmd);
+    m_display.draw(cmd);
+    m_device.endRender(cmd);
+
+    m_device.beginRenderLoad(cmd);
+    m_gui.render(cmd);
+    m_device.endRender(cmd);
+
+    m_device.endFrame(cmd);
 }
 
 void Game::updateGui()

@@ -244,11 +244,7 @@ void BindlessManager::removeResource(u32 id)
         return;
     }
 
-    m_resources[id].isUsed = false;
-    
-    m_resources[id].buffer = VK_NULL_HANDLE;
-    m_resources[id].offset = 0;
-    m_resources[id].range = 0;
+    m_resources[id] = ResourceSlot{};
 }
 
 void BindlessManager::update()

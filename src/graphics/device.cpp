@@ -87,7 +87,6 @@ VkCommandBuffer Device::beginFrame()
     }
 
     auto &frame = m_frames[m_currentFrame];
-    
     vkResetCommandBuffer(frame.commandBuffer, 0);
 
     VkCommandBufferBeginInfo beginInfo{};
@@ -97,104 +96,14 @@ VkCommandBuffer Device::beginFrame()
     VkResult res = vkBeginCommandBuffer(frame.commandBuffer, &beginInfo);
     vk::check(res, "Failed to begin command buffer");
 
-    VkImageMemoryBarrier2 imageBarrierToRenderTarget = {};
-    imageBarrierToRenderTarget.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-    imageBarrierToRenderTarget.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-    imageBarrierToRenderTarget.srcAccessMask = 0;
-    imageBarrierToRenderTarget.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-    imageBarrierToRenderTarget.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-    imageBarrierToRenderTarget.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageBarrierToRenderTarget.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    imageBarrierToRenderTarget.image = image;
-    imageBarrierToRenderTarget.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageBarrierToRenderTarget.subresourceRange.baseMipLevel = 0;
-    imageBarrierToRenderTarget.subresourceRange.levelCount = 1;
-    imageBarrierToRenderTarget.subresourceRange.baseArrayLayer = 0;
-    imageBarrierToRenderTarget.subresourceRange.layerCount = 1;
-
-    VkRenderingAttachmentInfoKHR depthAttachment = {};
-    depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    depthAttachment.imageView = m_depthBuffer.getImageView();
-    depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.clearValue.depthStencil = {1.0f, 0};
-
-    VkImageMemoryBarrier2 depthBarrier = {};
-    depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-    depthBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-    depthBarrier.srcAccessMask = 0;
-    depthBarrier.dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | 
-                                VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-    depthBarrier.dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | 
-                                VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthBarrier.image = m_depthBuffer.getImage();
-    depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    depthBarrier.subresourceRange.baseMipLevel = 0;
-    depthBarrier.subresourceRange.levelCount = 1;
-    depthBarrier.subresourceRange.baseArrayLayer = 0;
-    depthBarrier.subresourceRange.layerCount = 1;
-
-    VkDependencyInfoKHR dependencyInfo = {};
-    dependencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-    std::array<VkImageMemoryBarrier2, 2> barriers = {
-        imageBarrierToRenderTarget, 
-        depthBarrier
-    };
-
-    dependencyInfo.imageMemoryBarrierCount = static_cast<u32>(barriers.size());
-    dependencyInfo.pImageMemoryBarriers = barriers.data();
-
-    vkCmdPipelineBarrier2(frame.commandBuffer, &dependencyInfo);
-
-    VkRenderingAttachmentInfoKHR colorAttachment = {};
-    colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
-    colorAttachment.imageView = m_swapchain.getImageView(imageIndex);
-    colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-
-    VkRenderingInfoKHR renderingInfo = {};
-    renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
-    renderingInfo.renderArea.offset = {0, 0};
-    renderingInfo.renderArea.extent = m_swapchain.getExtent();
-    renderingInfo.layerCount = 1;
-    renderingInfo.colorAttachmentCount = 1;
-    renderingInfo.pColorAttachments = &colorAttachment;
-    renderingInfo.pDepthAttachment = &depthAttachment;
-
-    vkCmdBeginRendering(frame.commandBuffer, &renderingInfo);
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(m_swapchain.getExtent().width);
-    viewport.height = static_cast<float>(m_swapchain.getExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = m_swapchain.getExtent();
-    
-    vkCmdSetViewport(frame.commandBuffer, 0, 1, &viewport);
-    vkCmdSetScissor(frame.commandBuffer, 0, 1, &scissor);
-
     return frame.commandBuffer;
 }
 
-void Device::endFrame()
+void Device::endFrame(VkCommandBuffer cmd)
 {
     if (m_swapchain.isOutOfDate()) {
         return;
     }
-
-    auto &frame = m_frames[m_currentFrame];
-
-    vkCmdEndRendering(frame.commandBuffer);
 
     VkImageMemoryBarrier2 imageBarrierToPresent{};
     imageBarrierToPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -210,26 +119,133 @@ void Device::endFrame()
     imageBarrierToPresent.subresourceRange.levelCount = 1;
     imageBarrierToPresent.subresourceRange.baseArrayLayer = 0;
     imageBarrierToPresent.subresourceRange.layerCount = 1;
-    
+
     VkDependencyInfoKHR dependencyInfo{};
     dependencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
     dependencyInfo.imageMemoryBarrierCount = 1;
     dependencyInfo.pImageMemoryBarriers = &imageBarrierToPresent;
-    
-    vkCmdPipelineBarrier2(frame.commandBuffer, &dependencyInfo);
 
-    VkResult res = vkEndCommandBuffer(frame.commandBuffer);
+    vkCmdPipelineBarrier2(cmd, &dependencyInfo);
+
+    VkResult res = vkEndCommandBuffer(cmd);
     vk::check(res, "Failed to end command buffer");
 
-    m_swapchain.submit(m_currentFrame, frame.commandBuffer, m_graphicsQueue);
-
+    m_swapchain.submit(m_currentFrame, cmd, m_graphicsQueue);
     m_swapchain.present(m_currentFrame, m_presentQueue);
+
     if (m_swapchain.isOutOfDate()) {
         recreateSwapchain();
         return;
     }
 
     m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Device::beginRenderClear(VkCommandBuffer cmd)
+{
+    beginRender(cmd, VK_ATTACHMENT_LOAD_OP_CLEAR);
+}
+
+void Device::beginRenderLoad(VkCommandBuffer cmd)
+{
+    beginRender(cmd, VK_ATTACHMENT_LOAD_OP_LOAD);
+}
+
+void Device::beginRender(VkCommandBuffer cmd, VkAttachmentLoadOp loadOp)
+{
+    VkExtent2D extent = m_swapchain.getExtent();
+    VkClearColorValue clearColor = {{0.0f, 0.0f, 0.0f, 1.0f}};
+
+    VkImageMemoryBarrier2 imageBarrierToRenderTarget{};
+    imageBarrierToRenderTarget.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    imageBarrierToRenderTarget.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+    imageBarrierToRenderTarget.srcAccessMask = 0;
+    imageBarrierToRenderTarget.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    imageBarrierToRenderTarget.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+    imageBarrierToRenderTarget.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageBarrierToRenderTarget.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    imageBarrierToRenderTarget.image = m_swapchain.getImage(m_imageIndex);
+    imageBarrierToRenderTarget.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrierToRenderTarget.subresourceRange.baseMipLevel = 0;
+    imageBarrierToRenderTarget.subresourceRange.levelCount = 1;
+    imageBarrierToRenderTarget.subresourceRange.baseArrayLayer = 0;
+    imageBarrierToRenderTarget.subresourceRange.layerCount = 1;
+
+    VkImageMemoryBarrier2 depthBarrier{};
+    depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    depthBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+    depthBarrier.srcAccessMask = 0;
+    depthBarrier.dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | 
+                                    VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+    depthBarrier.dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | 
+                                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthBarrier.image = m_depthBuffer.getImage();
+    depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    depthBarrier.subresourceRange.baseMipLevel = 0;
+    depthBarrier.subresourceRange.levelCount = 1;
+    depthBarrier.subresourceRange.baseArrayLayer = 0;
+    depthBarrier.subresourceRange.layerCount = 1;
+
+    std::array<VkImageMemoryBarrier2, 2> barriers = {
+        imageBarrierToRenderTarget,
+        depthBarrier
+    };
+
+    VkDependencyInfoKHR dependencyInfo{};
+    dependencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    dependencyInfo.imageMemoryBarrierCount = static_cast<u32>(barriers.size());
+    dependencyInfo.pImageMemoryBarriers = barriers.data();
+    
+    vkCmdPipelineBarrier2(cmd, &dependencyInfo);
+
+    VkRenderingAttachmentInfoKHR colorAttachment{};
+    colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    colorAttachment.imageView = m_swapchain.getImageView(m_imageIndex);
+    colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachment.loadOp = loadOp;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.clearValue.color = clearColor;
+
+    VkRenderingAttachmentInfoKHR depthAttachment{};
+    depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+    depthAttachment.imageView = m_depthBuffer.getImageView();
+    depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depthAttachment.loadOp = loadOp;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachment.clearValue.depthStencil = {1.0f, 0};
+
+    VkRenderingInfoKHR renderingInfo{};
+    renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+    renderingInfo.renderArea.offset = {0, 0};
+    renderingInfo.renderArea.extent = extent;
+    renderingInfo.layerCount = 1;
+    renderingInfo.colorAttachmentCount = 1;
+    renderingInfo.pColorAttachments = &colorAttachment;
+    renderingInfo.pDepthAttachment = &depthAttachment;
+
+    vkCmdBeginRendering(cmd, &renderingInfo);
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = extent;
+    
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+}
+
+void Device::endRender(VkCommandBuffer cmd)
+{
+    vkCmdEndRendering(cmd);
 }
 
 VkCommandBuffer Device::beginSingleTimeCommands()
