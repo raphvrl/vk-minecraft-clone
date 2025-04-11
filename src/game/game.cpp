@@ -49,6 +49,7 @@ void Game::init()
 
     m_ecs.addComponent<cmp::Velocity>(playerEntity);
     m_ecs.addComponent<cmp::Player>(playerEntity);
+
     auto *playerCollider = m_ecs.addComponent<cmp::Collider>(playerEntity);
 
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);

@@ -44,6 +44,6 @@ count = 256
 
 	[blocks.leaves]
 	id = 18
-	textures.all = { x = 4, y = 3}
+	textures.all = { x = 5, y = 3}
 	transparency = true
 	

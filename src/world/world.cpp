@@ -47,7 +47,7 @@ void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
-    m_generator.init(1);
+    m_generator.init(0);
 }
 
 void World::destroy()

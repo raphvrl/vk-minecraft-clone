@@ -103,16 +103,22 @@ void Player::tick(f32 dt)
 
     bool spacePressed = m_window.isKeyPressed(GLFW_KEY_SPACE);
     if (spacePressed && m_jumpCooldown <= 0.0f) {
-        if (collider->isGrounded) {
+        if (collider->isGrounded && !player->isFlying) {
             velocity->position.y = player->jumpForce;
             collider->isGrounded = false;
             m_jumpCooldown = 0.5f;
         }
     }
 
-    if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) && player->isInWater) {
-        velocity->position.y = -player->swimSpeed * 0.8f;
-    } 
+    if (spacePressed && player->isFlying) {
+        transform->position.y += player->moveSpeed;
+    }
+
+    if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+        if (player->isFlying) {
+            transform->position.y -= player->moveSpeed;
+        }
+    }
 
     if (
         m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&

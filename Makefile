@@ -33,7 +33,7 @@ DEP = $(OBJ:.o=.d)
 
 DEPFLAGS = -MMD -MP
 
-CXXFLAGS = -Wall -Wextra -Werror -I$(SRC_DIR)
+CXXFLAGS = -Wall -Wextra -Werror -I$(SRC_DIR) -Wno-aggressive-loop-optimizations
 
 ifeq ($(OS), Windows_NT)
 	TARGET = vulkan-minecraft.exe
