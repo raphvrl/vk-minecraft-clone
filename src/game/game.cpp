@@ -169,6 +169,9 @@ void Game::update(f32 dt)
     m_camera.updateOrtho(extent.width, extent.height);
 
     m_gpuData.updateCamera(m_camera);
+
+    m_gpuData.updateTime(m_window.getCurrentTime(), dt);
+
     m_gpuData.update();
     
     if (m_state != GameState::RUNNING) {

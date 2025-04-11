@@ -26,8 +26,8 @@ public:
 private:
     gfx::Pipeline m_pipeline;
 
-    i32 m_width;
-    i32 m_height;
+    int m_width;
+    int m_height;
     std::vector<bool> m_pattern;
 
     struct CloudCell

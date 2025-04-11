@@ -1,5 +1,5 @@
 #include "world_generator.hpp"
-#include "world.hpp"
+#include "chunk.hpp"
 
 namespace wld
 {
@@ -10,89 +10,112 @@ void WorldGenerator::init(u32 seed)
 
     m_terrainNoise.SetSeed(seed);
     m_terrainNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    m_terrainNoise.SetFrequency(TERRAIN_SCALE);
+    m_terrainNoise.SetFractalType(FastNoiseLite::FractalType_FBm);
+    m_terrainNoise.SetFractalOctaves(5);
+    m_terrainNoise.SetFrequency(0.005f);
+    m_terrainNoise.SetFractalLacunarity(2.0f);
+    m_terrainNoise.SetFractalGain(0.5f);
 
-    m_detailNoise.SetSeed(seed);
-    m_detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    m_detailNoise.SetFrequency(TERRAIN_SCALE * 2.0f);
+    m_biomeNoise.SetSeed(seed + 1);
+    m_biomeNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_biomeNoise.SetFrequency(0.002f);
 }
 
+// TODO : Implement a better organization of the world generation
 void WorldGenerator::generateChunk(Chunk &chunk, const ChunkPos &pos)
 {
-    const i32 chunkX = pos.x * Chunk::CHUNK_SIZE;
-    const i32 chunkZ = pos.z * Chunk::CHUNK_SIZE;
+    const int seaLevel = 64;
+    const int maxHeight = 128;
+    const int minHeight = 1;
 
-    for (i32 x = 0; x < Chunk::CHUNK_SIZE; x++) {
-        for (i32 z = 0; z < Chunk::CHUNK_SIZE; z++) {
-            const i32 worldX = chunkX + x;
-            const i32 worldZ = chunkZ + z;
+    for (int x = 0; x < Chunk::CHUNK_SIZE; ++x) {
+        for (int z = 0; z < Chunk::CHUNK_SIZE; ++z) {
+            int worldX = pos.x * Chunk::CHUNK_SIZE + x;
+            int worldZ = pos.z * Chunk::CHUNK_SIZE + z;
 
-            i32 terrainHeight = getTerrainHeight(worldX, worldZ);
-
-            i32 dirtDepth = 3 + static_cast<i32>(
-                m_detailNoise.GetNoise(worldX * 0.1f, worldZ * 0.1f) * 2.0f
+            f32 biomeValue = m_biomeNoise.GetNoise(
+                static_cast<f32>(worldX),
+                static_cast<f32>(worldZ)
             );
 
-            for (i32 y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
-                if (y > terrainHeight) {
-                    if (y <= SEA_LEVEL) {
-                        chunk.setBlock(x, y, z, BlockType::WATER);
-                    } else {
-                        chunk.setBlock(x, y, z, BlockType::AIR);
-                    }
-                } else {
-                    BlockType block = getBlockAtHeight(y, terrainHeight, dirtDepth);
-                    chunk.setBlock(x, y, z, block);
+            biomeValue = (biomeValue + 1.0f) * 0.5f;
+
+            f32 beachValue = m_biomeNoise.GetNoise(
+                static_cast<f32>(worldX * 1.5f),
+                static_cast<f32>(worldZ * 1.5f)
+            );
+            beachValue = (beachValue + 1.0f) * 0.5f;
+            
+
+            f32 heightValue = m_terrainNoise.GetNoise(
+                static_cast<f32>(worldX),
+                static_cast<f32>(worldZ)
+            );
+
+            heightValue = (heightValue + 1.0f) * 0.5f;
+
+            int height = minHeight;
+            height += static_cast<int>(heightValue * (maxHeight - minHeight));
+            
+            bool isBeach = false;
+            
+            if (biomeValue < 0.45f) {
+                height = minHeight + static_cast<int>(
+                    heightValue * (seaLevel + 8 - minHeight)
+                );
+                
+                if (beachValue < 0.6f && height > seaLevel - 4 && height < seaLevel + 4) {
+                    isBeach = true;
                 }
+            } else if (biomeValue < 0.7f) {
+
+                if (beachValue < 0.4f && height > seaLevel - 3 && height < seaLevel + 3) {
+                    isBeach = true;
+                }
+            } else {
+                height = minHeight + static_cast<int>(
+                    heightValue * (maxHeight - minHeight) * 1.2f
+                );
+                height = std::min(height, maxHeight - 1);
             }
-        }
+
+            for (int y = 0; y < Chunk::CHUNK_HEIGHT; ++y) {
+                BlockType block = BlockType::AIR;
+
+                if (y == 0) {
+                    block = BlockType::BEDROCK;
+                } else if (y <= height) {
+                    bool isUnderwater = height < seaLevel - 1;
+
+                    if (isBeach || (height <= seaLevel + 3 && biomeValue < 0.5f)) {
+                        if (y == height) {
+                            block = BlockType::SAND;
+                        } else if (y >= height - 4) {
+                            block = BlockType::SAND;
+                        } else {
+                            block = BlockType::STONE;
+                        }
+                    } else {
+                        if (y == height) {
+                            if (isUnderwater) {
+                                block = BlockType::DIRT;
+                            } else {
+                                block = BlockType::GRASS;
+                            }
+                        } else if (y >= height - 3) {
+                            block = BlockType::DIRT;
+                        } else {
+                            block = BlockType::STONE;
+                        }
+                    }
+                } else if (y < seaLevel) {
+                    block = BlockType::WATER;
+                }
+                
+                chunk.setBlock(x, y, z, block);
+            }
+        } 
     }
-}
-
-BlockType WorldGenerator::getBlockAtHeight(
-    i32 y,
-    i32 terrainHeight,
-    i32 dirtDepth
-)
-{
-    bool isBeachZone = 
-        terrainHeight >= (SEA_LEVEL - 5) && 
-        terrainHeight <= (SEA_LEVEL + 1);
-
-    if (y == terrainHeight) {
-        if (isBeachZone || y <= SEA_LEVEL) {
-            return BlockType::SAND;
-        }
-        return BlockType::GRASS;
-    } else if (y > terrainHeight - dirtDepth) {
-        if (isBeachZone || y <= SEA_LEVEL - 1) {
-            return BlockType::SAND;
-        }
-        return BlockType::DIRT;
-    } else if (y > 5) {
-        return BlockType::STONE;
-    } else {
-        return BlockType::BEDROCK;
-    }
-}
-
-i32 WorldGenerator::getTerrainHeight(i32 x, i32 z)
-{
-    f32 baseNoise = m_terrainNoise.GetNoise(
-        static_cast<f32>(x),
-        static_cast<f32>(z)
-    );
-
-    f32 detailNoise = m_detailNoise.GetNoise(
-        static_cast<f32>(x),
-        static_cast<f32>(z)
-    );
-
-    f32 CombinedNoise = baseNoise + detailNoise;
-
-    return BASE_TERRAIN_HEIGHT + static_cast<i32>(
-        CombinedNoise * TERRAIN_HEIGHT_SCALE
-    );
 }
 
 } // namespace wld

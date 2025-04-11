@@ -356,9 +356,9 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(
 bool ChunkMesh::isFaceVisible(
     const Chunk &chunk,
     std::array<const Chunk *, 4> neighbors,
-    i32 x,
-    i32 y,
-    i32 z,
+    int x,
+    int y,
+    int z,
     BlockType block
 )
 {

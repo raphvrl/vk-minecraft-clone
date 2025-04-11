@@ -8,7 +8,7 @@ namespace cmp
 {
 struct Player : public ecs::Component
 {
-    static constexpr f32 JUMP_HEIGHT = 1.25f;
+    static constexpr f32 JUMP_HEIGHT = 1.5f;
 
     f32 moveSpeed = 4.3f;
     f32 jumpForce = std::sqrt(2.0f * std::abs(GRAVITY) * JUMP_HEIGHT);

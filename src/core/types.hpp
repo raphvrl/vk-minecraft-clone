@@ -57,4 +57,4 @@ template<typename T> inline void unused(T &&) {}
 using EntityID = u32;
 static constexpr EntityID ENTITY_NULL = std::numeric_limits<EntityID>::max();
 
-static constexpr f32 GRAVITY = -30.0f;
+static constexpr f32 GRAVITY = -32.0f;

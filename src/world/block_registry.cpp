@@ -8,7 +8,7 @@ void BlockRegistry::load(const std::string &path)
     auto config = toml::parse_file(path);
 
     auto atlas = config["atlas"];
-    i32 count = atlas["count"].value_or(0);
+    int count = atlas["count"].value_or(0);
     m_blocks.resize(count);
 
     auto blocks = config["blocks"];

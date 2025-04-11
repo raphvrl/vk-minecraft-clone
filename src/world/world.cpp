@@ -41,13 +41,13 @@ void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
         .setDepthTest(true)
-        .setDepthWrite(false)
+        .setDepthWrite(true)
         .build();
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
-    m_generator.init(0);
+    m_generator.init(1);
 }
 
 void World::destroy()
