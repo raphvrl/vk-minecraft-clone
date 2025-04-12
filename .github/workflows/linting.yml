@@ -48,16 +48,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libvulkan-dev
-          sudo ln -sf /usr/lib/x86_64-linux-gnu/libvulkan.so.1 /usr/lib/x86_64-linux-gnu/libvulkan.so
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/libvulkan.so.1 \
+            /usr/lib/x86_64-linux-gnu/libvulkan.so
 
           ls -la /usr/lib/x86_64-linux-gnu/libvulkan*
-          
+
           export VULKAN_SDK=/usr
           export VULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so
 
           mkdir -p build_win
           cd build_win
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 \
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                -DWIN32=1 \
+                -D_WIN32=1 \
                 -DVULKAN_SDK=/usr \
                 -DVULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so \
                 -DGITHUB_ACTIONS=ON \
@@ -66,21 +69,26 @@ jobs:
 
           mkdir -p build_linux
           cd build_linux
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 \
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                -D__linux__=1 \
                 -DVULKAN_SDK=/usr \
                 -DVULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so \
                 ..
           cd ..
-          
+
           echo "Checking Windows compatibility..."
           cp build_win/compile_commands.json .
           find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} bash -c "clang-tidy {} -p . || exit 1"
-          
+          xargs -I {} bash -c "clang-tidy \
+            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*' \
+            --header-filter='src/.*' {} -p . || exit 1"
+
           echo "Checking Linux compatibility..."
           cp build_linux/compile_commands.json .
           find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} bash -c "clang-tidy {} -p . || exit 1"
+          xargs -I {} bash -c "clang-tidy \
+            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*' \
+            --header-filter='src/.*' {} -p . || exit 1"
 
   windows-build-check:
     name: Windows Build Verification
