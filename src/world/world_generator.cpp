@@ -24,6 +24,10 @@ void WorldGenerator::init(u32 seed)
     m_treeNoise.SetSeed(seed + 2);
     m_treeNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     m_treeNoise.SetFrequency(0.5f);
+
+    m_flowerNoise.SetSeed(seed + 3);
+    m_flowerNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    m_flowerNoise.SetFrequency(0.8f);
 }
 
 void WorldGenerator::generateChunk(Chunk &chunk, const ChunkPos &pos)
@@ -130,7 +134,7 @@ void WorldGenerator::generateChunk(Chunk &chunk, const ChunkPos &pos)
                 
                 chunk.setBlock(x, y, z, block);
             }
-        } 
+        }
     }
 
     std::mt19937 treeRng(m_seed + pos.x * 341873 + pos.z * 132897);
@@ -190,28 +194,69 @@ void WorldGenerator::generateChunk(Chunk &chunk, const ChunkPos &pos)
             }
         }
     }
-}
 
-bool WorldGenerator::canPlaceTree(Chunk &chunk, int x, int y, int z)
-{
-    if (x < 2 || x >= Chunk::CHUNK_SIZE - 2 || z < 2 || z >= Chunk::CHUNK_SIZE - 2) {
-        return false;
-    }
-
-    for (int dy = 1; dy <= 6; ++dy) {
-        if (y + dy >= Chunk::CHUNK_HEIGHT) {
-            return false;
-        }
-        
-        if (chunk.getBlock(x, y + dy, z) != BlockType::AIR) {
-            return false;
-        }
-    }
+    std::mt19937 flowerRng(m_seed + pos.x * 743891 + pos.z * 238761);
     
-    return true;
+    for (int x = 0; x < Chunk::CHUNK_SIZE; ++x) {
+        for (int z = 0; z < Chunk::CHUNK_SIZE; ++z) {
+            int worldX = pos.x * Chunk::CHUNK_SIZE + x;
+            int worldZ = pos.z * Chunk::CHUNK_SIZE + z;
+            int y = heightMap[x][z];
+
+            if (
+                chunk.getBlock(x, y, z) == BlockType::GRASS && 
+                chunk.getBlock(x, y + 1, z) == BlockType::AIR
+            ) {
+
+                float flowerValue = m_flowerNoise.GetNoise(
+                    static_cast<float>(worldX * 0.8f),
+                    static_cast<float>(worldZ * 0.8f)
+                );
+                flowerValue = (flowerValue + 1.0f) * 0.5f;
+
+                float flowerProbability = 0.08f;
+
+                if (
+                    m_biomeNoise.GetNoise(
+                        static_cast<f32>(worldX),
+                        static_cast<f32>(worldZ)
+                    ) > 0.5f && 
+                    m_biomeNoise.GetNoise(
+                        static_cast<f32>(worldX),
+                        static_cast<f32>(worldZ)
+                    ) < 0.7f) {
+                    flowerProbability = 0.03f;
+                }
+
+                float flowerPatchValue = m_flowerNoise.GetNoise(
+                    static_cast<float>(worldX * 0.2f),
+                    static_cast<float>(worldZ * 0.2f)
+                );
+                
+                if (flowerPatchValue > 0.7f) {
+                    flowerProbability *= 6.0f;
+                }
+
+                if (flowerValue < flowerProbability) {
+                    if (
+                        y + 1 < Chunk::CHUNK_HEIGHT &&
+                        chunk.getBlock(x, y + 1, z) == BlockType::AIR
+                    ) {
+                        generateFlowers(chunk, x, y, z, flowerRng);
+                    }
+                }
+            }
+        }
+    }
 }
 
-void WorldGenerator::generateTree(Chunk &chunk, int x, int y, int z, std::mt19937 &rng)
+void WorldGenerator::generateTree(
+    Chunk &chunk,
+    int x,
+    int y,
+    int z,
+    std::mt19937 &rng
+)
 {
     std::uniform_int_distribution<int> trunkHeightDist(4, 6);
     int trunkHeight = trunkHeightDist(rng);
@@ -246,6 +291,46 @@ void WorldGenerator::generateTree(Chunk &chunk, int x, int y, int z, std::mt1993
             }
         }
     }
+}
+
+bool WorldGenerator::canPlaceTree(Chunk &chunk, int x, int y, int z)
+{
+    if (x < 2 || x >= Chunk::CHUNK_SIZE - 2 || z < 2 || z >= Chunk::CHUNK_SIZE - 2) {
+        return false;
+    }
+
+    for (int dy = 1; dy <= 6; ++dy) {
+        if (y + dy >= Chunk::CHUNK_HEIGHT) {
+            return false;
+        }
+        
+        if (chunk.getBlock(x, y + dy, z) != BlockType::AIR) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+void WorldGenerator::generateFlowers(
+    Chunk &chunk,
+    int x,
+    int y,
+    int z,
+    std::mt19937 &rng
+)
+{
+    std::uniform_int_distribution<int> flowerTypeDist(0, 1);
+    int flowerType = flowerTypeDist(rng);
+
+    BlockType flowerBlock;
+    if (flowerType == 0) {
+        flowerBlock = BlockType::ROSE;
+    } else {
+        flowerBlock = BlockType::FLOWER;
+    }
+
+    chunk.setBlock(x, y + 1, z, flowerBlock);
 }
 
 } // namespace wld

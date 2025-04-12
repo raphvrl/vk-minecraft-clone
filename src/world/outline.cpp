@@ -14,6 +14,7 @@ void Outline::init(gfx::Device &device, World &world)
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
         .setDepthTest(true)
+        .setDepthWrite(true)
         .build();
 
     m_world = &world;

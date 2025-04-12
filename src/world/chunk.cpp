@@ -139,7 +139,12 @@ void Chunk::calulateSkyLight()
             for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
                 BlockType block = getBlock(x, y, z);
 
-                if (block != BlockType::AIR && block != BlockType::WATER) {
+                if (
+                    block != BlockType::AIR &&
+                    block != BlockType::WATER &&
+                    block != BlockType::ROSE &&
+                    block != BlockType::FLOWER
+                ) {
                     setLight(x, y, z, 0);
                     currentLight = 0;
                 } else {

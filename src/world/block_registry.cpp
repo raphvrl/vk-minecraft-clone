@@ -62,6 +62,20 @@ void BlockRegistry::load(const std::string &path)
                     ->as_boolean()
                     ->value_or(true);
             }
+
+            if (blockTable->contains("breakable")) {
+                block.breakable = blockTable
+                    ->get("breakable")
+                    ->as_boolean()
+                    ->value_or(true);
+            }
+
+            if (blockTable->contains("cross")) {
+                block.cross = blockTable
+                    ->get("cross")
+                    ->as_boolean()
+                    ->value_or(false);
+            }
         }
 
         m_blocks[id] = block;

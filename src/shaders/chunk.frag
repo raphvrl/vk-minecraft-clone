@@ -23,10 +23,6 @@ vec3 addShadow(vec3 color)
         0.6, 0.6, 0.8, 0.8, 1.0, 0.4
     );
 
-    // float faceLights[6] = float[](
-    //     1.0, 1.0, 1.0, 1.0, 1.0, 1.0
-    // );
-
     float brightness = pow(lightLevel / 15.0, 2.2);
 
     float light = brightness * faceLights[faceDirection];
@@ -63,6 +59,10 @@ void main()
 
     if (alpha > 0.1 && alpha < 0.9) {
         alpha = 0.8;
+    }
+
+    if (alpha < 0.1) {
+        discard;
     }
 
     color = addShadow(color);

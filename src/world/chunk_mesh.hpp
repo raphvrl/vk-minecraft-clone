@@ -97,6 +97,7 @@ public:
 
     void drawOpaque(VkCommandBuffer cmd);
     void drawTransparent(VkCommandBuffer cmd);
+    void drawCross(VkCommandBuffer cmd);
 
 private:
     gfx::Device *m_device;
@@ -114,6 +115,12 @@ private:
     gfx::Buffer m_transparentVertexBuffer;
     gfx::Buffer m_transparentIndexBuffer;
 
+    std::vector<Vertex> m_crossVertices;
+    std::vector<u32> m_crossIndices;
+
+    gfx::Buffer m_crossVertexBuffer;
+    gfx::Buffer m_crossIndexBuffer;
+
     // mesh generation
     static const std::array<glm::vec3, 4> FACE_NORTH;
     static const std::array<glm::vec3, 4> FACE_SOUTH;
@@ -121,6 +128,8 @@ private:
     static const std::array<glm::vec3, 4> FACE_WEST;
     static const std::array<glm::vec3, 4> FACE_TOP;
     static const std::array<glm::vec3, 4> FACE_BOTTOM;
+    static const std::array<glm::vec3, 4> FACE_CROSS_1;
+    static const std::array<glm::vec3, 4> FACE_CROSS_2;
 
     void addFace(
         const Chunk &chunk,
@@ -129,7 +138,7 @@ private:
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
         BlockType block,
-        Face fac3
+        Face face
     );
 
     std::array<glm::vec2, 4> getUVs(

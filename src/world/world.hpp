@@ -96,10 +96,11 @@ private:
     enum PipelineType
     {
         P_OPAQUE,
-        P_TRANSPARENT
+        P_TRANSPARENT,
+        P_CROSS,
     };
 
-    std::array<gfx::Pipeline, 2> m_pipelines;
+    std::array<gfx::Pipeline, 3> m_pipelines;
 
     u32 m_textureID;
 

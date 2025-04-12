@@ -41,6 +41,7 @@ public:
         Builder &setPushConstant(u32 size);
         Builder &setDepthTest(bool enable);
         Builder &setDepthWrite(bool enable);
+        Builder &setAlphaTest(bool enable);
         Builder &setCullMode(VkCullModeFlags mode);
         Builder &setCull(bool enable);
         Builder &setBlending(bool enable);
@@ -64,6 +65,8 @@ public:
 
         bool m_depthTest = false;
         bool m_depthWrite = false;
+
+        bool m_alphaTest = false;
 
         bool m_cull = false;
         VkCullModeFlags m_cullMode = VK_CULL_MODE_BACK_BIT;

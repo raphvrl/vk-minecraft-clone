@@ -19,6 +19,8 @@ void ChunkMesh::destroy()
     m_vertexBuffer.destroy();
     m_transparentIndexBuffer.destroy();
     m_transparentVertexBuffer.destroy();
+    m_crossIndexBuffer.destroy();
+    m_crossVertexBuffer.destroy();
 }
 
 void ChunkMesh::generate(
@@ -35,6 +37,31 @@ void ChunkMesh::generate(
                 }
 
                 glm::vec3 pos(x, y, z);
+
+                
+                if (m_registry->getBlock(block).cross) {
+                    addFace(
+                        chunk,
+                        neighbors,
+                        pos,
+                        ChunkMesh::FACE_CROSS_1,
+                        getUVs(block, Face::NORTH),
+                        block,
+                        Face::NORTH
+                    );
+
+                    addFace(
+                        chunk,
+                        neighbors,
+                        pos,
+                        ChunkMesh::FACE_CROSS_2,
+                        getUVs(block, Face::SOUTH),
+                        block,
+                        Face::SOUTH
+                    );
+
+                    continue;
+                }
 
                 if (isFaceVisible(chunk, neighbors, x - 1, y, z, block)) {
                     addFace(
@@ -142,6 +169,22 @@ void ChunkMesh::generate(
     );
 
     m_transparentIndexBuffer.uploadData(m_transparentIndices);
+
+    m_crossVertexBuffer = m_device->createBuffer(
+        m_crossVertices.size() * sizeof(Vertex),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
+    );
+
+    m_crossVertexBuffer.uploadData(m_crossVertices);
+
+    m_crossIndexBuffer = m_device->createBuffer(
+        m_crossIndices.size() * sizeof(u32),
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU 
+    );
+
+    m_crossIndexBuffer.uploadData(m_crossIndices);
 }
 
 void ChunkMesh::update(
@@ -153,14 +196,17 @@ void ChunkMesh::update(
     m_indices.clear();
     m_transparentVertices.clear();
     m_transparentIndices.clear();
+    m_crossVertices.clear();
+    m_crossIndices.clear();
 
     m_device->waitIdle();
 
     m_vertexBuffer.destroy();
     m_indexBuffer.destroy();
-
     m_transparentVertexBuffer.destroy();
     m_transparentIndexBuffer.destroy();
+    m_crossIndexBuffer.destroy();
+    m_crossVertexBuffer.destroy();
 
     generate(chunk, neighbors);
 }
@@ -219,6 +265,33 @@ void ChunkMesh::drawTransparent(VkCommandBuffer cmd)
     vkCmdDrawIndexed(cmd, m_transparentIndices.size(), 1, 0, 0, 0);
 }
 
+void ChunkMesh::drawCross(VkCommandBuffer cmd)
+{
+    if (m_crossVertices.empty()) {
+        return;
+    }
+
+    VkDeviceSize offsets[] = {0};
+
+    VkBuffer vertexBuffer = m_crossVertexBuffer.getBuffer();
+    vkCmdBindVertexBuffers(
+        cmd,
+        0,
+        1,
+        &vertexBuffer,
+        offsets
+    );
+
+    vkCmdBindIndexBuffer(
+        cmd,
+        m_crossIndexBuffer.getBuffer(),
+        0,
+        VK_INDEX_TYPE_UINT32
+    );
+
+    vkCmdDrawIndexed(cmd, m_crossIndices.size(), 1, 0, 0, 0);
+}
+
 const std::array<glm::vec3, 4> ChunkMesh::FACE_NORTH = {
     glm::vec3(1.0f, 0.0f, 1.0f),
     glm::vec3(0.0f, 0.0f, 1.0f),
@@ -261,6 +334,20 @@ const std::array<glm::vec3, 4> ChunkMesh::FACE_BOTTOM = {
     glm::vec3(1.0f, 0.0f, 1.0f)
 };
 
+const std::array<glm::vec3, 4> ChunkMesh::FACE_CROSS_1 = {
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(1.0f, 0.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 1.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+};
+
+const std::array<glm::vec3, 4> ChunkMesh::FACE_CROSS_2 = {
+    glm::vec3(0.0f, 0.0f, 1.0f),
+    glm::vec3(1.0f, 0.0f, 0.0f),
+    glm::vec3(1.0f, 1.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 1.0f)
+};
+
 void ChunkMesh::addFace(
     const Chunk &chunk,
     const std::array<const Chunk *, 4> &neighbors,
@@ -277,6 +364,9 @@ void ChunkMesh::addFace(
     if (m_registry->getBlock(block).transparency) {
         verticesData = &m_transparentVertices;
         indicesData = &m_transparentIndices;
+    } else if (m_registry->getBlock(block).cross) {
+        verticesData = &m_crossVertices;
+        indicesData = &m_crossIndices;
     } else {
         verticesData = &m_vertices;
         indicesData = &m_indices;
@@ -391,6 +481,10 @@ bool ChunkMesh::isFaceVisible(
         return true;
     }
 
+    if (m_registry->getBlock(adjacentBlock).cross) {
+        return true;
+    }
+
     Block currentData = m_registry->getBlock(block);
     Block adjacentData = m_registry->getBlock(adjacentBlock);
 
@@ -421,6 +515,9 @@ glm::vec3 ChunkMesh::getNormalFromFace(std::array<glm::vec3, 4> &face)
     if (face == FACE_SOUTH) return glm::vec3(0.0f, 0.0f, -1.0f);
     if (face == FACE_EAST) return glm::vec3(1.0f, 0.0f, 0.0f);
     if (face == FACE_WEST) return glm::vec3(-1.0f, 0.0f, 0.0f);
+
+    if (face == FACE_CROSS_1) return glm::vec3(0.0f, 1.0f, 0.0f);
+    if (face == FACE_CROSS_2) return glm::vec3(0.0f, 1.0f, 0.0f);
 
     return glm::vec3(0.0f, 1.0f, 0.0f);
 }

@@ -44,6 +44,21 @@ void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
         .setDepthWrite(true)
         .build();
 
+    m_pipelines[P_CROSS] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
+            &binding,
+            attributes.data(),
+            attributes.size()
+        })
+        .setPushConstant(sizeof(PushConstants))
+        .setCullMode(VK_CULL_MODE_NONE)
+        .setBlending(false)
+        .setDepthTest(true)
+        .setDepthWrite(true)
+        .build();
+
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
@@ -233,6 +248,33 @@ void World::render(const core::Camera &camera, VkCommandBuffer cmd)
 
         mesh->drawTransparent(cmd);
     }
+
+    m_pipelines[P_CROSS].bind(cmd);
+
+    for (const auto &[pos, mesh] : m_meshes) {
+        f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
+        f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
+
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
+        );
+
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
+
+        m_pipelines[P_CROSS].push(cmd, pc);
+
+        mesh->drawCross(cmd);
+    }
 }
 
 BlockType World::getBlock(int x, int y, int z) const
@@ -339,7 +381,7 @@ bool World::raycast(
         BlockType type = getBlock(blockPos);
         if (
             type != BlockType::AIR &&
-            m_blockRegistry.getBlock(type).collision
+            m_blockRegistry.getBlock(type).breakable
         ) {
             result.pos = blockPos;
             result.face = hitFace;

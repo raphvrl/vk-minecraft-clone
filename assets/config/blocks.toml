@@ -31,6 +31,7 @@ count = 256
 	textures.all = { x = 13, y = 12 }
 	transparency = true
 	collision = false
+	breakable = false
 
 	[blocks.sand]
 	id = 12
@@ -45,5 +46,16 @@ count = 256
 	[blocks.leaves]
 	id = 18
 	textures.all = { x = 5, y = 3}
-	transparency = true
+
+	[blocks.flower]
+	id = 37
+	textures.all = { x = 13, y = 0 }
+	cross = true
+	collision = false
+
+	[blocks.rose]
+	id = 38
+	textures.all = { x = 12, y = 0 }
+	cross = true
+	collision = false
 	

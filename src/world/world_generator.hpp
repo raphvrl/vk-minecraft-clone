@@ -22,6 +22,8 @@ private:
     void generateTree(Chunk &chunk, int x, int y, int z, std::mt19937 &rng);
     bool canPlaceTree(Chunk &chunk, int x, int y, int z);
 
+    void generateFlowers(Chunk &chunk, int x, int y, int z, std::mt19937 &rng);
+
 private:
     u32 m_seed;
     std::mt19937 m_rng;
@@ -29,6 +31,7 @@ private:
     FastNoiseLite m_terrainNoise;
     FastNoiseLite m_biomeNoise;
     FastNoiseLite m_treeNoise;
+    FastNoiseLite m_flowerNoise;
 
 };
 
