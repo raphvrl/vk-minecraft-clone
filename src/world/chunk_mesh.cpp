@@ -395,15 +395,26 @@ void ChunkMesh::addFace(
         }
     }
 
-    glm::vec3 normal = getNormalFromFace(adjustedVerts);
-    glm::ivec3 adjPos = glm::ivec3(pos) + glm::ivec3(normal);
-    u8 faceLightLevel = getFaceLightLevel(
-        chunk,
-        neighbors,
-        adjPos.x,
-        adjPos.y,
-        adjPos.z
-    );
+    u8 faceLightLevel;
+    if (m_registry->getBlock(block).cross) {
+        faceLightLevel = getFaceLightLevel(
+            chunk,
+            neighbors,
+            pos.x,
+            pos.y,
+            pos.z
+        );
+    } else {
+        glm::vec3 normal = getNormalFromFace(adjustedVerts);
+        glm::ivec3 adjPos = glm::ivec3(pos) + glm::ivec3(normal);
+        faceLightLevel = getFaceLightLevel(
+            chunk,
+            neighbors,
+            adjPos.x,
+            adjPos.y,
+            adjPos.z
+        );
+    }
 
     for (usize i = 0; i < 4; i++) {
         Vertex vertex;

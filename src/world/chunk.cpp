@@ -4,8 +4,9 @@
 namespace wld
 {
 
-Chunk::Chunk(World &world, const ChunkPos &pos) :
+Chunk::Chunk(World &world, BlockRegistry &blockRegistry, const ChunkPos &pos) :
     m_world(world),
+    m_blockRegistry(blockRegistry),
     m_pos(pos)
 {
     m_blocks.fill(BlockType::AIR);
@@ -58,7 +59,8 @@ void Chunk::propagateLight()
                 BlockType neighborBlock = getBlock(adjPos.x, adjPos.y, adjPos.z);
                 if (
                     neighborBlock != BlockType::AIR &&
-                    neighborBlock != BlockType::WATER
+                    !m_blockRegistry.getBlock(neighborBlock).transparency &&
+                    !m_blockRegistry.getBlock(neighborBlock).cross
                 ) {
                     continue;
                 }
@@ -141,12 +143,11 @@ void Chunk::calulateSkyLight()
 
                 if (
                     block != BlockType::AIR &&
-                    block != BlockType::WATER &&
-                    block != BlockType::ROSE &&
-                    block != BlockType::FLOWER
+                    !m_blockRegistry.getBlock(block).transparency &&
+                    !m_blockRegistry.getBlock(block).cross
                 ) {
                     setLight(x, y, z, 0);
-                    currentLight = 0;
+                    currentLight = 0;                    
                 } else {
                     setLight(x, y, z, currentLight);
 

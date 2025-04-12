@@ -477,7 +477,7 @@ Chunk *World::getChunk(const ChunkPos &pos) const
 
 void World::loadChunks(const ChunkPos &pos)
 {
-    auto chunk = std::make_unique<Chunk>(*this, pos);
+    auto chunk = std::make_unique<Chunk>(*this, m_blockRegistry, pos);
 
     m_generator.generateChunk(*chunk, pos);
 
