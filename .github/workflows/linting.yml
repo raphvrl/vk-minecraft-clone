@@ -43,11 +43,25 @@ jobs:
           
       - name: Run Clang-Tidy with platform detection
         run: |
-          find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} clang-tidy {} -- -I$PWD/src -DWIN32 -D_WIN32 || true
+          mkdir -p build_win
+          cd build_win
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 ..
+          cd ..
+
+          mkdir -p build_linux
+          cd build_linux
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 ..
+          cd ..
           
+          echo "Checking Windows compatibility..."
+          cp build_win/compile_commands.json .
           find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} clang-tidy {} -- -I$PWD/src -D__linux__ || true
+          xargs -I {} bash -c "clang-tidy {} -p . || exit 1"
+          
+          echo "Checking Linux compatibility..."
+          cp build_linux/compile_commands.json .
+          find src -name "*.cpp" -o -name "*.hpp" | \
+          xargs -I {} bash -c "clang-tidy {} -p . || exit 1"
 
   windows-build-check:
     name: Windows Build Verification
