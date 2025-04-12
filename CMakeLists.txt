@@ -22,6 +22,24 @@ endif()
 
 find_package(Vulkan REQUIRED)
 
+if(NOT Vulkan_FOUND OR NOT Vulkan_LIBRARY)
+    if(DEFINED ENV{GITHUB_ACTIONS})
+        message(STATUS "GitHub Actions detected, using explicit Vulkan library path")
+
+        set(Vulkan_FOUND TRUE)
+
+        if(Vulkan_INCLUDE_DIR)
+            message(STATUS "Vulkan headers found: ${Vulkan_INCLUDE_DIR}")
+        else()
+            set(Vulkan_INCLUDE_DIR "/usr/include")
+            message(STATUS "Using default Vulkan headers path: ${Vulkan_INCLUDE_DIR}")
+        endif()
+
+        set(Vulkan_LIBRARY "/usr/lib/x86_64-linux-gnu/libvulkan.so")
+        message(STATUS "Using explicit Vulkan library path: ${Vulkan_LIBRARY}")
+    endif()
+endif()
+
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
         add_compile_definitions(DEBUG)
 else()
