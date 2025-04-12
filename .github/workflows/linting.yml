@@ -21,7 +21,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential clang-tidy clang-format cppcheck \
             libvulkan-dev vulkan-tools glslang-tools \
-            libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
+            libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev \
+            libvulkan1
       
       - name: Check platform-specific includes
         run: |
@@ -46,15 +47,22 @@ jobs:
       - name: Run Clang-Tidy with platform detection
         run: |
           export VULKAN_SDK=/usr
+          export VULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so
 
           mkdir -p build_win
           cd build_win
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 -DVULKAN_SDK=/usr ..
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 \
+                -DVULKAN_SDK=/usr \
+                -DVULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so \
+                ..
           cd ..
 
           mkdir -p build_linux
           cd build_linux
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 -DVULKAN_SDK=/usr ..
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 \
+                -DVULKAN_SDK=/usr \
+                -DVULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so \
+                ..
           cd ..
           
           echo "Checking Windows compatibility..."
