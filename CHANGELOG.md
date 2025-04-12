@@ -5,13 +5,14 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- Custom application icon for Windows executable (.exe)
+- Custom application icon for Windows and Linux
 - Windows resource configuration for better integration with File Explorer
 - Post-processing capability with framebuffers for storing rendering outputs
 - Shading on block faces to enhance visual appearance
 
 ### Changed
 - Upgraded to Vulkan 1.3
+- Migrated build system to CMake
 - Implemented dynamic rendering for improved performance
 - Implemented bindless descriptor sets for more efficient resource binding
 - Completely restructured graphics core architecture
