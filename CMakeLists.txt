@@ -53,6 +53,71 @@ file(GLOB_RECURSE SRC_FILES
 
 add_executable(vulkan-minecraft ${SRC_FILES})
 
+if(WIN32)
+    set(APP_ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/app.ico")
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/app_icon.rc")
+
+    if(NOT EXISTS "${APP_ICON_PATH}")
+        message(FATAL_ERROR "Windows icon file not found at ${APP_ICON_PATH}. Please ensure the file exists.")
+    endif()
+
+    if(NOT EXISTS "${APP_ICON_RESOURCE_WINDOWS}")
+        file(WRITE "${APP_ICON_RESOURCE_WINDOWS}" "IDI_ICON1 ICON \"${APP_ICON_PATH}\"\n")
+        message(STATUS "Created Windows icon resource file pointing to your existing app.ico")
+    endif()
+
+    target_sources(vulkan-minecraft PRIVATE "${APP_ICON_RESOURCE_WINDOWS}")
+
+    add_custom_command(TARGET vulkan-minecraft POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${APP_ICON_PATH}"
+            "$<TARGET_FILE_DIR:vulkan-minecraft>/app.ico"
+        COMMENT "Copying Windows application icon"
+        DEPENDS "${APP_ICON_PATH}"
+    )
+elseif(UNIX AND NOT APPLE)
+    set(LINUX_ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/app.png")
+
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons")
+    endif()
+
+    if(NOT EXISTS "${LINUX_ICON_PATH}")
+        message(STATUS "Please place your app.png in assets/icons folder for Linux icon support.")
+    endif()
+
+    set(DESKTOP_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/vulkan-minecraft.desktop")
+    file(WRITE ${DESKTOP_FILE_PATH}
+        "[Desktop Entry]\n"
+        "Type=Application\n"
+        "Name=Vulkan Minecraft\n"
+        "Comment=A Minecraft clone built with Vulkan\n"
+        "Exec=${CMAKE_INSTALL_PREFIX}/bin/vulkan-minecraft\n"
+        "Icon=${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps/vulkan-minecraft.png\n"
+        "Terminal=false\n"
+        "Categories=Game;\n"
+    )
+
+    include(GNUInstallDirs)
+
+    install(TARGETS vulkan-minecraft
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/vulkan-minecraft/assets
+    )
+
+    install(FILES ${LINUX_ICON_PATH}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
+        RENAME vulkan-minecraft.png
+    )
+
+    install(FILES ${DESKTOP_FILE_PATH}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    )
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(vulkan-minecraft PRIVATE ${STRICT_FLAGS})
 endif()
