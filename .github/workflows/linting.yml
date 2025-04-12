@@ -46,6 +46,12 @@ jobs:
           
       - name: Run Clang-Tidy with platform detection
         run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/libvulkan.so.1 /usr/lib/x86_64-linux-gnu/libvulkan.so
+
+          ls -la /usr/lib/x86_64-linux-gnu/libvulkan*
+          
           export VULKAN_SDK=/usr
           export VULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so
 
@@ -54,6 +60,7 @@ jobs:
           cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 \
                 -DVULKAN_SDK=/usr \
                 -DVULKAN_LIBRARY=/usr/lib/x86_64-linux-gnu/libvulkan.so \
+                -DGITHUB_ACTIONS=ON \
                 ..
           cd ..
 

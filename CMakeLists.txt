@@ -20,24 +20,21 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /O2")
 endif()
 
-find_package(Vulkan REQUIRED)
+option(GITHUB_ACTIONS "Build in GitHub Actions environment" OFF)
 
-if(NOT Vulkan_FOUND OR NOT Vulkan_LIBRARY)
-    if(DEFINED ENV{GITHUB_ACTIONS})
-        message(STATUS "GitHub Actions detected, using explicit Vulkan library path")
+if(GITHUB_ACTIONS)
+    message(STATUS "GitHub Actions detected, manual Vulkan configuration")
+    
+    set(Vulkan_INCLUDE_DIR "/usr/include")
+    set(Vulkan_LIBRARY "/usr/lib/x86_64-linux-gnu/libvulkan.so")
+    set(Vulkan_FOUND TRUE)
 
-        set(Vulkan_FOUND TRUE)
-
-        if(Vulkan_INCLUDE_DIR)
-            message(STATUS "Vulkan headers found: ${Vulkan_INCLUDE_DIR}")
-        else()
-            set(Vulkan_INCLUDE_DIR "/usr/include")
-            message(STATUS "Using default Vulkan headers path: ${Vulkan_INCLUDE_DIR}")
-        endif()
-
-        set(Vulkan_LIBRARY "/usr/lib/x86_64-linux-gnu/libvulkan.so")
-        message(STATUS "Using explicit Vulkan library path: ${Vulkan_LIBRARY}")
-    endif()
+    add_library(vulkan INTERFACE)
+    add_library(Vulkan::Vulkan ALIAS vulkan)
+    target_include_directories(vulkan INTERFACE ${Vulkan_INCLUDE_DIR})
+    target_link_libraries(vulkan INTERFACE ${Vulkan_LIBRARY})
+else()
+    find_package(Vulkan REQUIRED)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
