@@ -19,7 +19,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang-tidy clang-format cppcheck
+          sudo apt-get install -y build-essential clang-tidy clang-format cppcheck \
+            libvulkan-dev vulkan-tools glslang-tools \
+            libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
       
       - name: Check platform-specific includes
         run: |
@@ -43,14 +45,16 @@ jobs:
           
       - name: Run Clang-Tidy with platform detection
         run: |
+          export VULKAN_SDK=/usr
+
           mkdir -p build_win
           cd build_win
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 ..
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWIN32=1 -D_WIN32=1 -DVULKAN_SDK=/usr ..
           cd ..
 
           mkdir -p build_linux
           cd build_linux
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 ..
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D__linux__=1 -DVULKAN_SDK=/usr ..
           cd ..
           
           echo "Checking Windows compatibility..."
