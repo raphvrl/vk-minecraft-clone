@@ -62,7 +62,7 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p release-package
-          cp vulkan-minecraft.exe release-package/
+          cp build/vulkan-minecraft.exe release-package/
           cp -r assets release-package/
           cd release-package
           zip -r ../vulkan-minecraft-windows-${GITHUB_REF_NAME}.zip .
@@ -115,7 +115,7 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p release-package
-          cp vulkan-minecraft release-package/
+          cp build/vulkan-minecraft release-package/
           cp -r assets release-package/
           cd release-package
           zip -r ../vulkan-minecraft-linux-${GITHUB_REF_NAME}.zip .
