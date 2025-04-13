@@ -5,13 +5,11 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- Block placement and destruction sound effects
+- Sound effects for block placement and destruction for all block types
+- Audio feedback system that varies sound based on block material
 
 ### Changed
--
-
-### Fixed
--
+- Enhanced sound system to support material-specific audio variations
 
 
 ## [0.2.0] - 2025-04-13
