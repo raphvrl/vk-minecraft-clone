@@ -1,4 +1,7 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+
+#include "binding.glsl"
 
 const float outlineOffset = 0.002;
 const vec3 positions[] = vec3[24](
@@ -33,14 +36,15 @@ const vec3 positions[] = vec3[24](
     vec3(-outlineOffset, 1.0 + outlineOffset, 1.0 + outlineOffset)
 );
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {
+layout(push_constant) uniform PushConstantObject {
     mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo;
+} pco;
 
 void main()
 {
-    mat4 mvp = ubo.proj * ubo.view * ubo.model;
-    gl_Position = mvp * vec4(positions[gl_VertexIndex], 1.0);
+    mat4 view = uboArray[CAMERA_UBO_IDX].camera.view;
+    mat4 proj = uboArray[CAMERA_UBO_IDX].camera.proj;
+    mat4 model = pco.model;
+
+    gl_Position = proj * view * model * vec4(positions[gl_VertexIndex], 1.0);
 }

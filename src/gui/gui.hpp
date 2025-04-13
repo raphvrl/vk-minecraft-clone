@@ -6,10 +6,10 @@
 #include <memory>
 
 #include "core/window/window.hpp"
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/texture.hpp"
-#include "graphics/uniform_buffer.hpp"
+#include "graphics/texture_cache.hpp"
+#include "audio/sound_manager.hpp"
 #include "text_renderer.hpp"
 #include "game/game_state.hpp"
 
@@ -33,14 +33,14 @@ class GUI
 public:
     using CallBackFn = std::function<void()>;
 
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
     void update(const glm::vec2 &point);
     void handleMouseClick();
     void updateStat(const GameStat &gameStat) { m_gameStat = gameStat; }
 
-    void render();
+    void render(VkCommandBuffer cmd);
 
     void initGameElements();
     void initPauseElements();
@@ -48,42 +48,40 @@ public:
     void setQuitCallback(CallBackFn callback) { m_quitCallback = callback; }
     void setResumeCallback(CallBackFn callback) { m_resumeCallback = callback; }
 
-    void draw(const Element &element);
+    void draw(VkCommandBuffer cmd, const Element &element);
 
     void drawText(
+        VkCommandBuffer cmd,
         const std::string &text,
         const glm::vec2 &pos,
         f32 size,
         TextAlign align = TextAlign::LEFT
     )
     {
-        m_text.draw(text, pos, size, align);
+        m_text.draw(cmd, text, pos, size, align);
     }
 
-    VkExtent2D getExtent() const { return m_ctx->getSwapChainExtent(); }
+public:
+    VkExtent2D getExtent() const
+    {
+        return m_device->getExtent();
+    }
 
 private:
-    gfx::VulkanCtx *m_ctx;
+    gfx::Device *m_device = nullptr;
 
     gfx::Pipeline m_pipeline;
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 ortho;
-    };
-
-    gfx::UniformBuffer m_ubo;
 
     struct PushConstant
     {
         alignas(16) glm::mat4 model;
         alignas(16) glm::vec4 uv;
+        alignas(4) u32 textureID;
     };
 
     constexpr static u32 ATLAS_SIZE = 256;
 
-    std::unordered_map<std::string, gfx::Texture> m_textures;
-    std::unordered_map<std::string, VkDescriptorSet> m_descriptorSets;
+    std::unordered_map<std::string, u32> m_textureIDs;
 
     TextRenderer m_text;
 
@@ -92,10 +90,8 @@ private:
 
     GameStat m_gameStat;
 
-    void loadTexture(const std::string &name, const std::string &path);
-
-    void drawGameElements();
-    void drawPauseElements();
+    void drawGameElements(VkCommandBuffer cmd);
+    void drawPauseElements(VkCommandBuffer cmd);
 
     CallBackFn m_quitCallback = nullptr;
     CallBackFn m_resumeCallback = nullptr;

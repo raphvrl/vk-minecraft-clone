@@ -3,7 +3,8 @@
 #include <glm/ext.hpp>
 #include <toml++/toml.hpp>
 
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
+#include "graphics/buffer.hpp"
 
 namespace wld
 {
@@ -35,6 +36,7 @@ public:
         glm::vec3 pos;
         glm::vec2 uv;
         u32 lightLevel;
+        u32 faceDirection;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -46,9 +48,9 @@ public:
             return bindingDescription;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions()
         {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
+            std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
@@ -65,6 +67,11 @@ public:
             attributeDescriptions[2].format = VK_FORMAT_R32_UINT;
             attributeDescriptions[2].offset = offsetof(Vertex, lightLevel);
 
+            attributeDescriptions[3].binding = 0;
+            attributeDescriptions[3].location = 3;
+            attributeDescriptions[3].format = VK_FORMAT_R32_UINT;
+            attributeDescriptions[3].offset = offsetof(Vertex, faceDirection);
+
             return attributeDescriptions;
         }
     };
@@ -75,7 +82,7 @@ public:
     ChunkMesh(const ChunkMesh &) = delete;
     ChunkMesh &operator=(const ChunkMesh &) = delete;
 
-    void init(gfx::VulkanCtx &ctx, BlockRegistry &registry);
+    void init(gfx::Device &device, BlockRegistry &registry);
     void destroy();
 
     void generate(
@@ -88,40 +95,31 @@ public:
         const std::array<const Chunk *, 4> &neighbors
     );
 
-    void drawOpaque();
-    void drawTransparent();
+    void drawOpaque(VkCommandBuffer cmd);
+    void drawTransparent(VkCommandBuffer cmd);
+    void drawCross(VkCommandBuffer cmd);
 
 private:
-    gfx::VulkanCtx *m_ctx;
+    gfx::Device *m_device;
     BlockRegistry *m_registry;
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
 
-    VkBuffer m_vertexBuffer;
-    VmaAllocation m_vertexAllocation;
-    VkBuffer m_indexBuffer;
-    VmaAllocation m_indexAllocation;
+    gfx::Buffer m_vertexBuffer;
+    gfx::Buffer m_indexBuffer;
 
     std::vector<Vertex> m_transparentVertices;
     std::vector<u32> m_transparentIndices;
 
-    VkBuffer m_vertexBufferTransparent;
-    VmaAllocation m_vertexAllocationTransparent;
-    VkBuffer m_indexBufferTransparent;
-    VmaAllocation m_indexAllocationTransparent;
+    gfx::Buffer m_transparentVertexBuffer;
+    gfx::Buffer m_transparentIndexBuffer;
 
-    void createVertexBuffer(
-        VkBuffer &buffer,
-        VmaAllocation &allocation,
-        const std::vector<Vertex> &vertices
-    );
+    std::vector<Vertex> m_crossVertices;
+    std::vector<u32> m_crossIndices;
 
-    void createIndexBuffer(
-        VkBuffer &buffer,
-        VmaAllocation &allocation,
-        const std::vector<u32> &indices
-    );
+    gfx::Buffer m_crossVertexBuffer;
+    gfx::Buffer m_crossIndexBuffer;
 
     // mesh generation
     static const std::array<glm::vec3, 4> FACE_NORTH;
@@ -130,6 +128,8 @@ private:
     static const std::array<glm::vec3, 4> FACE_WEST;
     static const std::array<glm::vec3, 4> FACE_TOP;
     static const std::array<glm::vec3, 4> FACE_BOTTOM;
+    static const std::array<glm::vec3, 4> FACE_CROSS_1;
+    static const std::array<glm::vec3, 4> FACE_CROSS_2;
 
     void addFace(
         const Chunk &chunk,
@@ -137,7 +137,8 @@ private:
         const glm::vec3 &pos,
         const std::array<glm::vec3, 4> &vertices,
         const std::array<glm::vec2, 4> &uvs,
-        BlockType block
+        BlockType block,
+        Face face
     );
 
     std::array<glm::vec2, 4> getUVs(

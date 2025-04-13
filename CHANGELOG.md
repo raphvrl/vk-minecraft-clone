@@ -2,16 +2,32 @@
 
 All notable changes to the Vulkan Minecraft project will be documented in this file.
 
+
 ## [Unreleased]
 
 ### Added
-- Upcoming features...
+- Custom application icon for Windows and Linux
+- Windows resource configuration for better integration with File Explorer
+- Post-processing capability with framebuffers for storing rendering outputs
+- Shading on block faces to enhance visual appearance
+- Tree and flower generation in world terrain
+- 3D sound system implementation
+- Footstep sounds based on block type (partial implementation)
+- Sound effects for UI button interactions
 
 ### Changed
-- Upcoming changes...
+- Upgraded to Vulkan 1.3
+- Migrated build system to CMake
+- Implemented dynamic rendering for improved performance
+- Implemented bindless descriptor sets for more efficient resource binding
+- Completely restructured graphics core architecture
+- Simplified push constants implementation for pipeline configuration
+- Increased gravity to better match Minecraft's physics
 
 ### Fixed
-- Upcoming fixes...
+- Fixed water blocks appearing as half-blocks when another water block was directly above
+
+
 
 ## [0.1.0] - 2025-04-08
 
@@ -45,7 +61,7 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
   - Pause menu
 - Performance optimizations
   - Face culling for meshes
-  - Frustum culling for chunks
+  - Frustum culling for chunks and clouds
 
-[Unreleased]: https://github.com/username/vulkan-minecraft/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/username/vulkan-minecraft/releases/tag/v0.1.0
+[Unreleased]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/raphvrl/vulkan-minecraft/releases/tag/v0.1.0

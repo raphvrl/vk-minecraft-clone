@@ -22,8 +22,6 @@ public:
 private:
     wld::World &m_world;
 
-    static constexpr f32 GRAVITY = -19.6f;
-
     void resolveCollisions(
         cmp::Transform *transform,
         cmp::Velocity *velocity,

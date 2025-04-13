@@ -3,60 +3,36 @@
 namespace gfx
 {
 
-void OverlayRenderer::init(VulkanCtx &ctx)
+void OverlayRenderer::init(Device &device, TextureCache &TextureCache)
 {
-    m_ctx = &ctx;
+    m_device = &device;
 
-    m_pipeline = Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "overlay.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "overlay.frag.spv")
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
-        })
+    m_textureID = TextureCache.getTextureID("water");
+
+    m_pipeline = Pipeline::Builder(*m_device)
+        .setShader("overlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("overlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setPushConstant(sizeof(u32))
         .setDepthTest(false)
         .setDepthWrite(false)
         .setBlending(true)
         .build();
-
-
-    createWater();
 }
 
 void OverlayRenderer::destroy()
 {
     m_pipeline.destroy();
-    m_waterTexture.destroy();
 }
 
-void OverlayRenderer::render()
+void OverlayRenderer::render(VkCommandBuffer cmd)
 {
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
-
     if (m_water) {
-        m_pipeline.bind();
-        m_pipeline.bindDescriptorSet(m_waterSet);
+        m_pipeline.bind(cmd);
+
+        m_pipeline.push(cmd, m_textureID);
 
         vkCmdDraw(cmd, 6, 1, 0, 0);
     }
-}
-
-void OverlayRenderer::createWater()
-{
-    m_waterTexture.init(*m_ctx, "water.png");
-
-    std::vector<DescriptorData> data = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_waterTexture
-        }
-    };
-
-    m_waterSet = m_pipeline.createDescriptorSet(data);
 }
 
 } // namespace gfx

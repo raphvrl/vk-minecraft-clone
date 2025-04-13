@@ -47,3 +47,6 @@ Thumbs.db
 
 # Log files
 *.log
+
+# icon
+*.rc

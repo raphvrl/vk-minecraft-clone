@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "ecs/ecs.hpp"
+#include "audio/sound_manager.hpp"
 
 namespace sys
 {
@@ -83,15 +84,15 @@ void Player::tick(f32 dt)
     }
 
     wld::BlockType headBlock = m_world.getBlock(
-        transform->position.x,
-        transform->position.y + player->eyeHeight,
-        transform->position.z
+        std::floor(transform->position.x),
+        std::floor(transform->position.y + player->eyeHeight),
+        std::floor(transform->position.z)
     );
 
     wld::BlockType bodyBlock = m_world.getBlock(
-        transform->position.x,
-        transform->position.y + player->eyeHeight * 0.5f,
-        transform->position.z
+        std::floor(transform->position.x),
+        std::floor(transform->position.y + player->eyeHeight * 0.5f),
+        std::floor(transform->position.z)
     );
 
     player->isInWater = (
@@ -103,16 +104,62 @@ void Player::tick(f32 dt)
 
     bool spacePressed = m_window.isKeyPressed(GLFW_KEY_SPACE);
     if (spacePressed && m_jumpCooldown <= 0.0f) {
-        if (collider->isGrounded) {
+        if (collider->isGrounded && !player->isFlying) {
             velocity->position.y = player->jumpForce;
             collider->isGrounded = false;
             m_jumpCooldown = 0.5f;
         }
     }
 
-    if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT) && player->isInWater) {
-        velocity->position.y = -player->swimSpeed * 0.8f;
-    } 
+    if (spacePressed && player->isFlying) {
+        transform->position.y += player->moveSpeed;
+    }
+
+    if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+        if (player->isFlying) {
+            transform->position.y -= player->moveSpeed;
+        }
+    }
+
+    bool isMoving = std::abs(velocity->position.x) > 0.01f || 
+                    std::abs(velocity->position.z) > 0.01f;
+
+    if (collider->isGrounded && isMoving) {
+        m_footstepTimer -= dt;
+    
+        if (m_footstepTimer <= 0.0f) {
+            glm::ivec3 blockPos = {
+                static_cast<int>(std::floor(transform->position.x)),
+                static_cast<int>(std::floor(transform->position.y - 0.01f)),
+                static_cast<int>(std::floor(transform->position.z))
+            };
+            
+            wld::BlockType blockUnder = m_world.getBlock(
+                blockPos.x, blockPos.y, blockPos.z
+            );
+
+            sfx::SoundManager::get().playFootstep(blockUnder, transform->position);
+
+            m_footstepTimer = 0.400;
+
+            f32 randomFactor = 0.9f + (static_cast<f32>(std::rand()) / RAND_MAX) * 0.2f;
+            m_footstepTimer *= randomFactor;
+        }
+    } else {
+        m_footstepTimer = 0.0f;
+    }
+
+    if (collider->isGrounded && !m_wasGrounded) {
+        wld::BlockType blockUnder = m_world.getBlock(
+            static_cast<int>(std::floor(transform->position.x)),
+            static_cast<int>(std::floor(transform->position.y - 0.01f)),
+            static_cast<int>(std::floor(transform->position.z))
+        );
+
+        sfx::SoundManager::get().playFootstep(blockUnder, transform->position);
+    }
+
+    m_wasGrounded = collider->isGrounded;
 
     if (
         m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&

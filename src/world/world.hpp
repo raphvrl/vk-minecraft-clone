@@ -16,42 +16,13 @@
 #include "block_registry.hpp"
 #include "world_generator.hpp"
 #include "core/camera/camera.hpp"
-#include "graphics/vulkan_ctx.hpp"
+#include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/texture.hpp"
-#include "graphics/uniform_buffer.hpp"
+#include "graphics/texture_cache.hpp"
 #include "core/frustum.hpp"
 
 namespace wld
 {
-
-struct ChunkPos
-{
-    int x, z;
-
-    ChunkPos() : x(0), z(0) {}
-
-    ChunkPos(int x, int z) : x(x), z(z) {}
-
-    ChunkPos(const ChunkPos &other) : x(other.x), z(other.z) {}
-
-    bool operator==(const ChunkPos &other) const
-    {
-        return x == other.x && z == other.z;
-    }
-
-    bool operator!=(const ChunkPos &other) const
-    {
-        return x != other.x || z != other.z;
-    }
-
-    ChunkPos &operator=(const ChunkPos &other)
-    {
-        x = other.x;
-        z = other.z;
-        return *this;
-    }
-};
 
 struct Ray
 {
@@ -66,13 +37,15 @@ struct RaycastResult
     Face face;
 };
 
-class World {
+class World
+{
+
 public:
-    void init(gfx::VulkanCtx &ctx);
+    void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
     void update(const glm::vec3 &playerPos, f32 dt);
-    void render(const core::Camera &camera);
+    void render(const core::Camera &camera, VkCommandBuffer cmd);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3 &pos) const {
@@ -86,6 +59,10 @@ public:
     bool checkCollision(const glm::vec3 &min, const glm::vec3 &max);
 
     usize getUpdatedChunks() const { return m_updatedChunks; }
+
+public:
+    Chunk *getChunk(const ChunkPos &pos) const;
+
 
 private:
     struct ChunkPosHash
@@ -102,39 +79,36 @@ private:
     void loadChunks(const ChunkPos &pos);
     void unloadChunks(const ChunkPos &pos);
     bool isChunkLoaded(const ChunkPos &pos);
-    const Chunk *getChunk(const ChunkPos &pos) const;
 
     void updateMeshe(const ChunkPos &pos);
 
     static constexpr int RENDER_DISTANCE = 8;
     static constexpr int CHUNKS_PER_TICK = 1;
-    static constexpr int MESHES_PER_TICK = 2;
 
     std::queue<ChunkPos> m_pendingChunks;
     std::queue<ChunkPos> m_pendingMeshes;
 
     usize m_updatedChunks = 0;
 
-    gfx::VulkanCtx *m_ctx;
+    gfx::Device *m_device;
     BlockRegistry m_blockRegistry;
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::vec3 camPos;
-    };
 
     enum PipelineType
     {
         P_OPAQUE,
-        P_TRANSPARENT
+        P_TRANSPARENT,
+        P_CROSS,
     };
 
-    std::array<gfx::Pipeline, 2> m_pipelines;
-    gfx::Texture m_texture;
-    gfx::UniformBuffer m_ubo;
-    std::array<VkDescriptorSet, 2> m_descriptorSets;
+    std::array<gfx::Pipeline, 3> m_pipelines;
+
+    u32 m_textureID;
+
+    struct PushConstants
+    {
+        alignas(16) glm::mat4 model;
+        alignas(4) u32 textureID;
+    };
 
     core::Frustum m_frustum;
 

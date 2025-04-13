@@ -45,6 +45,16 @@ void Camera::updateProj(f32 aspect)
     m_proj[1][1] *= -1;
 }
 
+void Camera::updateOrtho(u32 width, u32 height) 
+{
+    m_ortho = glm::ortho(
+        0.0f,
+        static_cast<f32>(width),
+        0.0f,
+        static_cast<f32>(height)
+    );
+}
+
 void Camera::rotate(f32 xoffset, f32 yoffset)
 {
     m_yaw += xoffset;

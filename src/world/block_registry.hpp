@@ -23,7 +23,7 @@ public:
         return m_blocks[static_cast<u32>(type)];
     }
 
-    const Block &getBlock(i32 id) const {
+    const Block &getBlock(int id) const {
         return m_blocks[id];
     }
 

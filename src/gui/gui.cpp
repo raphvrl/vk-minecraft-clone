@@ -3,58 +3,43 @@
 namespace gui
 {
 
-void GUI::init(gfx::VulkanCtx &ctx)
+void GUI::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
-    m_ctx = &ctx;
+    m_device = &device;
 
-    m_pipeline = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "gui.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "gui.frag.spv")
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(PushConstant)
-        )
+    m_textureIDs["gui"] = textureCache.getTextureID("gui");
+    m_textureIDs["icons"] = textureCache.getTextureID("icons");
+
+    initGameElements();
+    initPauseElements();
+
+    m_pipeline = gfx::Pipeline::Builder(device)
+        .setShader("gui.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("gui.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setPushConstant(sizeof(PushConstant))
         .setDepthTest(false)
         .setDepthWrite(false)
         .setBlending(true)
         .build();
 
-    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
-    loadTexture("icons", "gui/icons.png");
-    loadTexture("gui", "gui/gui.png");
-
-    m_text.init(*m_ctx);
+    m_text.init(device, textureCache);
 }
 
 void GUI::destroy()
 {
     m_text.destroy();
-    m_ubo.destroy();
-
-    for (auto &[_, texture] : m_textures) {
-        texture.destroy();
-    }
 
     m_pipeline.destroy();
 }
 
 void GUI::update(const glm::vec2 &point)
 {
-    for (auto &[_, button] : m_buttons) {
-        button->update(point);
+    auto state = m_gameStat.state;
+
+    if (state == game::GameState::PAUSED) {
+        for (auto &[_, button] : m_buttons) {
+            button->update(point);
+        }
     }
 }
 
@@ -65,32 +50,17 @@ void GUI::handleMouseClick()
     }
 }
 
-void GUI::render()
+void GUI::render(VkCommandBuffer cmd)
 {
-    VkExtent2D extent = m_ctx->getSwapChainExtent();
-    
-    glm::mat4 ortho = glm::ortho(
-        -0.5f,
-        static_cast<f32>(extent.width),
-        -0.5f,
-        static_cast<f32>(extent.height)
-    );
-
-    UniformBufferObject ubo{
-        .ortho = ortho,
-    };
-
-    m_ubo.update(&ubo, sizeof(ubo));
-
     switch (m_gameStat.state)
     {
 
     case game::GameState::RUNNING:
-        drawGameElements();
+        drawGameElements(cmd);
         break;
 
     case game::GameState::PAUSED:
-        drawPauseElements();
+        drawPauseElements(cmd);
         break;
 
     default:
@@ -116,7 +86,7 @@ void GUI::initPauseElements()
     Element background = {
         .anchor = Anchor::CENTER,
         .pos = {0.0f, -100.0f},
-        .size = {600.0f, 60.0f},
+        .size = {800.0f, 80.0f},
         .uv = {0.0f, 0.0f, 0.0f, 0.0f},
         .texture = "gui",
     };
@@ -142,10 +112,9 @@ void GUI::initPauseElements()
     m_buttons["quit"] = std::move(quitButton);
 }
 
-void GUI::draw(const Element &element)
+void GUI::draw(VkCommandBuffer cmd, const Element &element)
 {
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
-    VkExtent2D extent = m_ctx->getSwapChainExtent();
+    VkExtent2D extent = m_device->getExtent();
 
     glm::vec2 pos = element.pos;
 
@@ -179,8 +148,7 @@ void GUI::draw(const Element &element)
         break;
     }
 
-    m_pipeline.bind();
-    m_pipeline.bindDescriptorSet(m_descriptorSets[element.texture]);
+    m_pipeline.bind(cmd);
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(
@@ -203,70 +171,44 @@ void GUI::draw(const Element &element)
         element.uv.x + element.uv.z,
         element.uv.y + element.uv.w
     };
+    pc.textureID = m_textureIDs[element.texture];
 
     pc.uv /= ATLAS_SIZE;
 
-    m_pipeline.push(
-        VK_SHADER_STAGE_VERTEX_BIT,
-        0,
-        sizeof(pc),
-        &pc
-    );
+    m_pipeline.push(cmd, pc);
 
     vkCmdDraw(cmd, 6, 1, 0, 0);
 }
 
-void GUI::loadTexture(const std::string &name, const std::string &path)
-{
-    m_textures[name].init(*m_ctx, path);
-
-    std::vector<gfx::DescriptorData> descriptorData = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo,
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_textures[name],
-        }
-    };
-
-    m_descriptorSets[name] = m_pipeline.createDescriptorSet(descriptorData);
-}
-
-void GUI::drawGameElements()
+void GUI::drawGameElements(VkCommandBuffer cmd)
 {
     std::string stat = "Minecraft Vulkan Clone ";
     stat += "(" + std::to_string(m_gameStat.fps) + " fps";
     stat += ", " + std::to_string(m_gameStat.updatedChunks) + " chunk updates)";
 
-    m_text.draw(stat, {10.0f, 10.0f}, 24.0f);
+    m_text.draw(cmd, stat, {10.0f, 10.0f}, 32.0f);
 
     for (auto &[_, element] : m_elements) {
-        draw(element);
+        draw(cmd, element);
     }
 }
 
-void GUI::drawPauseElements()
+void GUI::drawPauseElements(VkCommandBuffer cmd)
 {
-    VkExtent2D extent = m_ctx->getSwapChainExtent();
+    VkExtent2D extent = m_device->getExtent();
     glm::vec2 textPos(
         extent.width / 2.0f,
-        extent.height / 2.0f - 200.0f
+        extent.height / 2.0f - 350.0f
     );
 
-    m_text.draw("Game menu", textPos, 24.0f, TextAlign::CENTER);
+    m_text.draw(cmd, "Game menu", textPos, 32.0f, TextAlign::CENTER);
 
     for (auto &[_, element] : m_elements) {
-        draw(element);
+        draw(cmd, element);
     }
 
     for (auto &[_, button] : m_buttons) {
-        button->render();
+        button->draw(cmd);
     }
 }
 

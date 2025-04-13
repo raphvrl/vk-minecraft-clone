@@ -13,7 +13,7 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
 #else
     setlocale(LC_ALL, ".UTF-8");
-#endif    
+#endif
 
     try {
         game::Game game;

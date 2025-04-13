@@ -45,6 +45,9 @@ private:
         const glm::vec3 &pos,
         const glm::vec3 &size
     );
+
+    f32 m_footstepTimer = 0.0f;
+    bool m_wasGrounded = false;
 };
 
 } // namespace sys

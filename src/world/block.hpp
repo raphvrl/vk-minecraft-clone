@@ -23,6 +23,8 @@ enum class BlockType
     SAND = 12,
     LOG = 17,
     LEAVES = 18,
+    FLOWER = 37,
+    ROSE = 38,
 };
 
 struct TextureInfo
@@ -59,6 +61,8 @@ struct Block
     TextureInfo textures;
     bool transparency = false;
     bool collision = true;
+    bool breakable = true;
+    bool cross = false;
 };
 
 } // namespace wld

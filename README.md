@@ -24,7 +24,8 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
 **Windows:**
 - Windows 10/11
 - [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
-- MSYS2 with MinGW-w64
+- MSYS2 with MinGW-w64 or Visual Studio 2019/2022
+- CMake 3.10 or higher
 
 **Linux:**
 - Recent distribution (Ubuntu 22.04+, Fedora 36+, etc.)
@@ -42,14 +43,21 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
    cd vulkan-minecraft
    ```
 
-2. Build the project:
+2. Build with CMake:
    ```bash
-   make
+   # Create a build directory
+   mkdir build && cd build
+
+   # Configure the project
+   cmake ..
+
+   # Build the project
+   cmake --build . --config Release
    ```
 
 3. Run the game:
-   - **Windows**: `./vulkan-minecraft.exe`
-   - **Linux**: `./vulkan-minecraft`
+   - **Windows**: `.\vulkan-minecraft.exe` (from the build directory)
+   - **Linux**: `./vulkan-minecraft` (from the build directory)
 
 ## System Requirements
 
@@ -68,10 +76,11 @@ A Minecraft clone built with Vulkan, compatible with both Windows and Linux.
 ## Features
 
 - Procedural terrain generation
-- lighting system
+- Lighting system
 - Sky and cloud rendering
 - Block system with different textures
 - First-person controls
+- 3D spatial audio
 
 ## Disclaimer
 

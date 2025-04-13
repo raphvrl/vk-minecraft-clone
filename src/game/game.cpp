@@ -14,30 +14,45 @@ void Game::init()
 {
     m_window.init(1600, 900, "Minecraft Clone");
     
-    m_ctx.init(m_window);
+    m_device.init(m_window, "Minecraft Clone", {0, 1, 0});
+    m_gpuData.init(m_device);
+    m_textureCache.init(m_device);
 
-    m_world.init(m_ctx);
-    m_sky.init(m_ctx);
-    m_outline.init(m_ctx, m_world);
-    m_clouds.init(m_ctx);
+    m_textureCache.loadTexture("terrain.png", "terrain");
+    m_textureCache.loadTexture("font.png", "font");
+    m_textureCache.loadTexture("water.png", "water");
+    m_textureCache.loadTexture("gui/gui.png", "gui");
+    m_textureCache.loadTexture("gui/icons.png", "icons");
 
-    m_overlay.init(m_ctx);
+    m_display.init(m_device);
 
-    m_gui.init(m_ctx);
+    sfx::SoundManager::get().init();
+
+    m_world.init(m_device, m_textureCache);
+    m_sky.init(m_device);
+    m_outline.init(m_device, m_world);
+    m_clouds.init(m_device);
+
+    m_overlay.init(m_device, m_textureCache);
+
+    m_gui.init(m_device, m_textureCache);
     m_gui.setQuitCallback([&] {
         m_running = false;
     });
     m_gui.setResumeCallback([&] {
         m_state = GameState::RUNNING;
     });
+
     m_gui.initGameElements();
     m_gui.initPauseElements();
 
     EntityID playerEntity = m_ecs.creatEntity();
-    m_ecs.addComponent<cmp::Transform>(playerEntity)
-        ->position.y = 80.0f;
+    auto transform = m_ecs.addComponent<cmp::Transform>(playerEntity);
+    transform->position = glm::vec3(0.0f, 80.0f, 0.0f);
+
     m_ecs.addComponent<cmp::Velocity>(playerEntity);
     m_ecs.addComponent<cmp::Player>(playerEntity);
+
     auto *playerCollider = m_ecs.addComponent<cmp::Collider>(playerEntity);
 
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
@@ -50,6 +65,8 @@ void Game::init()
 
 void Game::destroy()
 {
+    m_device.waitIdle();
+
     m_gui.destroy();
 
     m_overlay.destroy();
@@ -58,7 +75,14 @@ void Game::destroy()
     m_outline.destroy();
     m_sky.destroy();
     m_world.destroy();
-    m_ctx.destroy();
+
+    sfx::SoundManager::get().destroy();
+
+    m_display.destroy();
+    m_textureCache.destroy();
+    m_gpuData.destroy();
+    m_device.destroy();
+
     m_window.destroy();
 }
 
@@ -101,6 +125,11 @@ void Game::run()
         }
 
         m_window.update();
+        if (m_window.isMinimized()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
         handleInput();
 
         while (accumulator >= MS_PER_TICK) {
@@ -137,18 +166,37 @@ void Game::handleInput()
 
 void Game::update(f32 dt)
 {
+    m_camera.updateView();
+    m_camera.updateProj(m_window.getAspect());
+
+    VkExtent2D extent = m_device.getExtent();
+    m_camera.updateOrtho(extent.width, extent.height);
+
+    m_gpuData.updateCamera(m_camera);
+
+    m_gpuData.updateTime(m_window.getCurrentTime(), dt);
+
+    m_gpuData.update();
+
+    glm::vec3 camPos = m_camera.getPos();
+    glm::vec3 camFront = m_camera.getFront();
+    glm::vec3 camUp = m_camera.getUp();
+
+    sfx::SoundManager::get().setListenerPos(camPos, camFront, camUp);
+    sfx::SoundManager::get().update();
+
     updateGui();
     
     if (m_state != GameState::RUNNING) {
+        m_display.setColor({0.6f, 0.6f, 0.6f, 1.0f});
         return;
+    } else {
+        m_display.setColor({1.0f, 1.0f, 1.0f, 1.0f});
     }
 
     m_ecs.interpolate(dt);
 
     m_playerSystem.updateCamera();
-
-    m_camera.updateView();
-    m_camera.updateProj(m_window.getAspect());
 }
 
 void Game::tick(f32 dt)
@@ -166,20 +214,30 @@ void Game::tick(f32 dt)
 
 void Game::render()
 {
-    if (!m_ctx.beginFrame()) {
+    auto cmd = m_device.beginFrame();
+    if (!cmd) {
         return;
     }
 
-    m_sky.render(m_camera);
-    m_world.render(m_camera);
-    m_outline.render(m_camera);
-    m_clouds.render(m_camera);
+    m_display.begin(cmd);
 
-    m_overlay.render();
+    m_sky.render(cmd);
+    m_world.render(m_camera, cmd);
+    m_outline.render(cmd, m_camera);
+    m_clouds.render(cmd, m_camera);
+    m_overlay.render(cmd);
 
-    m_gui.render();
+    m_display.end(cmd);
 
-    m_ctx.endFrame();
+    m_device.beginRenderClear(cmd);
+    m_display.draw(cmd);
+    m_device.endRender(cmd);
+
+    m_device.beginRenderLoad(cmd);
+    m_gui.render(cmd);
+    m_device.endRender(cmd);
+
+    m_device.endFrame(cmd);
 }
 
 void Game::updateGui()

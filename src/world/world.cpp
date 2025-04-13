@@ -3,93 +3,61 @@
 namespace wld
 {
 
-void World::init(gfx::VulkanCtx &ctx)
+void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
-    m_ctx = &ctx;
+    m_device = &device;
     m_blockRegistry.load("assets/config/blocks.toml");
 
     m_playerChunkPos = {-1, -1};
 
+    m_textureID = textureCache.getTextureID("terrain");
+
     auto binding = ChunkMesh::Vertex::getBindingDescription();
     auto attributes = ChunkMesh::Vertex::getAttributeDescriptions();
 
-    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
-        .setVertexInput(
+    m_pipelines[P_OPAQUE] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
             &binding,
             attributes.data(),
             attributes.size()
-        )
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
         })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
-        })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(glm::mat4)
-        )
+        .setPushConstant(sizeof(PushConstants))
+        .setDepthTest(true)
+        .setDepthWrite(true)
+        .setCull(true)
         .build();
 
-    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "chunk.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "chunk.frag.spv")
-        .setVertexInput(
+    m_pipelines[P_TRANSPARENT] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
             &binding,
             attributes.data(),
             attributes.size()
-        )
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
         })
-        .addDescriptorBinding({
-            .binding = 1,
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT
-        })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(glm::mat4)
-        )
+        .setPushConstant(sizeof(PushConstants))
         .setCullMode(VK_CULL_MODE_NONE)
         .setBlending(true)
+        .setDepthTest(true)
+        .setDepthWrite(true)
         .build();
 
-    m_texture.init(*m_ctx, "terrain.png");
-    m_ubo.init(*m_ctx, sizeof(UniformBufferObject));
-
-    std::vector<gfx::DescriptorData> descriptors = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .binding = 1,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .texture = &m_texture
-        }
-    };
-
-    for (usize i = 0; i < m_pipelines.size(); i++) {
-        m_descriptorSets[i] = m_pipelines[i].createDescriptorSet(descriptors);
-    }
+    m_pipelines[P_CROSS] = gfx::Pipeline::Builder(*m_device)
+        .setShader("chunk.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("chunk.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setVertexInput({
+            &binding,
+            attributes.data(),
+            attributes.size()
+        })
+        .setPushConstant(sizeof(PushConstants))
+        .setCullMode(VK_CULL_MODE_NONE)
+        .setBlending(false)
+        .setDepthTest(true)
+        .setDepthWrite(true)
+        .build();
 
     m_chunks.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
@@ -99,9 +67,6 @@ void World::init(gfx::VulkanCtx &ctx)
 
 void World::destroy()
 {
-    m_ubo.destroy();
-    m_texture.destroy();
-    
     for (auto &pipeline : m_pipelines) {
         pipeline.destroy();
     }
@@ -185,7 +150,10 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
         ChunkPos pos = m_pendingChunks.front();
         m_pendingChunks.pop();
 
-        if (!isChunkLoaded(pos) && m_chunksNeeded.find(pos) != m_chunksNeeded.end()) {
+        if (
+            !isChunkLoaded(pos) &&
+            m_chunksNeeded.find(pos) != m_chunksNeeded.end()
+        ) {
             loadChunks(pos);
             
             m_pendingMeshes.push(pos);
@@ -210,35 +178,24 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
         }
     }
 
-    int meshesUpdated = 0;
-    while (!m_pendingMeshes.empty() && meshesUpdated < MESHES_PER_TICK) {
+    while (!m_pendingMeshes.empty()) {
         ChunkPos pos = m_pendingMeshes.front();
         m_pendingMeshes.pop();
 
         if (isChunkLoaded(pos)) {
             updateMeshe(pos);
-            meshesUpdated++;
         }
     }
 }
 
-void World::render(const core::Camera &camera)
+void World::render(const core::Camera &camera, VkCommandBuffer cmd)
 {
     m_frustum = core::Frustum::fromViewProj(
         camera.getView(),
         camera.getProj()
     );
 
-    m_pipelines[P_OPAQUE].bind();
-    m_pipelines[P_OPAQUE].bindDescriptorSet(m_descriptorSets[P_OPAQUE]);
-
-    UniformBufferObject uniformBuffer = {
-        .view = camera.getView(),
-        .proj = camera.getProj(),
-        .camPos = camera.getPos()
-    };
-
-    m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
+    m_pipelines[P_OPAQUE].bind(cmd);
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
@@ -255,23 +212,17 @@ void World::render(const core::Camera &camera)
             continue;
         }
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, {x, 0.0f, z});
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
 
-        m_pipelines[P_OPAQUE].push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(model),
-            &model
-        );
+        m_pipelines[P_OPAQUE].push(cmd, pc);
 
-        mesh->drawOpaque();
+        mesh->drawOpaque(cmd);
     }
 
-    m_pipelines[P_TRANSPARENT].bind();
-    m_pipelines[P_TRANSPARENT].bindDescriptorSet(
-        m_descriptorSets[P_TRANSPARENT]
-    );
+    m_pipelines[P_TRANSPARENT].bind(cmd);
 
     for (const auto &[pos, mesh] : m_meshes) {
         f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
@@ -288,17 +239,41 @@ void World::render(const core::Camera &camera)
             continue;
         }
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, {x, 0.0f, z});
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
 
-        m_pipelines[P_TRANSPARENT].push(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(model),
-            &model
+        m_pipelines[P_TRANSPARENT].push(cmd, pc);
+
+        mesh->drawTransparent(cmd);
+    }
+
+    m_pipelines[P_CROSS].bind(cmd);
+
+    for (const auto &[pos, mesh] : m_meshes) {
+        f32 x = static_cast<f32>(pos.x * Chunk::CHUNK_SIZE);
+        f32 z = static_cast<f32>(pos.z * Chunk::CHUNK_SIZE);
+
+        glm::vec3 min(x, 0.0f, z);
+        glm::vec3 max(
+            x + Chunk::CHUNK_SIZE,
+            Chunk::CHUNK_HEIGHT,
+            z + Chunk::CHUNK_SIZE
         );
 
-        mesh->drawTransparent();
+        if (!m_frustum.isBoxVisible(min, max)) {
+            continue;
+        }
+
+        PushConstants pc = {
+            .model = glm::translate(glm::mat4(1.0f), {x, 0.0f, z}),
+            .textureID = m_textureID
+        };
+
+        m_pipelines[P_CROSS].push(cmd, pc);
+
+        mesh->drawCross(cmd);
     }
 }
 
@@ -406,7 +381,7 @@ bool World::raycast(
         BlockType type = getBlock(blockPos);
         if (
             type != BlockType::AIR &&
-            m_blockRegistry.getBlock(type).collision
+            m_blockRegistry.getBlock(type).breakable
         ) {
             result.pos = blockPos;
             result.face = hitFace;
@@ -491,9 +466,18 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
     return false;
 }
 
+Chunk *World::getChunk(const ChunkPos &pos) const
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        return it->second.get();
+    }
+
+    return nullptr;
+}
+
 void World::loadChunks(const ChunkPos &pos)
 {
-    auto chunk = std::make_unique<Chunk>();
+    auto chunk = std::make_unique<Chunk>(*this, m_blockRegistry, pos);
 
     m_generator.generateChunk(*chunk, pos);
 
@@ -517,15 +501,6 @@ bool World::isChunkLoaded(const ChunkPos &pos)
     return m_chunks.find(pos) != m_chunks.end();
 }
 
-const Chunk *World::getChunk(const ChunkPos &pos) const
-{
-    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
-        return it->second.get();
-    }
-
-    return nullptr;
-}
-
 void World::updateMeshe(const ChunkPos &pos)
 {
     auto chunk = getChunk(pos);
@@ -539,11 +514,13 @@ void World::updateMeshe(const ChunkPos &pos)
         getChunk({pos.x, pos.z + 1})
     };
 
+    UNUSED(neighbors);
+
     if (auto it = m_meshes.find(pos); it != m_meshes.end()) {
         it->second->update(*chunk, neighbors);
     } else {
         auto mesh = std::make_unique<ChunkMesh>();
-        mesh->init(*m_ctx, m_blockRegistry);
+        mesh->init(*m_device, m_blockRegistry);
         mesh->generate(*chunk, neighbors);
         m_meshes[pos] = std::move(mesh);
     }

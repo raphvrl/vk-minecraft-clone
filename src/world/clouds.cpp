@@ -3,47 +3,24 @@
 namespace wld
 {
 
-void Clouds::init(gfx::VulkanCtx &ctx)
+void Clouds::init(gfx::Device &device)
 {
-    m_ctx = &ctx;
+    UNUSED(device);
 
     loadPattern("assets/textures/clouds.png");
     generateClouds();
 
-    m_pipeline = gfx::Pipeline::Builder(ctx)
-        .setShader(VK_SHADER_STAGE_VERTEX_BIT, "cloud.vert.spv")
-        .setShader(VK_SHADER_STAGE_FRAGMENT_BIT, "cloud.frag.spv")
-        .addDescriptorBinding({
-            .binding = 0,
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .count = 1,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT
-        })
-        .addPushConstant(
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(glm::mat4)
-        )
+    m_pipeline = gfx::Pipeline::Builder(device)
+        .setShader("cloud.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .setShader("cloud.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .setPushConstant(sizeof(glm::mat4))
         .setBlending(true)
+        .setDepthTest(true)
         .build();
-
-    m_ubo.init(ctx, sizeof(UniformBufferObject));
-
-    std::vector<gfx::DescriptorData> descriptors = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .binding = 0,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .ubo = &m_ubo
-        }
-    };
-
-    m_descriptorSet = m_pipeline.createDescriptorSet(descriptors);
 }
 
 void Clouds::destroy()
 {
-    m_ubo.destroy();
     m_pipeline.destroy();
 }
 
@@ -57,22 +34,11 @@ void Clouds::update(f32 dt)
     }
 }
 
-void Clouds::render(const core::Camera &camera)
+void Clouds::render(VkCommandBuffer cmd, const core::Camera &camera)
 {
-    VkCommandBuffer cmd = m_ctx->getCommandBuffer();
-
-    m_pipeline.bind();
-    m_pipeline.bindDescriptorSet(m_descriptorSet);
+    m_pipeline.bind(cmd);
 
     glm::vec3 camPos = camera.getPos();
-
-    UniformBufferObject uniformBuffer = {
-        .view = camera.getView(),
-        .proj = camera.getProj(),
-        .camPos = camPos
-    };
-
-    m_ubo.update(&uniformBuffer, sizeof(UniformBufferObject));
 
     f32 patternSizeX = m_width * CLOUD_SIZE;
     f32 patternSizeZ = m_height * CLOUD_SIZE;
@@ -137,12 +103,7 @@ void Clouds::render(const core::Camera &camera)
                                 glm::mat4 model = glm::mat4(1.0f);
                                 model = glm::translate(model, cloudPos);
 
-                                m_pipeline.push(
-                                    VK_SHADER_STAGE_VERTEX_BIT,
-                                    0,
-                                    sizeof(model),
-                                    &model
-                                );
+                                m_pipeline.push(cmd, model);
 
                                 vkCmdDraw(cmd, 6, 1, 0, 0);
                                 renderedClouds++;

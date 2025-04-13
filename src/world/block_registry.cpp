@@ -8,7 +8,7 @@ void BlockRegistry::load(const std::string &path)
     auto config = toml::parse_file(path);
 
     auto atlas = config["atlas"];
-    i32 count = atlas["count"].value_or(0);
+    int count = atlas["count"].value_or(0);
     m_blocks.resize(count);
 
     auto blocks = config["blocks"];
@@ -61,6 +61,20 @@ void BlockRegistry::load(const std::string &path)
                     ->get("collision")
                     ->as_boolean()
                     ->value_or(true);
+            }
+
+            if (blockTable->contains("breakable")) {
+                block.breakable = blockTable
+                    ->get("breakable")
+                    ->as_boolean()
+                    ->value_or(true);
+            }
+
+            if (blockTable->contains("cross")) {
+                block.cross = blockTable
+                    ->get("cross")
+                    ->as_boolean()
+                    ->value_or(false);
             }
         }
 
