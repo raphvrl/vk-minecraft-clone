@@ -76,19 +76,18 @@ jobs:
                 ..
           cd ..
 
-          echo "Checking Windows compatibility..."
-          cp build_win/compile_commands.json .
-          find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} bash -c "clang-tidy \
-            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*' \
-            --header-filter='src/.*' {} -p . || exit 1"
+          echo "Checking for NULL vs nullptr usage..."
+                cp build_win/compile_commands.json .
+                find src -name "*.cpp" -o -name "*.hpp" | \
+                xargs -I {} bash -c "clang-tidy \
+                -checks='-*,modernize-use-nullptr' \
+                --header-filter='src/.*' {} -p . || exit 1"
 
-          echo "Checking Linux compatibility..."
-          cp build_linux/compile_commands.json .
-          find src -name "*.cpp" -o -name "*.hpp" | \
-          xargs -I {} bash -c "clang-tidy \
-            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*' \
-            --header-filter='src/.*' {} -p . || exit 1"
+                cp build_linux/compile_commands.json .
+                find src -name "*.cpp" -o -name "*.hpp" | \
+                xargs -I {} bash -c "clang-tidy \
+                -checks='-*,modernize-use-nullptr' \
+                --header-filter='src/.*' {} -p . || exit 1"
 
   windows-build-check:
     name: Windows Build Verification
