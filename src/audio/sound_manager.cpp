@@ -85,7 +85,9 @@ void SoundManager::registerSounds()
             "assets/sounds/step/grass4.ogg",
             "assets/sounds/step/grass5.ogg",
             "assets/sounds/step/grass6.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -97,7 +99,9 @@ void SoundManager::registerSounds()
             "assets/sounds/step/stone4.ogg",
             "assets/sounds/step/stone5.ogg",
             "assets/sounds/step/stone6.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -108,7 +112,9 @@ void SoundManager::registerSounds()
             "assets/sounds/step/sand3.ogg",
             "assets/sounds/step/sand4.ogg",
             "assets/sounds/step/sand5.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -118,7 +124,9 @@ void SoundManager::registerSounds()
             "assets/sounds/step/gravel2.ogg",
             "assets/sounds/step/gravel3.ogg",
             "assets/sounds/step/gravel4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -130,7 +138,9 @@ void SoundManager::registerSounds()
             "assets/sounds/step/wood4.ogg",
             "assets/sounds/step/wood5.ogg",
             "assets/sounds/step/wood6.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -140,7 +150,9 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/grass2.ogg",
             "assets/sounds/dig/grass3.ogg",
             "assets/sounds/dig/grass4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -150,7 +162,9 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/stone2.ogg",
             "assets/sounds/dig/stone3.ogg",
             "assets/sounds/dig/stone4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -160,7 +174,9 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/sand2.ogg",
             "assets/sounds/dig/sand3.ogg",
             "assets/sounds/dig/sand4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -170,7 +186,9 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/gravel2.ogg",
             "assets/sounds/dig/gravel3.ogg",
             "assets/sounds/dig/gravel4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 
     registerGroup(
@@ -180,26 +198,37 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/wood2.ogg",
             "assets/sounds/dig/wood3.ogg",
             "assets/sounds/dig/wood4.ogg",
-        }
+        },
+        0.5f,
+        1.0f
     );
 }
 
 void SoundManager::registerSound(
     const std::string &id,
-    const std::string &path
+    const std::string &path,
+    f32 volume,
+    f32 pitch
 )
 {
+    UNUSED(volume);
+    UNUSED(pitch);
+
     m_soundMap[id] = path;
     m_audioManager.loadSound(path);
 }
 
 void SoundManager::registerGroup(
     const std::string &id,
-    const std::vector<fs::path> &paths
+    const std::vector<fs::path> &paths,
+    f32 volume,
+    f32 pitch
 )
 {
     SoundGroup group;
     group.name = id;
+    group.volume = volume;
+    group.pitch = pitch;
     for (const auto &path : paths) {
         group.sounds.push_back(path.string());
         m_audioManager.loadSound(path);
@@ -211,14 +240,20 @@ void SoundManager::play(const SoundGroup &group, bool isLooping)
 {
     std::uniform_int_distribution<int> dist(0, group.sounds.size() - 1);
     int index = dist(m_rng);
-    m_audioManager.play(group.sounds[index], isLooping);
+    m_audioManager.play(group.sounds[index], 1.0f, 1.0f, isLooping);
 }
 
 void SoundManager::play(const SoundGroup &group, glm::vec3 &pos, bool isLooping)
 {
     std::uniform_int_distribution<int> dist(0, group.sounds.size() - 1);
     int index = dist(m_rng);
-    m_audioManager.play(group.sounds[index], pos, isLooping);
+    m_audioManager.play(
+        group.sounds[index],
+        pos,
+        group.volume,
+        group.pitch,
+        isLooping
+    );
 }
 
 } // namespace sfx

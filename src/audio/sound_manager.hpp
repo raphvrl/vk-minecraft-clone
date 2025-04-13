@@ -15,6 +15,8 @@ struct SoundGroup
 {
     std::string name;
     std::vector<std::string> sounds;
+    f32 volume = 1.0f;
+    f32 pitch = 1.0f;
 };
 
 class SoundManager
@@ -64,12 +66,16 @@ private:
 
     void registerSound(
         const std::string &id,
-        const std::string &path
+        const std::string &path,
+        f32 volume = 1.0f,
+        f32 pitch = 1.0f
     );
 
     void registerGroup(
         const std::string &id,
-        const std::vector<fs::path> &paths
+        const std::vector<fs::path> &paths,
+        f32 volume = 1.0f,
+        f32 pitch = 1.0f
     );
 
     void play(const std::string &name, bool isLooping = false)

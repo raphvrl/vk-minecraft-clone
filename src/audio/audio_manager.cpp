@@ -52,7 +52,12 @@ void AudioManager::update()
     }
 }
 
-void AudioManager::play(const std::string &name, bool isLooping)
+void AudioManager::play(
+    const std::string &name,
+    f32 volume,
+    f32 pitch,
+    bool isLooping
+)
 {
     ALuint bufferId = m_soundCache.getSoundID(name);
     
@@ -60,6 +65,8 @@ void AudioManager::play(const std::string &name, bool isLooping)
     alGenSources(1, &sourceId);
 
     alSourcei(sourceId, AL_BUFFER, bufferId);
+    alSourcef(sourceId, AL_GAIN, volume);
+    alSourcef(sourceId, AL_PITCH, pitch);
     alSourcei(sourceId, AL_LOOPING, isLooping ? AL_TRUE : AL_FALSE);
 
     alSourcei(sourceId, AL_SOURCE_RELATIVE, AL_TRUE);
@@ -78,14 +85,23 @@ void AudioManager::play(const std::string &name, bool isLooping)
     m_activeSounds.push_back({sourceId, name, isLooping});
 }
 
-void AudioManager::play(const std::string &name, glm::vec3 pos, bool isLooping)
+void AudioManager::play(
+    const std::string &name,
+    glm::vec3 pos,
+    f32 volume,
+    f32 pitch, 
+    bool isLooping
+)
 {
     ALuint bufferId = m_soundCache.getSoundID(name);
     
     ALuint sourceId = 0;
     alGenSources(1, &sourceId);
 
+
     alSourcei(sourceId, AL_BUFFER, bufferId);
+    alSourcef(sourceId, AL_GAIN, volume);
+    alSourcef(sourceId, AL_PITCH, pitch);
     alSourcei(sourceId, AL_LOOPING, isLooping ? AL_TRUE : AL_FALSE);
 
     alSource3f(sourceId, AL_POSITION, pos.x, pos.y, pos.z);

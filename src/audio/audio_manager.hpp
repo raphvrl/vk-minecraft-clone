@@ -26,8 +26,20 @@ public:
 
     void update();
 
-    void play(const std::string &name, bool isLooping = false);
-    void play(const std::string &name, glm::vec3 pos, bool isLooping = false);
+    void play(
+        const std::string &name,
+        f32 volume = 1.0f,
+        f32 pitch = 1.0f,
+        bool isLooping = false
+    );
+
+    void play(
+        const std::string &name,
+        glm::vec3 pos,
+        f32 volume = 1.0f,
+        f32 pitch = 1.0f, 
+        bool isLooping = false
+    );
 
     void stopAll();
     void stop(const std::string &name);

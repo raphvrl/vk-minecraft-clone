@@ -5,6 +5,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include "core/types.hpp"
+
 namespace fs = std::filesystem;
 
 namespace sfx
