@@ -52,7 +52,7 @@ public:
     static constexpr int CHUNK_SIZE = 16;
     static constexpr int CHUNK_HEIGHT = 128;
 
-    Chunk(World &world, BlockRegistry &blockRegistry, const ChunkPos &pos);
+    Chunk(World &world, const ChunkPos &pos);
 
     void update();
     void propagateLight();
@@ -74,7 +74,6 @@ public:
     
 private:
     World &m_world;
-    BlockRegistry &m_blockRegistry;
     ChunkPos m_pos;
 
     std::array<BlockType, CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE> m_blocks;

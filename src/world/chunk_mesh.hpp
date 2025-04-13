@@ -10,7 +10,6 @@ namespace wld
 {
 
 // forward declarations
-class BlockRegistry;
 class World;
 class Chunk;
 struct ChunkPos;
@@ -82,7 +81,7 @@ public:
     ChunkMesh(const ChunkMesh &) = delete;
     ChunkMesh &operator=(const ChunkMesh &) = delete;
 
-    void init(gfx::Device &device, BlockRegistry &registry);
+    void init(gfx::Device &device);
     void destroy();
 
     void generate(
@@ -101,7 +100,6 @@ public:
 
 private:
     gfx::Device *m_device;
-    BlockRegistry *m_registry;
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;

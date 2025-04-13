@@ -1,14 +1,14 @@
 #include "chunk_mesh.hpp"
 #include "block_registry.hpp"
 #include "world.hpp"
+#include "block_registry.hpp"
 
 namespace wld
 {
 
-void ChunkMesh::init(gfx::Device &device, BlockRegistry &registry)
+void ChunkMesh::init(gfx::Device &device)
 {
     m_device = &device;
-    m_registry = &registry;
 }
 
 void ChunkMesh::destroy()
@@ -39,7 +39,7 @@ void ChunkMesh::generate(
                 glm::vec3 pos(x, y, z);
 
                 
-                if (m_registry->getBlock(block).cross) {
+                if (wld::BlockRegistry::get().getBlock(block).cross) {
                     addFace(
                         chunk,
                         neighbors,
@@ -361,10 +361,10 @@ void ChunkMesh::addFace(
     std::vector<Vertex> *verticesData;
     std::vector<u32> *indicesData;
 
-    if (m_registry->getBlock(block).transparency) {
+    if (wld::BlockRegistry::get().getBlock(block).transparency) {
         verticesData = &m_transparentVertices;
         indicesData = &m_transparentIndices;
-    } else if (m_registry->getBlock(block).cross) {
+    } else if (wld::BlockRegistry::get().getBlock(block).cross) {
         verticesData = &m_crossVertices;
         indicesData = &m_crossIndices;
     } else {
@@ -396,7 +396,7 @@ void ChunkMesh::addFace(
     }
 
     u8 faceLightLevel;
-    if (m_registry->getBlock(block).cross) {
+    if (wld::BlockRegistry::get().getBlock(block).cross) {
         faceLightLevel = getFaceLightLevel(
             chunk,
             neighbors,
@@ -440,7 +440,7 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(
 {
     f32 tileSize = 16.0f / 256.0f;
 
-    TextureInfo texInfo = m_registry->getBlock(block).textures;
+    TextureInfo texInfo = wld::BlockRegistry::get().getBlock(block).textures;
     glm::uvec2 uv = texInfo.getUV(face);
 
     f32 x = (uv.x * tileSize);
@@ -492,12 +492,12 @@ bool ChunkMesh::isFaceVisible(
         return true;
     }
 
-    if (m_registry->getBlock(adjacentBlock).cross) {
+    if (wld::BlockRegistry::get().getBlock(adjacentBlock).cross) {
         return true;
     }
 
-    Block currentData = m_registry->getBlock(block);
-    Block adjacentData = m_registry->getBlock(adjacentBlock);
+    Block currentData = wld::BlockRegistry::get().getBlock(block);
+    Block adjacentData = wld::BlockRegistry::get().getBlock(adjacentBlock);
 
     if (isChunkBoundary && block == adjacentBlock) {
         return false;
