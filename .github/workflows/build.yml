@@ -59,7 +59,6 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
                 -DBUILD_SHARED_LIBS=OFF \
                 -DLIBTYPE=STATIC \
-                -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
                 ..
           cmake --build . --config Release
       
@@ -117,7 +116,6 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release \
                 -DBUILD_SHARED_LIBS=OFF \
                 -DLIBTYPE=STATIC \
-                -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
                 -G "Ninja" \
                 ..
           cmake --build . --config Release
