@@ -48,6 +48,9 @@ private:
 
     f32 m_footstepTimer = 0.0f;
     bool m_wasGrounded = false;
+    f32 m_lastGroundedY = 0.0f;
+    f32 m_fallingSince = 0.0f;
+    f32 m_lastY = 0.0f;
 };
 
 } // namespace sys

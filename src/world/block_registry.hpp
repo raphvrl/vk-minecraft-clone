@@ -15,9 +15,14 @@ class BlockRegistry
 {
 
 public:
-    BlockRegistry() = default;
+    static BlockRegistry &get()
+    {
+        static BlockRegistry instance;
+        return instance;
+    }
 
-    void load(const std::string &path);
+    BlockRegistry(const BlockRegistry &) = delete;
+    BlockRegistry &operator=(const BlockRegistry &) = delete;
 
     const Block &getBlock(BlockType type) const {
         return m_blocks[static_cast<u32>(type)];
@@ -28,6 +33,9 @@ public:
     }
 
 private:
+    BlockRegistry();
+    ~BlockRegistry() = default;
+
     std::vector<Block> m_blocks;
 
 };

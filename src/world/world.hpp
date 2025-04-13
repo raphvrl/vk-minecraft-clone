@@ -91,7 +91,6 @@ private:
     usize m_updatedChunks = 0;
 
     gfx::Device *m_device;
-    BlockRegistry m_blockRegistry;
 
     enum PipelineType
     {

@@ -1,4 +1,5 @@
 #include "sound_manager.hpp"
+#include "world/block_registry.hpp"
 
 namespace sfx
 {
@@ -30,24 +31,13 @@ void SoundManager::playFootstep(
     glm::vec3 &pos
 )
 {
-    switch (blockType) {
-        case wld::BlockType::GRASS:
-            play(m_soundGroups["step.grass"], pos, false);
-            break;
-        case wld::BlockType::DIRT:
-            play(m_soundGroups["step.gravel"], pos, false);
-            break;
-        case wld::BlockType::STONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        case wld::BlockType::SAND:
-            play(m_soundGroups["step.sand"], pos, false);
-            break;
-        case wld::BlockType::COBBLESTONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        default:
-            break;
+    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+
+    std::string groupName = "step." + block.material;
+
+    auto it = m_soundGroups.find(groupName);
+    if (it != m_soundGroups.end()) {
+        play(it->second, pos, false);
     }
 }
 
@@ -56,24 +46,12 @@ void SoundManager::playPlaceBlock(
     glm::vec3 &pos
 )
 {
-    switch (blockType) {
-        case wld::BlockType::GRASS:
-            play(m_soundGroups["step.grass"], pos, false);
-            break;
-        case wld::BlockType::DIRT:
-            play(m_soundGroups["step.gravel"], pos, false);
-            break;
-        case wld::BlockType::STONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        case wld::BlockType::SAND:
-            play(m_soundGroups["step.sand"], pos, false);
-            break;
-        case wld::BlockType::COBBLESTONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        default:
-            break;
+    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+
+    std::string groupName = "dig." + block.material;
+    auto it = m_soundGroups.find(groupName);
+    if (it != m_soundGroups.end()) {
+        play(it->second, pos, false);
     }
 }
 
@@ -82,24 +60,12 @@ void SoundManager::playBreakBlock(
     glm::vec3 &pos
 )
 {
-    switch (blockType) {
-        case wld::BlockType::GRASS:
-            play(m_soundGroups["step.grass"], pos, false);
-            break;
-        case wld::BlockType::DIRT:
-            play(m_soundGroups["step.gravel"], pos, false);
-            break;
-        case wld::BlockType::STONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        case wld::BlockType::SAND:
-            play(m_soundGroups["step.sand"], pos, false);
-            break;
-        case wld::BlockType::COBBLESTONE:
-            play(m_soundGroups["step.stone"], pos, false);
-            break;
-        default:
-            break;
+    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+
+    std::string groupName = "dig." + block.material;
+    auto it = m_soundGroups.find(groupName);
+    if (it != m_soundGroups.end()) {
+        play(it->second, pos, false);
     }
 }
 
@@ -152,6 +118,68 @@ void SoundManager::registerSounds()
             "assets/sounds/step/gravel2.ogg",
             "assets/sounds/step/gravel3.ogg",
             "assets/sounds/step/gravel4.ogg",
+        }
+    );
+
+    registerGroup(
+        "step.wood",
+        {
+            "assets/sounds/step/wood1.ogg",
+            "assets/sounds/step/wood2.ogg",
+            "assets/sounds/step/wood3.ogg",
+            "assets/sounds/step/wood4.ogg",
+            "assets/sounds/step/wood5.ogg",
+            "assets/sounds/step/wood6.ogg",
+        }
+    );
+
+    registerGroup(
+        "dig.grass",
+        {
+            "assets/sounds/dig/grass1.ogg",
+            "assets/sounds/dig/grass2.ogg",
+            "assets/sounds/dig/grass3.ogg",
+            "assets/sounds/dig/grass4.ogg",
+        }
+    );
+
+    registerGroup(
+        "dig.stone",
+        {
+            "assets/sounds/dig/stone1.ogg",
+            "assets/sounds/dig/stone2.ogg",
+            "assets/sounds/dig/stone3.ogg",
+            "assets/sounds/dig/stone4.ogg",
+        }
+    );
+
+    registerGroup(
+        "dig.sand",
+        {
+            "assets/sounds/dig/sand1.ogg",
+            "assets/sounds/dig/sand2.ogg",
+            "assets/sounds/dig/sand3.ogg",
+            "assets/sounds/dig/sand4.ogg",
+        }
+    );
+
+    registerGroup(
+        "dig.gravel",
+        {
+            "assets/sounds/dig/gravel1.ogg",
+            "assets/sounds/dig/gravel2.ogg",
+            "assets/sounds/dig/gravel3.ogg",
+            "assets/sounds/dig/gravel4.ogg",
+        }
+    );
+
+    registerGroup(
+        "dig.wood",
+        {
+            "assets/sounds/dig/wood1.ogg",
+            "assets/sounds/dig/wood2.ogg",
+            "assets/sounds/dig/wood3.ogg",
+            "assets/sounds/dig/wood4.ogg",
         }
     );
 }

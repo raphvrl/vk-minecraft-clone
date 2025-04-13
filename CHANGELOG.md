@@ -5,13 +5,14 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- 
+- Block placement and destruction sound effects
 
 ### Changed
 -
 
 ### Fixed
 -
+
 
 ## [0.2.0] - 2025-04-13
 

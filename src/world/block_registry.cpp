@@ -3,9 +3,9 @@
 namespace wld
 {
 
-void BlockRegistry::load(const std::string &path)
+BlockRegistry::BlockRegistry()
 {
-    auto config = toml::parse_file(path);
+    auto config = toml::parse_file("assets/config/blocks.toml");
 
     auto atlas = config["atlas"];
     int count = atlas["count"].value_or(0);
@@ -75,6 +75,13 @@ void BlockRegistry::load(const std::string &path)
                     ->get("cross")
                     ->as_boolean()
                     ->value_or(false);
+            }
+
+            if (blockTable->contains("material")) {
+                block.material = blockTable
+                    ->get("material")
+                    ->as_string()
+                    ->value_or("stone");
             }
         }
 

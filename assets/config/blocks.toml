@@ -7,24 +7,29 @@ count = 256
 	[blocks.stone]
 	id = 1
 	textures.all = { x = 1, y = 0 }
+	material = "stone"
 
 	[blocks.grass]
 	id = 2
 	textures.top = { x = 0, y = 0 }
 	textures.bottom = { x = 2, y = 0 }
 	textures.sides = { x = 3, y = 0 }
+	material = "grass"
 
 	[blocks.dirt]
 	id = 3
 	textures.all = { x = 2, y = 0 }
+	material = "gravel"
 
 	[blocks.cobblestone]
 	id = 4
 	textures.all = { x = 0, y = 1 }
+	material = "stone"
 
 	[blocks.bedrock]
 	id = 7
 	textures.all = { x = 1, y = 1 }
+	material = "stone"
 
 	[blocks.water]
 	id = 9
@@ -32,30 +37,36 @@ count = 256
 	transparency = true
 	collision = false
 	breakable = false
+	material = "water"
 
 	[blocks.sand]
 	id = 12
 	textures.all = { x = 2, y = 1 }
+	material = "sand"
 
 	[blocks.log]
 	id = 17
 	textures.top = { x = 5, y = 1 }
 	textures.bottom = { x = 5, y = 1 }
 	textures.sides = { x = 4, y = 1 }
+	material = "wood"
 
 	[blocks.leaves]
 	id = 18
 	textures.all = { x = 5, y = 3}
+	material = "grass"
 
 	[blocks.flower]
 	id = 37
 	textures.all = { x = 13, y = 0 }
 	cross = true
 	collision = false
+	material = "grass"
 
 	[blocks.rose]
 	id = 38
 	textures.all = { x = 12, y = 0 }
 	cross = true
 	collision = false
+	material = "grass"
 	

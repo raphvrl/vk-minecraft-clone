@@ -149,16 +149,42 @@ void Player::tick(f32 dt)
         m_footstepTimer = 0.0f;
     }
 
-    if (collider->isGrounded && !m_wasGrounded) {
-        wld::BlockType blockUnder = m_world.getBlock(
-            static_cast<int>(std::floor(transform->position.x)),
-            static_cast<int>(std::floor(transform->position.y - 0.01f)),
-            static_cast<int>(std::floor(transform->position.z))
-        );
+    if (collider->isGrounded) {
+        f32 deltaY = m_lastY - transform->position.y;
 
-        sfx::SoundManager::get().playFootstep(blockUnder, transform->position);
+        if (!m_wasGrounded) {
+            wld::BlockType blockUnder = m_world.getBlock(
+                static_cast<int>(std::floor(transform->position.x)),
+                static_cast<int>(std::floor(transform->position.y - 0.01f)),
+                static_cast<int>(std::floor(transform->position.z))
+            );
+        
+            
+            f32 fallDistance = std::abs(m_lastGroundedY - transform->position.y);
+
+            if (fallDistance > 0.5f) {
+                sfx::SoundManager::get().playFootstep(
+                    blockUnder,
+                    transform->position
+                );
+            }
+        } else if (deltaY > 0.5f && deltaY < 1.5f) {
+            wld::BlockType blockUnder = m_world.getBlock(
+                static_cast<int>(std::floor(transform->position.x)),
+                static_cast<int>(std::floor(transform->position.y - 0.01f)),
+                static_cast<int>(std::floor(transform->position.z))
+            );
+
+            sfx::SoundManager::get().playFootstep(
+                blockUnder,
+                transform->position
+            );
+        }
+
+        m_lastGroundedY = transform->position.y;
     }
 
+    m_lastY = transform->position.y;
     m_wasGrounded = collider->isGrounded;
 
     if (

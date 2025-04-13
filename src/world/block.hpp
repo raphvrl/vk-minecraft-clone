@@ -63,6 +63,7 @@ struct Block
     bool collision = true;
     bool breakable = true;
     bool cross = false;
+    std::string material = "none";
 };
 
 } // namespace wld

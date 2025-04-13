@@ -6,7 +6,6 @@ namespace wld
 void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
 {
     m_device = &device;
-    m_blockRegistry.load("assets/config/blocks.toml");
 
     m_playerChunkPos = {-1, -1};
 
@@ -381,7 +380,7 @@ bool World::raycast(
         BlockType type = getBlock(blockPos);
         if (
             type != BlockType::AIR &&
-            m_blockRegistry.getBlock(type).breakable
+            wld::BlockRegistry::get().getBlock(type).breakable
         ) {
             result.pos = blockPos;
             result.face = hitFace;
@@ -455,7 +454,7 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
                 if (
                     chunk &&
                     block != BlockType::AIR &&
-                    m_blockRegistry.getBlock(block).collision
+                    wld::BlockRegistry::get().getBlock(block).collision
                 ) {
                     return true;
                 }
@@ -477,7 +476,7 @@ Chunk *World::getChunk(const ChunkPos &pos) const
 
 void World::loadChunks(const ChunkPos &pos)
 {
-    auto chunk = std::make_unique<Chunk>(*this, m_blockRegistry, pos);
+    auto chunk = std::make_unique<Chunk>(*this, pos);
 
     m_generator.generateChunk(*chunk, pos);
 
@@ -520,7 +519,7 @@ void World::updateMeshe(const ChunkPos &pos)
         it->second->update(*chunk, neighbors);
     } else {
         auto mesh = std::make_unique<ChunkMesh>();
-        mesh->init(*m_device, m_blockRegistry);
+        mesh->init(*m_device);
         mesh->generate(*chunk, neighbors);
         m_meshes[pos] = std::move(mesh);
     }
