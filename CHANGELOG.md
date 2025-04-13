@@ -2,8 +2,18 @@
 
 All notable changes to the Vulkan Minecraft project will be documented in this file.
 
-
 ## [Unreleased]
+
+### Added
+- 
+
+### Changed
+-
+
+### Fixed
+-
+
+## [0.2.0] - 2025-04-13
 
 ### Added
 - Custom application icon for Windows and Linux
@@ -26,8 +36,6 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 
 ### Fixed
 - Fixed water blocks appearing as half-blocks when another water block was directly above
-
-
 
 ## [0.1.0] - 2025-04-08
 
@@ -63,5 +71,6 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
   - Face culling for meshes
   - Frustum culling for chunks and clouds
 
-[Unreleased]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/raphvrl/vulkan-minecraft/releases/tag/v0.1.0
