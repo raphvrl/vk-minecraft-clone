@@ -36,7 +36,9 @@ public:
 
     void playButtonClick();
 
-    void playFootstep(wld::BlockType &blockType, glm::vec3 &pos);
+    void playFootstep(const wld::BlockType &blockType, glm::vec3 &pos);
+    void playPlaceBlock(const wld::BlockType &blockType, glm::vec3 &pos);
+    void playBreakBlock(const wld::BlockType &blockType, glm::vec3 &pos);
 
     void setListenerPos(
         const glm::vec3 &pos,

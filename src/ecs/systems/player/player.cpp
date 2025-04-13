@@ -173,7 +173,22 @@ void Player::tick(f32 dt)
         wld::RaycastResult result;
 
         if (m_world.raycast(ray, 4.0f, result)) {
+            glm::ivec3 blockPos = {
+                static_cast<int>(std::floor(result.pos.x)),
+                static_cast<int>(std::floor(result.pos.y)),
+                static_cast<int>(std::floor(result.pos.z))
+            };
+
+            wld::BlockType type = m_world.getBlock(
+                blockPos.x, blockPos.y, blockPos.z
+            );
+
             m_world.deleteBlock(result.pos);
+
+            sfx::SoundManager::get().playBreakBlock(
+                type,
+                transform->position
+            );
         }
 
         player->breakCooldown = 0.2f;
@@ -202,6 +217,11 @@ void Player::tick(f32 dt)
             m_world.placeBlock(
                 result.normal,
                 wld::BlockType::COBBLESTONE
+            );
+
+            sfx::SoundManager::get().playPlaceBlock(
+                wld::BlockType::COBBLESTONE,
+                transform->position
             );
         }
 

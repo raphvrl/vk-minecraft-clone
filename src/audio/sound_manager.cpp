@@ -25,7 +25,62 @@ void SoundManager::playButtonClick()
     play("ui.button.click", false);
 }
 
-void SoundManager::playFootstep(wld::BlockType &blockType, glm::vec3 &pos)
+void SoundManager::playFootstep(
+    const wld::BlockType &blockType, 
+    glm::vec3 &pos
+)
+{
+    switch (blockType) {
+        case wld::BlockType::GRASS:
+            play(m_soundGroups["step.grass"], pos, false);
+            break;
+        case wld::BlockType::DIRT:
+            play(m_soundGroups["step.gravel"], pos, false);
+            break;
+        case wld::BlockType::STONE:
+            play(m_soundGroups["step.stone"], pos, false);
+            break;
+        case wld::BlockType::SAND:
+            play(m_soundGroups["step.sand"], pos, false);
+            break;
+        case wld::BlockType::COBBLESTONE:
+            play(m_soundGroups["step.stone"], pos, false);
+            break;
+        default:
+            break;
+    }
+}
+
+void SoundManager::playPlaceBlock(
+    const wld::BlockType &blockType, 
+    glm::vec3 &pos
+)
+{
+    switch (blockType) {
+        case wld::BlockType::GRASS:
+            play(m_soundGroups["step.grass"], pos, false);
+            break;
+        case wld::BlockType::DIRT:
+            play(m_soundGroups["step.gravel"], pos, false);
+            break;
+        case wld::BlockType::STONE:
+            play(m_soundGroups["step.stone"], pos, false);
+            break;
+        case wld::BlockType::SAND:
+            play(m_soundGroups["step.sand"], pos, false);
+            break;
+        case wld::BlockType::COBBLESTONE:
+            play(m_soundGroups["step.stone"], pos, false);
+            break;
+        default:
+            break;
+    }
+}
+
+void SoundManager::playBreakBlock(
+    const wld::BlockType &blockType, 
+    glm::vec3 &pos
+)
 {
     switch (blockType) {
         case wld::BlockType::GRASS:
