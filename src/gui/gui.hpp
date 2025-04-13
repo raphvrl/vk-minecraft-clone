@@ -9,6 +9,7 @@
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture_cache.hpp"
+#include "audio/sound_manager.hpp"
 #include "text_renderer.hpp"
 #include "game/game_state.hpp"
 

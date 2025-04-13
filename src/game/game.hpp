@@ -7,6 +7,7 @@
 #include "graphics/gpu_data.hpp"
 #include "graphics/texture_cache.hpp"
 #include "graphics/display.hpp"
+#include "audio/sound_manager.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"

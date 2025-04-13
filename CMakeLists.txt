@@ -54,6 +54,7 @@ set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
 set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
 set(ALSOFT_CONFIG OFF CACHE BOOL "" FORCE)
+set(LIBTYPE "STATIC" CACHE STRING "Library type")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
@@ -140,16 +141,22 @@ endif()
 target_include_directories(vulkan-minecraft PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb-vorbis/source
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/fastnoise/Cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/tomplusplus/include
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/vma/include
 )
 
+add_library(stb_vorbis STATIC "${CMAKE_CURRENT_SOURCE_DIR}/lib/stb/stb_vorbis.c")
+set_target_properties(stb_vorbis PROPERTIES LINKER_LANGUAGE C)
+target_include_directories(stb_vorbis PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/lib/stb")
+
 target_link_libraries(vulkan-minecraft PRIVATE
         glfw
         Vulkan::Vulkan
         OpenAL
+        stb_vorbis
 )
 
 if(Vulkan_FOUND)

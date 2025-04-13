@@ -2,6 +2,7 @@
 
 All notable changes to the Vulkan Minecraft project will be documented in this file.
 
+
 ## [Unreleased]
 
 ### Added
@@ -9,6 +10,10 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 - Windows resource configuration for better integration with File Explorer
 - Post-processing capability with framebuffers for storing rendering outputs
 - Shading on block faces to enhance visual appearance
+- Tree and flower generation in world terrain
+- 3D sound system implementation
+- Footstep sounds based on block type (partial implementation)
+- Sound effects for UI button interactions
 
 ### Changed
 - Upgraded to Vulkan 1.3
@@ -21,6 +26,7 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 
 ### Fixed
 - Fixed water blocks appearing as half-blocks when another water block was directly above
+
 
 
 ## [0.1.0] - 2025-04-08

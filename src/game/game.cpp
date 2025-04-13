@@ -26,6 +26,8 @@ void Game::init()
 
     m_display.init(m_device);
 
+    sfx::SoundManager::get().init();
+
     m_world.init(m_device, m_textureCache);
     m_sky.init(m_device);
     m_outline.init(m_device, m_world);
@@ -40,6 +42,7 @@ void Game::init()
     m_gui.setResumeCallback([&] {
         m_state = GameState::RUNNING;
     });
+
     m_gui.initGameElements();
     m_gui.initPauseElements();
 
@@ -72,6 +75,8 @@ void Game::destroy()
     m_outline.destroy();
     m_sky.destroy();
     m_world.destroy();
+
+    sfx::SoundManager::get().destroy();
 
     m_display.destroy();
     m_textureCache.destroy();
@@ -161,8 +166,6 @@ void Game::handleInput()
 
 void Game::update(f32 dt)
 {
-    updateGui();
-
     m_camera.updateView();
     m_camera.updateProj(m_window.getAspect());
 
@@ -174,6 +177,15 @@ void Game::update(f32 dt)
     m_gpuData.updateTime(m_window.getCurrentTime(), dt);
 
     m_gpuData.update();
+
+    glm::vec3 camPos = m_camera.getPos();
+    glm::vec3 camFront = m_camera.getFront();
+    glm::vec3 camUp = m_camera.getUp();
+
+    sfx::SoundManager::get().setListenerPos(camPos, camFront, camUp);
+    sfx::SoundManager::get().update();
+
+    updateGui();
     
     if (m_state != GameState::RUNNING) {
         m_display.setColor({0.6f, 0.6f, 0.6f, 1.0f});

@@ -19,3 +19,6 @@
 [submodule "lib/openal"]
 	path = lib/openal
 	url = https://github.com/kcat/openal-soft.git
+[submodule "lib/stb-vorbis"]
+	path = lib/stb-vorbis
+	url = https://github.com/exelotl/ooc-stb-vorbis.git

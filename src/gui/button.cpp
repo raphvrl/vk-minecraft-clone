@@ -1,5 +1,6 @@
 #include "button.hpp"
 #include "gui.hpp"
+#include "audio/sound_manager.hpp"
 
 namespace gui
 {
@@ -30,6 +31,7 @@ void Button::update(const glm::vec2 &point)
 void Button::handleMouseClick()
 {
     if (m_hovered && !m_pressed) {
+        sfx::SoundManager::get().playButtonClick();
         m_callback();
         m_pressed = true;
     }

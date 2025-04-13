@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "ecs/ecs.hpp"
+#include "audio/sound_manager.hpp"
 
 namespace sys
 {
@@ -119,6 +120,46 @@ void Player::tick(f32 dt)
             transform->position.y -= player->moveSpeed;
         }
     }
+
+    bool isMoving = std::abs(velocity->position.x) > 0.01f || 
+                    std::abs(velocity->position.z) > 0.01f;
+
+    if (collider->isGrounded && isMoving) {
+        m_footstepTimer -= dt;
+    
+        if (m_footstepTimer <= 0.0f) {
+            glm::ivec3 blockPos = {
+                static_cast<int>(std::floor(transform->position.x)),
+                static_cast<int>(std::floor(transform->position.y - 0.01f)),
+                static_cast<int>(std::floor(transform->position.z))
+            };
+            
+            wld::BlockType blockUnder = m_world.getBlock(
+                blockPos.x, blockPos.y, blockPos.z
+            );
+
+            sfx::SoundManager::get().playFootstep(blockUnder, transform->position);
+
+            m_footstepTimer = 0.400;
+
+            f32 randomFactor = 0.9f + (static_cast<f32>(std::rand()) / RAND_MAX) * 0.2f;
+            m_footstepTimer *= randomFactor;
+        }
+    } else {
+        m_footstepTimer = 0.0f;
+    }
+
+    if (collider->isGrounded && !m_wasGrounded) {
+        wld::BlockType blockUnder = m_world.getBlock(
+            static_cast<int>(std::floor(transform->position.x)),
+            static_cast<int>(std::floor(transform->position.y - 0.01f)),
+            static_cast<int>(std::floor(transform->position.z))
+        );
+
+        sfx::SoundManager::get().playFootstep(blockUnder, transform->position);
+    }
+
+    m_wasGrounded = collider->isGrounded;
 
     if (
         m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) &&
