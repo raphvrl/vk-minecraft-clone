@@ -86,7 +86,7 @@ void SoundManager::registerSounds()
             "assets/sounds/step/grass5.ogg",
             "assets/sounds/step/grass6.ogg",
         },
-        0.5f,
+        0.3f,
         1.0f
     );
 
@@ -100,7 +100,7 @@ void SoundManager::registerSounds()
             "assets/sounds/step/stone5.ogg",
             "assets/sounds/step/stone6.ogg",
         },
-        0.5f,
+        0.3f,
         1.0f
     );
 
@@ -113,7 +113,7 @@ void SoundManager::registerSounds()
             "assets/sounds/step/sand4.ogg",
             "assets/sounds/step/sand5.ogg",
         },
-        0.5f,
+        0.3f,
         1.0f
     );
 
@@ -125,7 +125,7 @@ void SoundManager::registerSounds()
             "assets/sounds/step/gravel3.ogg",
             "assets/sounds/step/gravel4.ogg",
         },
-        0.5f,
+        0.3f,
         1.0f
     );
 
@@ -139,7 +139,7 @@ void SoundManager::registerSounds()
             "assets/sounds/step/wood5.ogg",
             "assets/sounds/step/wood6.ogg",
         },
-        0.5f,
+        0.3f,
         1.0f
     );
 
@@ -151,7 +151,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/grass3.ogg",
             "assets/sounds/dig/grass4.ogg",
         },
-        0.5f,
+        0.6f,
         1.0f
     );
 
@@ -163,7 +163,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/stone3.ogg",
             "assets/sounds/dig/stone4.ogg",
         },
-        0.5f,
+        0.6f,
         1.0f
     );
 
@@ -175,7 +175,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/sand3.ogg",
             "assets/sounds/dig/sand4.ogg",
         },
-        0.5f,
+        0.6f,
         1.0f
     );
 
@@ -187,7 +187,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/gravel3.ogg",
             "assets/sounds/dig/gravel4.ogg",
         },
-        0.5f,
+        0.6f,
         1.0f
     );
 
@@ -199,7 +199,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/wood3.ogg",
             "assets/sounds/dig/wood4.ogg",
         },
-        0.5f,
+        0.6f,
         1.0f
     );
 }
