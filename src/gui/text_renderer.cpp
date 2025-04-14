@@ -86,7 +86,7 @@ void TextRenderer::draw(
 
         m_pipeline.push(cmd, pc);
 
-        vkCmdDraw(cmd, 6, 1, 0, 0);
+        gfx::drawQuad(cmd);
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(x, y, 0.0f));
@@ -97,7 +97,7 @@ void TextRenderer::draw(
 
         m_pipeline.push(cmd, pc);
 
-        vkCmdDraw(cmd, 6, 1, 0, 0);
+        gfx::drawQuad(cmd);
 
         x += m_charWidths[c] * pixelOffset;
     }

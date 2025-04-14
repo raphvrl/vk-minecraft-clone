@@ -51,7 +51,9 @@ void Camera::updateOrtho(u32 width, u32 height)
         0.0f,
         static_cast<f32>(width),
         0.0f,
-        static_cast<f32>(height)
+        static_cast<f32>(height),
+        -1000.0f,
+        1000.0f
     );
 }
 

@@ -47,7 +47,7 @@ void ChunkMesh::generate(
                         ChunkMesh::FACE_CROSS_1,
                         getUVs(block, Face::NORTH),
                         block,
-                        Face::NORTH
+                        Face::TOP
                     );
 
                     addFace(
@@ -57,7 +57,7 @@ void ChunkMesh::generate(
                         ChunkMesh::FACE_CROSS_2,
                         getUVs(block, Face::SOUTH),
                         block,
-                        Face::SOUTH
+                        Face::TOP
                     );
 
                     continue;

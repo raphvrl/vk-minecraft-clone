@@ -1,5 +1,4 @@
 #include "game.hpp"
-#include "gui/gui.hpp"
 
 namespace game
 {
@@ -35,17 +34,6 @@ void Game::init()
 
     m_overlay.init(m_device, m_textureCache);
 
-    m_gui.init(m_device, m_textureCache);
-    m_gui.setQuitCallback([&] {
-        m_running = false;
-    });
-    m_gui.setResumeCallback([&] {
-        m_state = GameState::RUNNING;
-    });
-
-    m_gui.initGameElements();
-    m_gui.initPauseElements();
-
     EntityID playerEntity = m_ecs.creatEntity();
     auto transform = m_ecs.addComponent<cmp::Transform>(playerEntity);
     transform->position = glm::vec3(0.0f, 80.0f, 0.0f);
@@ -66,8 +54,6 @@ void Game::init()
 void Game::destroy()
 {
     m_device.waitIdle();
-
-    m_gui.destroy();
 
     m_overlay.destroy();
 
@@ -158,10 +144,6 @@ void Game::handleInput()
     } else {
         m_window.setCursorMode(GLFW_CURSOR_NORMAL);
     }
-
-    if (m_window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)) {
-        m_gui.handleMouseClick();
-    }
 }
 
 void Game::update(f32 dt)
@@ -184,8 +166,6 @@ void Game::update(f32 dt)
 
     sfx::SoundManager::get().setListenerPos(camPos, camFront, camUp);
     sfx::SoundManager::get().update();
-
-    updateGui();
     
     if (m_state != GameState::RUNNING) {
         m_display.setColor({0.6f, 0.6f, 0.6f, 1.0f});
@@ -234,21 +214,10 @@ void Game::render()
     m_device.endRender(cmd);
 
     m_device.beginRenderLoad(cmd);
-    m_gui.render(cmd);
+
     m_device.endRender(cmd);
 
     m_device.endFrame(cmd);
-}
-
-void Game::updateGui()
-{
-    gui::GameStat gameStat;
-    gameStat.fps = static_cast<u32>(m_fps);
-    gameStat.updatedChunks = m_world.getUpdatedChunks();
-    gameStat.state = m_state;
-
-    m_gui.updateStat(gameStat);
-    m_gui.update(m_window.getMousePos());
 }
 
 } // namespace game

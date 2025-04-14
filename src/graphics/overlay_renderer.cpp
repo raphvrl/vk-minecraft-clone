@@ -31,7 +31,7 @@ void OverlayRenderer::render(VkCommandBuffer cmd)
 
         m_pipeline.push(cmd, m_textureID);
 
-        vkCmdDraw(cmd, 6, 1, 0, 0);
+        gfx::drawQuad(cmd);
     }
 }
 

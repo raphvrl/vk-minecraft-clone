@@ -105,7 +105,7 @@ void Clouds::render(VkCommandBuffer cmd, const core::Camera &camera)
 
                                 m_pipeline.push(cmd, model);
 
-                                vkCmdDraw(cmd, 6, 1, 0, 0);
+                                gfx::drawQuad(cmd);
                                 renderedClouds++;
                             }
                         }

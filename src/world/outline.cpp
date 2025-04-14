@@ -46,7 +46,7 @@ void Outline::drawOutline(VkCommandBuffer cmd, const glm::ivec3 &pos)
 
     m_pipeline.push(cmd, model);
 
-    vkCmdDraw(cmd, 36, 1, 0, 0);
+    gfx::drawCube(cmd);
 }
 
 } // namespace wld

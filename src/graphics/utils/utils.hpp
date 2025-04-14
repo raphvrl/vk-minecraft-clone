@@ -13,3 +13,11 @@ namespace gfx::vk
 void check(VkResult result, const std::string &msg);
 
 } // namespace gfx::vk
+
+namespace gfx
+{
+
+void drawQuad(VkCommandBuffer cmd);
+void drawCube(VkCommandBuffer cmd);
+
+} // namespace gfx

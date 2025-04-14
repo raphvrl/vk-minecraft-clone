@@ -18,6 +18,7 @@ enum class BlockType
     GRASS = 2,
     DIRT = 3,
     COBBLESTONE = 4,
+    PLANK = 5,
     BEDROCK = 7,
     WATER = 9,
     SAND = 12,
@@ -25,6 +26,7 @@ enum class BlockType
     LEAVES = 18,
     FLOWER = 37,
     ROSE = 38,
+    BRICK = 45,
 };
 
 struct TextureInfo

@@ -59,7 +59,7 @@ void Display::draw(VkCommandBuffer cmd)
     m_pc.textureID = m_framebuffer.getTextureID();
     m_pipeline.push(cmd, m_pc);
 
-    vkCmdDraw(cmd, 6, 1, 0, 0);
+    gfx::drawQuad(cmd);
 }
 
 } // namespace gfx

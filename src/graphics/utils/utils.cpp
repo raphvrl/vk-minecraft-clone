@@ -85,3 +85,18 @@ void check(VkResult result, const std::string &msg)
 }
 
 } // namespace gfx::vk
+
+namespace gfx
+{
+
+void drawQuad(VkCommandBuffer cmd)
+{
+    vkCmdDraw(cmd, 6, 1, 0, 0);
+}
+
+void drawCube(VkCommandBuffer cmd)
+{
+    vkCmdDraw(cmd, 36, 1, 0, 0);
+}
+
+}

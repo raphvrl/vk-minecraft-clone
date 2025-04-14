@@ -26,6 +26,11 @@ count = 256
 	textures.all = { x = 0, y = 1 }
 	material = "stone"
 
+	[blocks.planks]
+	id = 5
+	textures.all = { x = 4, y = 0 }
+	material = "wood"
+
 	[blocks.bedrock]
 	id = 7
 	textures.all = { x = 1, y = 1 }
@@ -69,4 +74,9 @@ count = 256
 	cross = true
 	collision = false
 	material = "grass"
+
+	[blocks.brick]
+	id = 45
+	textures.all = { x = 7, y = 0 }
+	material = "stone"
 	

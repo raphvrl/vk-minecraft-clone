@@ -24,7 +24,7 @@ void Sky::destroy()
 void Sky::render(VkCommandBuffer cmd)
 {
     m_pipeline.bind(cmd);
-    vkCmdDraw(cmd, 36, 1, 0, 0);
+    gfx::drawCube(cmd);
 }
 
 } // namespace wld

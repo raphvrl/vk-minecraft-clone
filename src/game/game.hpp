@@ -7,14 +7,13 @@
 #include "graphics/gpu_data.hpp"
 #include "graphics/texture_cache.hpp"
 #include "graphics/display.hpp"
+#include "graphics/item_renderer.hpp"
 #include "audio/sound_manager.hpp"
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
 #include "graphics/overlay_renderer.hpp"
-#include "gui/text_renderer.hpp"
-#include "gui/gui.hpp"
 #include "game/game_state.hpp"
 
 #include "ecs/ecs.hpp"
@@ -61,8 +60,6 @@ private:
 
     gfx::OverlayRenderer m_overlay;
 
-    gui::GUI m_gui;
-
     ecs::ECS m_ecs;
 
     sys::Player m_playerSystem;
@@ -73,8 +70,6 @@ private:
     f32 m_fps;
 
     GameState m_state = GameState::RUNNING;
-
-    void updateGui();
 };
 
 } // namespace game
