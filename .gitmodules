@@ -22,3 +22,6 @@
 [submodule "lib/stb-vorbis"]
 	path = lib/stb-vorbis
 	url = https://github.com/exelotl/ooc-stb-vorbis.git
+[submodule "lib/imgui"]
+	path = lib/imgui
+	url = https://github.com/ocornut/imgui.git

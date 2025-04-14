@@ -68,6 +68,28 @@ endif()
 
 add_subdirectory(lib/openal)
 
+set(IMGUI_SOURCES
+    lib/imgui/imgui.cpp
+    lib/imgui/imgui_demo.cpp
+    lib/imgui/imgui_draw.cpp
+    lib/imgui/imgui_tables.cpp
+    lib/imgui/imgui_widgets.cpp
+    lib/imgui/backends/imgui_impl_glfw.cpp
+    lib/imgui/backends/imgui_impl_vulkan.cpp
+)
+
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
+target_include_directories(imgui PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui/backends
+)
+
+target_link_libraries(imgui PUBLIC
+    glfw
+    Vulkan::Vulkan
+)
+
 file(GLOB_RECURSE SRC_FILES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
@@ -145,13 +167,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 target_include_directories(vulkan-minecraft PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb-vorbis/source
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/fastnoise/Cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/tomplusplus/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/vma/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/stb-vorbis/source
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/fastnoise/Cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/tomplusplus/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/vma/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui/backends
 )
 
 add_library(stb_vorbis STATIC "${CMAKE_CURRENT_SOURCE_DIR}/lib/stb/stb_vorbis.c")
@@ -163,6 +187,7 @@ target_link_libraries(vulkan-minecraft PRIVATE
         Vulkan::Vulkan
         OpenAL
         stb_vorbis
+        imgui
 )
 
 if(Vulkan_FOUND)

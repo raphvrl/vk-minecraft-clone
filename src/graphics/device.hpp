@@ -140,6 +140,16 @@ public:
     VkQueue getGraphicsQueue() const { return m_graphicsQueue; }
     VkQueue getPresentQueue() const { return m_presentQueue; }
 
+    u32 getGraphicsQueueFamilyIndex() const
+    {
+        return m_queueFamilyIndices.graphicsFamily.value();
+    }
+
+    u32 getPresentQueueFamilyIndex() const
+    {
+        return m_queueFamilyIndices.presentFamily.value();
+    }
+
     u32 getCurrentFrame() const { return m_currentFrame; }
     u32 getImageIndex() const { return m_imageIndex; }
 

@@ -42,6 +42,7 @@ public:
 public:
     VkSwapchainKHR getSwapchain() const { return m_swapchain; }
     VkImage getImage(u32 index) const { return m_images[index]; }
+    std::vector<VkImage> getImages() const { return m_images; }
     VkImageView getImageView(u32 index) const { return m_imageViews[index]; }
     VkFormat getFormat() const { return m_imageFormat; }
     VkExtent2D getExtent() const { return m_extent; }

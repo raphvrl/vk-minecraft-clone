@@ -14,6 +14,7 @@
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
 #include "graphics/overlay_renderer.hpp"
+#include "admin/imgui_manager.hpp"
 #include "game/game_state.hpp"
 
 #include "ecs/ecs.hpp"
@@ -64,6 +65,8 @@ private:
 
     sys::Player m_playerSystem;
     sys::Physics m_physicsSystem;
+
+    adm::ImGuiManager m_imguiManager;
 
     bool m_running;
 

@@ -49,11 +49,15 @@ void Game::init()
     playerCollider->isGhost = false;
 
     m_running = true;
+
+    m_imguiManager.init(m_device, m_window);
 }
 
 void Game::destroy()
 {
     m_device.waitIdle();
+
+    m_imguiManager.destroy();
 
     m_overlay.destroy();
 
@@ -215,8 +219,20 @@ void Game::render()
 
     m_device.beginRenderLoad(cmd);
 
-    m_device.endRender(cmd);
+    m_imguiManager.beginFrame();
 
+    ImGui::Begin("Controls");
+        
+    ImGui::Text("Movement: WASD");
+    ImGui::Text("Jump: Space");
+    ImGui::Text("Sprint: Shift");
+    ImGui::Text("Toggle Admin Panel: F1");
+    
+    ImGui::End();
+
+    m_imguiManager.endFrame(cmd);
+
+    m_device.endRender(cmd);
     m_device.endFrame(cmd);
 }
 
