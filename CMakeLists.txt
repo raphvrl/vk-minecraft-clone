@@ -176,6 +176,7 @@ target_include_directories(vulkan-minecraft PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/vma/include
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui/backends
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include
 )
 
 add_library(stb_vorbis STATIC "${CMAKE_CURRENT_SOURCE_DIR}/lib/stb/stb_vorbis.c")

@@ -6,7 +6,7 @@
 #include "graphics/pipeline.hpp"
 #include "graphics/texture_cache.hpp"
 
-namespace gui
+namespace gfx
 {
 
 enum class TextAlign

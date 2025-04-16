@@ -72,6 +72,46 @@ void Window::update()
     m_minimized = (width == 0 || height == 0);
 }
 
+void Window::setFullscreen(bool fullscreen)
+{
+    if (fullscreen == m_fullscreen) {
+        return;
+    }
+
+    m_fullscreen = fullscreen;
+
+    if (fullscreen) {
+        glfwGetWindowPos(m_handle, &m_x, &m_y);
+        m_width = static_cast<u32>(m_width);
+        m_height = static_cast<u32>(m_height);
+
+        GLFWmonitor* currentMonitor = getCurrentMonitor();
+
+        const GLFWvidmode* mode = glfwGetVideoMode(currentMonitor);
+
+        glfwSetWindowMonitor(
+            m_handle,
+            currentMonitor,
+            0,
+            0,
+            mode->width,
+            mode->height,
+            mode->refreshRate
+        );
+    }
+    else {
+        glfwSetWindowMonitor(
+            m_handle,
+            nullptr,
+            m_x,
+            m_y,
+            static_cast<int>(m_width),
+            static_cast<int>(m_height),
+            0
+        );
+    }
+}
+
 void Window::keyCallback(
     GLFWwindow *window,
     int key,
@@ -143,6 +183,35 @@ void Window::resizeCallback(
     win->m_height = static_cast<u32>(height);
 
     win->m_resized = true;
+}
+
+GLFWmonitor *Window::getCurrentMonitor()
+{
+    int x, y, width, height;
+    glfwGetWindowPos(m_handle, &x, &y);
+    glfwGetWindowSize(m_handle, &width, &height);
+
+    int monitorCount;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    int centerX = x + width / 2;
+    int centerY = y + height / 2;
+
+    for (int i = 0; i < monitorCount; i++) {
+        int mx, my, mwidth, mheight;
+        glfwGetMonitorWorkarea(monitors[i], &mx, &my, &mwidth, &mheight);
+
+        if (
+            centerX >= mx &&
+            centerX <= mx + mwidth &&
+            centerY >= my &&
+            centerY <= my + mheight
+        ) {
+            return monitors[i];
+        }
+    }
+
+    return glfwGetPrimaryMonitor();
 }
 
 } // namespace core

@@ -4,10 +4,10 @@
 
 #include <glm/glm.hpp>
 
-namespace cmp
+namespace ecs
 {
 
-struct Transform : public ecs::Component
+struct TransformComponent : public ecs::Component
 {
     glm::vec3 position = glm::vec3(0.0f);
     glm::vec3 prevPosition = glm::vec3(0.0f);

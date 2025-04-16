@@ -116,6 +116,11 @@ public:
         m_bindlessManager.update();
     }
 
+    VkDescriptorSet getDescriptorSet() const
+    {
+        return m_bindlessManager.getDescriptorSet();
+    }
+
     void waitIdle();
 
 public:

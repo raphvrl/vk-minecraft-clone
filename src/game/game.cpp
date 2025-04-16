@@ -25,6 +25,8 @@ void Game::init()
 
     m_display.init(m_device);
 
+    m_guiManager.init(m_device, m_textureCache);
+
     sfx::SoundManager::get().init();
 
     m_world.init(m_device, m_textureCache);
@@ -35,13 +37,13 @@ void Game::init()
     m_overlay.init(m_device, m_textureCache);
 
     EntityID playerEntity = m_ecs.creatEntity();
-    auto transform = m_ecs.addComponent<cmp::Transform>(playerEntity);
+    auto transform = m_ecs.addComponent<ecs::TransformComponent>(playerEntity);
     transform->position = glm::vec3(0.0f, 80.0f, 0.0f);
 
-    m_ecs.addComponent<cmp::Velocity>(playerEntity);
-    m_ecs.addComponent<cmp::Player>(playerEntity);
+    m_ecs.addComponent<ecs::VelocityComponent>(playerEntity);
+    m_ecs.addComponent<ecs::PlayerComponent>(playerEntity);
 
-    auto *playerCollider = m_ecs.addComponent<cmp::Collider>(playerEntity);
+    auto *playerCollider = m_ecs.addComponent<ecs::ColliderComponent>(playerEntity);
 
     playerCollider->size = glm::vec3(0.6f, 1.8f, 0.6f);
     playerCollider->offset = glm::vec3(0.0f, 0.9f, 0.0f);
@@ -51,6 +53,7 @@ void Game::init()
     m_running = true;
 
     m_imguiManager.init(m_device, m_window);
+    m_guiEditor.init(m_imguiManager, m_guiManager, m_textureCache);
 }
 
 void Game::destroy()
@@ -67,6 +70,8 @@ void Game::destroy()
     m_world.destroy();
 
     sfx::SoundManager::get().destroy();
+
+    m_guiManager.destroy();
 
     m_display.destroy();
     m_textureCache.destroy();
@@ -148,6 +153,14 @@ void Game::handleInput()
     } else {
         m_window.setCursorMode(GLFW_CURSOR_NORMAL);
     }
+
+    if (m_window.isKeyJustPressed(GLFW_KEY_F7)) {
+        m_guiEditor.toggleVisible();
+    }
+
+    if (m_window.isKeyJustPressed(GLFW_KEY_F11)) {
+        m_window.toogleFullscreen();
+    }
 }
 
 void Game::update(f32 dt)
@@ -221,14 +234,8 @@ void Game::render()
 
     m_imguiManager.beginFrame();
 
-    ImGui::Begin("Controls");
-        
-    ImGui::Text("Movement: WASD");
-    ImGui::Text("Jump: Space");
-    ImGui::Text("Sprint: Shift");
-    ImGui::Text("Toggle Admin Panel: F1");
-    
-    ImGui::End();
+    m_guiManager.render(cmd);
+    m_guiEditor.render();
 
     m_imguiManager.endFrame(cmd);
 

@@ -1,6 +1,6 @@
 #include "text_renderer.hpp"
 
-namespace gui
+namespace gfx
 {
 
 void TextRenderer::init(gfx::Device &device, gfx::TextureCache &textureCache)

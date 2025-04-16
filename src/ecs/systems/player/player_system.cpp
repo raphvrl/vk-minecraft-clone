@@ -1,11 +1,11 @@
-#include "player.hpp"
+#include "player_system.hpp"
 #include "ecs/ecs.hpp"
 #include "audio/sound_manager.hpp"
 
-namespace sys
+namespace ecs
 {
 
-Player::Player(
+PlayerSystem::PlayerSystem(
     ecs::ECS *ecs,
     core::Window &window,
     core::Camera &camera,
@@ -20,16 +20,16 @@ Player::Player(
 {
 }
 
-void Player::tick(f32 dt)
+void PlayerSystem::tick(f32 dt)
 {
     if (!findPlayerEntity()) {
         return;
     }
 
-    auto *player = m_ecs->getComponent<cmp::Player>(m_playerEntity);
-    auto *transform = m_ecs->getComponent<cmp::Transform>(m_playerEntity);
-    auto *velocity = m_ecs->getComponent<cmp::Velocity>(m_playerEntity);
-    auto *collider = m_ecs->getComponent<cmp::Collider>(m_playerEntity);
+    auto *player = m_ecs->getComponent<ecs::PlayerComponent>(m_playerEntity);
+    auto *transform = m_ecs->getComponent<ecs::TransformComponent>(m_playerEntity);
+    auto *velocity = m_ecs->getComponent<ecs::VelocityComponent>(m_playerEntity);
+    auto *collider = m_ecs->getComponent<ecs::ColliderComponent>(m_playerEntity);
 
     if (!player || !transform || !velocity) {
         return;
@@ -47,10 +47,10 @@ void Player::tick(f32 dt)
     updateCooldowns(dt, player);
 }
 
-bool Player::findPlayerEntity()
+bool PlayerSystem::findPlayerEntity()
 {
     if (m_playerEntity == ENTITY_NULL) {
-        auto entities = m_ecs->view<cmp::Player>();
+        auto entities = m_ecs->view<ecs::PlayerComponent>();
         if (!entities.empty()) {
             m_playerEntity = *entities.begin();
             return true;
@@ -60,12 +60,12 @@ bool Player::findPlayerEntity()
     return true;
 }
 
-void Player::handleMovement(
+void PlayerSystem::handleMovement(
     f32 dt, 
-    cmp::Player *player,
-    cmp::Transform *transform,
-    cmp::Velocity *velocity,
-    cmp::Collider *collider
+    ecs::PlayerComponent *player,
+    ecs::TransformComponent *transform,
+    ecs::VelocityComponent *velocity,
+    ecs::ColliderComponent *collider
 )
 {
     if (m_window.isKeyPressed(GLFW_KEY_W)) {
@@ -106,12 +106,12 @@ void Player::handleMovement(
     }
 }
 
-void Player::handleJumping(
+void PlayerSystem::handleJumping(
     f32 dt,
-    cmp::Player *player,
-    cmp::Transform *transform,
-    cmp::Velocity *velocity,
-    cmp::Collider *collider
+    ecs::PlayerComponent *player,
+    ecs::TransformComponent *transform,
+    ecs::VelocityComponent *velocity,
+    ecs::ColliderComponent *collider
 )
 {
     static bool wasSpacePressed = false;
@@ -136,10 +136,10 @@ void Player::handleJumping(
     wasSpacePressed = spacePressed;
 }
 
-void Player::handleEnvironment(
+void PlayerSystem::handleEnvironment(
     f32 dt,
-    cmp::Player *player,
-    cmp::Transform *transform
+    ecs::PlayerComponent *player,
+    ecs::TransformComponent *transform
 )
 {
     wld::BlockType headBlock = m_world.getBlock(
@@ -162,12 +162,12 @@ void Player::handleEnvironment(
     m_overlay.setWater(headBlock == wld::BlockType::WATER);
 }
 
-void Player::handleSounds(
+void PlayerSystem::handleSounds(
     f32 dt,
-    cmp::Player *player,
-    cmp::Transform *transform,
-    cmp::Velocity *velocity,
-    cmp::Collider *collider
+    ecs::PlayerComponent *player,
+    ecs::TransformComponent *transform,
+    ecs::VelocityComponent *velocity,
+    ecs::ColliderComponent *collider
 )
 {
     bool isMoving = std::abs(velocity->position.x) > 0.01f || 
@@ -200,7 +200,7 @@ void Player::handleSounds(
     m_wasGrounded = collider->isGrounded;
 }
 
-void Player::handleFootstepSounds(f32 dt, cmp::Transform *transform)
+void PlayerSystem::handleFootstepSounds(f32 dt, ecs::TransformComponent *transform)
 {
     m_footstepTimer -= dt;
     
@@ -214,10 +214,10 @@ void Player::handleFootstepSounds(f32 dt, cmp::Transform *transform)
     }
 }
 
-void Player::handleLandingSounds(
-    cmp::Transform *transform,
-    cmp::Velocity *velocity,
-    cmp::Collider *collider
+void PlayerSystem::handleLandingSounds(
+    ecs::TransformComponent *transform,
+    ecs::VelocityComponent *velocity,
+    ecs::ColliderComponent *collider
 )
 {
     wld::BlockType blockUnder = getBlockUnderPlayer(transform);
@@ -235,7 +235,7 @@ void Player::handleLandingSounds(
     }
 }
 
-wld::BlockType Player::getBlockUnderPlayer(cmp::Transform *transform)
+wld::BlockType PlayerSystem::getBlockUnderPlayer(ecs::TransformComponent *transform)
 {
     return m_world.getBlock(
         static_cast<int>(std::floor(transform->position.x)),
@@ -244,10 +244,10 @@ wld::BlockType Player::getBlockUnderPlayer(cmp::Transform *transform)
     );
 }
 
-void Player::handleBlockInteraction(
+void PlayerSystem::handleBlockInteraction(
     f32 dt,
-    cmp::Player *player,
-    cmp::Transform *transform
+    ecs::PlayerComponent *player,
+    ecs::TransformComponent *transform
 )
 {
     if (
@@ -265,7 +265,7 @@ void Player::handleBlockInteraction(
     }
 }
 
-void Player::handleBlockBreaking(cmp::Player *player, cmp::Transform *transform)
+void PlayerSystem::handleBlockBreaking(ecs::PlayerComponent *player, ecs::TransformComponent *transform)
 {
     wld::Ray ray;
     ray.origin = m_camera.getPos();
@@ -293,14 +293,14 @@ void Player::handleBlockBreaking(cmp::Player *player, cmp::Transform *transform)
     player->breakCooldown = 0.2f;
 }
 
-void Player::handleBlockPlacement(cmp::Player *player, cmp::Transform *transform)
+void PlayerSystem::handleBlockPlacement(ecs::PlayerComponent *player, ecs::TransformComponent *transform)
 {
     wld::Ray ray;
     ray.origin = m_camera.getPos();
     ray.direction = m_camera.getFront();
 
     wld::RaycastResult result;
-    auto *collider = m_ecs->getComponent<cmp::Collider>(m_playerEntity);
+    auto *collider = m_ecs->getComponent<ecs::ColliderComponent>(m_playerEntity);
 
     if (m_world.raycast(ray, 4.0f, result)) {
         if (wouldCollide(result.normal, transform->position, collider->size)) {
@@ -317,7 +317,7 @@ void Player::handleBlockPlacement(cmp::Player *player, cmp::Transform *transform
     player->placeCooldown = 0.2f;
 }
 
-void Player::updateCooldowns(f32 dt, cmp::Player *player)
+void PlayerSystem::updateCooldowns(f32 dt, ecs::PlayerComponent *player)
 {
     if (player->breakCooldown > 0.0f) {
         player->breakCooldown -= dt;
@@ -328,12 +328,12 @@ void Player::updateCooldowns(f32 dt, cmp::Player *player)
     }
 }
 
-void Player::updateCamera()
+void PlayerSystem::updateCamera()
 {
     if (m_playerEntity == ENTITY_NULL) return;
 
-    auto *player = m_ecs->getComponent<cmp::Player>(m_playerEntity);
-    auto *transform = m_ecs->getComponent<cmp::Transform>(m_playerEntity);
+    auto *player = m_ecs->getComponent<ecs::PlayerComponent>(m_playerEntity);
+    auto *transform = m_ecs->getComponent<ecs::TransformComponent>(m_playerEntity);
 
     if (!player || !transform) return;
 
@@ -348,7 +348,7 @@ void Player::updateCamera()
     );
 }
 
-bool Player::wouldCollide(
+bool PlayerSystem::wouldCollide(
     const glm::ivec3 &block,
     const glm::vec3 &pos,
     const glm::vec3 &size

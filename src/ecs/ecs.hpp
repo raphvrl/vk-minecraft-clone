@@ -10,7 +10,7 @@
 #include "components/component.hpp"
 #include "systems/system.hpp"
 
-#include "components/physics/transform.hpp"
+#include "components/physics/transform_component.hpp"
 
 namespace ecs
 {
@@ -79,10 +79,10 @@ public:
 
     void storePositions()
     {
-        auto entities = view<cmp::Transform>();
+        auto entities = view<ecs::TransformComponent>();
 
         for (auto &entity : entities) {
-            if (auto transform = getComponent<cmp::Transform>(entity)) {
+            if (auto transform = getComponent<ecs::TransformComponent>(entity)) {
                 transform->prevPosition = transform->position;
             }
         }
@@ -90,10 +90,10 @@ public:
 
     void interpolate(f32 alpha)
     {
-        auto entities = view<cmp::Transform>();
+        auto entities = view<ecs::TransformComponent>();
 
         for (auto &entity : entities) {
-            if (auto transform = getComponent<cmp::Transform>(entity)) {
+            if (auto transform = getComponent<ecs::TransformComponent>(entity)) {
                 transform->renderPosition = glm::mix(
                     transform->prevPosition,
                     transform->position,

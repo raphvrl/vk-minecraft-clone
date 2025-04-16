@@ -5,10 +5,11 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- 
+- Custom admin GUI interface
+- Keyboard shortcut for toggling fullscreen mode
 
 ### Changed
--
+- Completely redesigned GUI system architecture
 
 ### Fixed
 -

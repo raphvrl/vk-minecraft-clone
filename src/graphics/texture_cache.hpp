@@ -8,6 +8,17 @@ constexpr const char* TEXTURE_DIR_STR = "assets/textures/";
 namespace gfx
 {
 
+struct Texture
+{
+    Image gpuImage;
+    u32 index;
+
+    VkDescriptorSet descriptorSet;
+
+    u32 width = 0;
+    u32 height = 0;
+};
+
 class TextureCache
 {
 
@@ -24,16 +35,44 @@ public:
     {
         auto it = m_textures.find(name);
         if (it != m_textures.end()) {
-            return it->second.second;
+            return it->second.index;
         }
         return ~0u;
+    }
+
+    VkDescriptorSet getDescriptorSet() const
+    {
+        return m_device->getDescriptorSet();
+    }
+
+    Texture *getTexture(const std::string &name)
+    {
+        auto it = m_textures.find(name);
+        if (it != m_textures.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+
+    std::vector<std::string> getTextureNames() const
+    {
+        std::vector<std::string> names;
+        for (const auto &pair : m_textures) {
+            names.push_back(pair.first);
+        }
+        return names;
     }
 
 private:
     Device *m_device = nullptr;
 
-    std::unordered_map<std::string, std::pair<Image, u32>> m_textures;
+    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 
+    void createDescriptorResources();
+    VkDescriptorSet allocateDescriptorSet();
+
+    std::unordered_map<std::string, Texture> m_textures;
 }; 
 
 } // namespace gfx

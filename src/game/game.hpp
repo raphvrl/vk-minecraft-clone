@@ -2,28 +2,35 @@
 
 #include "core/window/window.hpp"
 #include "core/camera/camera.hpp"
+
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/gpu_data.hpp"
 #include "graphics/texture_cache.hpp"
 #include "graphics/display.hpp"
-#include "graphics/item_renderer.hpp"
+#include "graphics/renderer/overlay_renderer.hpp"
+
+#include "gui/gui_manager.hpp"
+
 #include "audio/sound_manager.hpp"
+
 #include "world/world.hpp"
 #include "world/sky.hpp"
 #include "world/outline.hpp"
 #include "world/clouds.hpp"
-#include "graphics/overlay_renderer.hpp"
+
 #include "admin/imgui_manager.hpp"
+#include "admin/gui_editor.hpp"
+
 #include "game/game_state.hpp"
 
 #include "ecs/ecs.hpp"
-#include "ecs/components/physics/transform.hpp"
-#include "ecs/components/physics/velocity.hpp"
-#include "ecs/components/physics/collider.hpp"
-#include "ecs/components/player/player.hpp"
-#include "ecs/systems/physics/physics.hpp"
-#include "ecs/systems/player/player.hpp"
+#include "ecs/components/physics/transform_component.hpp"
+#include "ecs/components/physics/velocity_component.hpp"
+#include "ecs/components/physics/collider_component.hpp"
+#include "ecs/components/player/player_component.hpp"
+#include "ecs/systems/physics/physics_system.hpp"
+#include "ecs/systems/player/player_system.hpp"
 
 namespace game
 {
@@ -54,6 +61,8 @@ private:
     gfx::TextureCache m_textureCache;
     gfx::Display m_display;
 
+    gui::GUIManager m_guiManager;
+
     wld::World m_world;
     wld::Sky m_sky;
     wld::Outline m_outline;
@@ -63,10 +72,11 @@ private:
 
     ecs::ECS m_ecs;
 
-    sys::Player m_playerSystem;
-    sys::Physics m_physicsSystem;
+    ecs::PlayerSystem m_playerSystem;
+    ecs::PhysicsSystem m_physicsSystem;
 
     adm::ImGuiManager m_imguiManager;
+    adm::GUIEditor m_guiEditor;
 
     bool m_running;
 

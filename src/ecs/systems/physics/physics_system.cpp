@@ -1,23 +1,26 @@
-#include "physics.hpp"
+#include "physics_system.hpp"
 #include "ecs/ecs.hpp"
 
-namespace sys
+namespace ecs
 {
 
-Physics::Physics(ecs::ECS *ecs, wld::World &world)
+PhysicsSystem::PhysicsSystem(ecs::ECS *ecs, wld::World &world)
     : System(ecs), m_world(world)
 {
 }
 
-void Physics::tick(f32 dt)
+void PhysicsSystem::tick(f32 dt)
 {
-    auto entities = m_ecs->view<cmp::Transform, cmp::Velocity>();
+    auto entities = m_ecs->view<
+        ecs::TransformComponent,
+        ecs::VelocityComponent
+    >();
 
     for (auto entity : entities) {
-        auto *transform = m_ecs->getComponent<cmp::Transform>(entity);
-        auto *velocity = m_ecs->getComponent<cmp::Velocity>(entity);
-        auto *collider = m_ecs->getComponent<cmp::Collider>(entity);
-        auto *player = m_ecs->getComponent<cmp::Player>(entity);
+        auto *transform = m_ecs->getComponent<ecs::TransformComponent>(entity);
+        auto *velocity = m_ecs->getComponent<ecs::VelocityComponent>(entity);
+        auto *collider = m_ecs->getComponent<ecs::ColliderComponent>(entity);
+        auto *player = m_ecs->getComponent<ecs::PlayerComponent>(entity);
 
         if (player && !player->isFlying) {
             if (player->isInWater) {
@@ -41,10 +44,10 @@ void Physics::tick(f32 dt)
     }
 }
 
-void Physics::resolveCollisions(
-    cmp::Transform *transform,
-    cmp::Velocity *velocity,
-    cmp::Collider *collider,
+void PhysicsSystem::resolveCollisions(
+    ecs::TransformComponent *transform,
+    ecs::VelocityComponent *velocity,
+    ecs::ColliderComponent *collider,
     f32 dt
 )
 {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "pipeline.hpp"
-#include "device.hpp"
-#include "texture_cache.hpp"
+#include "graphics/pipeline.hpp"
+#include "graphics/device.hpp"
+#include "graphics/texture_cache.hpp"
 
 namespace gfx
 {

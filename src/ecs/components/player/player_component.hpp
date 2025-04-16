@@ -4,9 +4,9 @@
 
 #include "ecs/components/component.hpp"
 
-namespace cmp
+namespace ecs
 {
-struct Player : public ecs::Component
+struct PlayerComponent : public ecs::Component
 {
     static constexpr f32 JUMP_HEIGHT = 1.5f;
 

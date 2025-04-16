@@ -1,0 +1,46 @@
+{
+    "elements": [
+        {
+            "anchor": "CENTER",
+            "id": "crosshair",
+            "position": [
+                0.0,
+                0.0
+            ],
+            "size": [
+                16.0,
+                16.0
+            ],
+            "textureID": "icons",
+            "type": "PANEL",
+            "uv": [
+                0.0,
+                0.0,
+                16.0,
+                16.0
+            ],
+            "visible": true
+        },
+        {
+            "anchor": "BOTTOM_CENTER",
+            "id": "navbar",
+            "position": [
+                0.0,
+                0.0
+            ],
+            "size": [
+                182.0,
+                22.0
+            ],
+            "textureID": "gui",
+            "type": "PANEL",
+            "uv": [
+                0.0,
+                0.0,
+                182.0,
+                22.0
+            ],
+            "visible": true
+        }
+    ]
+}

@@ -35,6 +35,11 @@ public:
         glfwSetInputMode(m_handle, GLFW_CURSOR, mode);
     }
 
+    void setFullscreen(bool fullscreen);
+    void toogleFullscreen() {
+        setFullscreen(!glfwGetWindowMonitor(m_handle));
+    }
+
     bool isOpen() const { return !glfwWindowShouldClose(m_handle); }
 
     bool isKeyPressed(int k) const { return m_keys[k]; }
@@ -65,6 +70,9 @@ private:
     GLFWwindow *m_handle;
     u32 m_width;
     u32 m_height;
+    int m_x;
+    int m_y;
+    bool m_fullscreen = false;
     std::string m_title;
 
     f32 m_lastFrame;
@@ -108,6 +116,10 @@ private:
         int width,
         int height
     );
+
+private:
+    GLFWmonitor *getCurrentMonitor();
+
 };
 
 } // namespace core

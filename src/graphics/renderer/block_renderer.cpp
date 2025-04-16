@@ -1,4 +1,4 @@
-#include "item_renderer.hpp"
+#include "block_renderer.hpp"
 
 namespace gfx
 {
@@ -16,6 +16,8 @@ void ItemRenderer::init(Device &device, TextureCache &textureCache)
         .build();
 
     m_textureID = textureCache.getTextureID("terrain");
+
+    
 }
 
 void ItemRenderer::destroy()
