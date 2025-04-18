@@ -124,8 +124,12 @@ void PlayerSystem::handleJumping(
     }
 
     bool spaceJustPressed = spacePressed && !wasSpacePressed;
-    
-    if ((spacePressed) && m_jumpCooldown <= 0.0f && !player->isFlying) {
+
+    if (player->isInWater) {
+        if (spacePressed) {
+            velocity->position.y = player->jumpForce * 0.4f;
+        }
+    } else if (spacePressed && m_jumpCooldown <= 0.0f && !player->isFlying) {
         if (collider->isGrounded) {
             velocity->position.y = player->jumpForce;
             collider->isGrounded = false;
