@@ -5,25 +5,32 @@ namespace wld
 
 BlockRegistry::BlockRegistry()
 {
-    auto config = toml::parse_file("assets/config/blocks.toml");
+    std::ifstream file("assets/config/blocks.json");
+    nlohmann::json config = nlohmann::json::parse(file);
 
     auto atlas = config["atlas"];
-    int count = atlas["count"].value_or(0);
+    int count = atlas.value("count", 0);
     m_blocks.resize(count);
 
     auto blocks = config["blocks"];
 
-    for (auto &&[blockKey, blockData] : *blocks.as_table()) {
+    for (auto it = blocks.begin(); it != blocks.end(); ++it) {
         Block block;
         TextureInfo texInfo;
         int id = -1;
 
-        if (auto blockTable = blockData.as_table()) {
-            if (auto textures = blockTable->at("textures").as_table()) {
-                for (auto &&[face, coords] : *textures) {
-                    auto pos = coords.as_table();
-                    int x = pos->at("x").value_or(-1);
-                    int y = pos->at("y").value_or(-1);
+        std::string blockKey = it.key();
+        auto blockData = it.value();
+
+        if (blockData.is_object()) {
+            if (blockData.contains("textures") && blockData["textures"].is_object()) {
+                auto textures = blockData["textures"];
+                for (auto texIt = textures.begin(); texIt != textures.end(); ++texIt) {
+                    std::string face = texIt.key();
+                    auto coords = texIt.value();
+                    
+                    int x = coords.value("x", -1);
+                    int y = coords.value("y", -1);
 
                     if (face == "all") {
                         texInfo.fill({x, y});
@@ -45,43 +52,28 @@ BlockRegistry::BlockRegistry()
                 }
             }
 
-            id = blockTable->at("id").value_or(-1);
-            block.name = std::string(blockKey.str());
+            id = blockData.value("id", -1);
+            block.name = blockKey;
             block.textures = texInfo;
 
-            if (blockTable->contains("transparency")) {
-                block.transparency = blockTable
-                    ->get("transparency")
-                    ->as_boolean()
-                    ->value_or(false);
+            if (blockData.contains("transparency")) {
+                block.transparency = blockData["transparency"];
             }
 
-            if (blockTable->contains("collision")) {
-                block.collision = blockTable
-                    ->get("collision")
-                    ->as_boolean()
-                    ->value_or(true);
+            if (blockData.contains("collision")) {
+                block.collision = blockData["collision"];
             }
 
-            if (blockTable->contains("breakable")) {
-                block.breakable = blockTable
-                    ->get("breakable")
-                    ->as_boolean()
-                    ->value_or(true);
+            if (blockData.contains("breakable")) {
+                block.breakable = blockData["breakable"];
             }
 
-            if (blockTable->contains("cross")) {
-                block.cross = blockTable
-                    ->get("cross")
-                    ->as_boolean()
-                    ->value_or(false);
+            if (blockData.contains("cross")) {
+                block.cross = blockData["cross"];
             }
 
-            if (blockTable->contains("material")) {
-                block.material = blockTable
-                    ->get("material")
-                    ->as_string()
-                    ->value_or("stone");
+            if (blockData.contains("material")) {
+                block.material = blockData["material"];
             }
         }
 

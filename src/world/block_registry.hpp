@@ -1,12 +1,14 @@
 #pragma once
 
-#include <toml++/toml.hpp>
+#include <nlohmann/json.hpp>
 
 #include <vector>
 #include <iostream>
 
 #include "chunk.hpp"
 #include "block.hpp"
+
+using json = nlohmann::json;
 
 namespace wld
 {
