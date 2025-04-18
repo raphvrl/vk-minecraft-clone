@@ -15,21 +15,38 @@ void GUIManager::init(gfx::Device &device, gfx::TextureCache &textureCache)
         .setBlending(true)
         .build();
 
+    m_textRenderer.init(device, textureCache);
+    m_itemRenderer.init(device, textureCache);
+
     loadConfig();
 }
 
 void GUIManager::destroy()
 {
+    m_textRenderer.destroy();
+    m_itemRenderer.destroy();
+
     m_pipeline.destroy();
     m_elements.clear();
 }
 
-void GUIManager::render(VkCommandBuffer cmd)
+void GUIManager::renderGame(VkCommandBuffer cmd)
 {
     m_pipeline.bind(cmd);
 
     for (const auto &[id, element] : m_elements) {
-        if (element->visible) {
+        if (element->visible && element->state == game::GameState::RUNNING) {
+            renderElement(cmd, element);
+        }
+    }
+}
+
+void GUIManager::renderMenu(VkCommandBuffer cmd)
+{
+    m_pipeline.bind(cmd);
+
+    for (const auto &[id, element] : m_elements) {
+        if (element->visible && element->state == game::GameState::PAUSED) {
             renderElement(cmd, element);
         }
     }
@@ -41,6 +58,11 @@ void GUIManager::renderElement(
 )
 {
     if (!element->visible) return;
+
+    if (element->type == ElementType::NAVBAR) {
+        renderNavBar(cmd, element);
+        return;
+    }
 
     glm::vec2 pos = calculateAnchoredPosition(element);
     glm::vec2 size = element->size * m_guiScale;
@@ -200,6 +222,81 @@ void GUIManager::renameElement(const std::string &oldID, const std::string &newI
 void GUIManager::clearAll()
 {
     m_elements.clear();
+}
+
+void GUIManager::renderNavBar(
+    VkCommandBuffer cmd,
+    const std::shared_ptr<GUIElement> &element
+)
+{
+    if (!element->visible) return;
+
+    glm::vec2 pos = calculateAnchoredPosition(element);
+    glm::vec2 size = element->size * m_guiScale;
+    glm::vec4 uv = {
+        element->uv.x / 256,
+        element->uv.y / 256,
+        element->uv.z / 256,
+        element->uv.w / 256
+    };
+
+    PushConstant pc;
+    pc.model = glm::mat4(1.0f);
+    pc.model = glm::translate(pc.model, {pos.x, pos.y, 0.0f});
+    pc.model = glm::scale(pc.model, {size.x, size.y, 1.0f});
+    pc.uv = uv;
+    pc.textureID = m_textureCache->getTextureID(element->texture);
+
+    m_pipeline.bind(cmd);
+    m_pipeline.push(cmd, pc);
+    
+    gfx::drawQuad(cmd);
+
+    const int NAVBAR_ITEM_COUN = 9;
+    const f32 itemSize = m_guiScale * 10.0f;
+    const f32 itemSpacing = m_guiScale * 10.0f;
+    const f32 itemStart = m_guiScale * 11.0f;
+
+    for (int i = 0; i < NAVBAR_ITEM_COUN; i++) {
+        f32 itemX = itemStart + pos.x + (i * itemSpacing) + (i * itemSize);
+        f32 itemY = itemStart + pos.y;
+
+        wld::BlockType blockType = m_inventory->getSlot(i).type;
+        if (blockType == wld::BlockType::AIR) {
+            continue;
+        }
+
+        m_itemRenderer.render(
+            cmd,
+            blockType,
+            {itemX, itemY},
+            itemSize
+        );
+    }
+
+    int selectedSlot = m_inventory->getSelectedSlot();
+
+    f32 selectorX = pos.x + (selectedSlot * itemSpacing) + (selectedSlot * itemSize) - m_guiScale;
+    f32 selectorY = pos.y - m_guiScale;
+
+    f32 selectorSize = 24.0f * m_guiScale;
+
+    PushConstant selectorPC;
+    selectorPC.model = glm::mat4(1.0f);
+    selectorPC.model = glm::translate(selectorPC.model, {selectorX, selectorY, 0.0f});
+    selectorPC.model = glm::scale(selectorPC.model, {selectorSize, selectorSize, 1.0f});
+    selectorPC.uv = {
+        0.0f,
+        22.0f / 256.0f,
+        24.0f / 256.0f,
+        46.0f / 256.0f
+    };
+    selectorPC.textureID = m_textureCache->getTextureID(element->texture);
+
+    m_pipeline.bind(cmd);
+    m_pipeline.push(cmd, selectorPC);
+
+    gfx::drawQuad(cmd);
 }
 
 void GUIManager::setElementVisible(const std::string &id, bool visible)

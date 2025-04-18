@@ -11,6 +11,10 @@
 #include "graphics/device.hpp"
 #include "graphics/texture_cache.hpp"
 #include "graphics/pipeline.hpp"
+#include "graphics/renderer/text_renderer.hpp"
+#include "graphics/renderer/block_renderer.hpp"
+
+#include "game/inventory.hpp"
 
 namespace fs = std::filesystem;
 
@@ -29,7 +33,8 @@ public:
     void init(gfx::Device &device, gfx::TextureCache &textureCache);
     void destroy();
 
-    void render(VkCommandBuffer cmd);
+    void renderGame(VkCommandBuffer cmd);
+    void renderMenu(VkCommandBuffer cmd);
 
     void loadConfig();
     void saveConfig();
@@ -45,6 +50,11 @@ public:
         return m_elements;
     }
 
+    void setInventory(game::Inventory &inventory)
+    {
+        m_inventory = &inventory;
+    }
+
 private:
     gfx::Device *m_device = nullptr;
     gfx::TextureCache *m_textureCache = nullptr;
@@ -57,6 +67,9 @@ private:
     };
 
     gfx::Pipeline m_pipeline;
+
+    gfx::ItemRenderer m_itemRenderer;
+    gfx::TextRenderer m_textRenderer;
 
     std::unordered_map<std::string, std::shared_ptr<GUIElement>> m_elements;
 
@@ -74,6 +87,13 @@ private:
     );
 
     f32 m_guiScale = 4.0f;
+
+    game::Inventory *m_inventory = nullptr;
+
+    void renderNavBar(
+        VkCommandBuffer cmd,
+        const std::shared_ptr<GUIElement> &element
+    );
 
     void setElementVisible(const std::string &id, bool visible);
     void setElementPosition(const std::string &id, const glm::vec2 &position);

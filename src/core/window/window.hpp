@@ -63,6 +63,9 @@ public:
     glm::vec2 getMousePos() const { return m_mousePos; }
     glm::vec2 getMouseRel() const { return m_mouseRel; }
 
+    f32 getMouseScrollY() const { return m_mouseScrollY; }
+    void resetMouseScrollY() { m_mouseScrollY = 0.0f; }
+
     bool isResized() const { return m_resized; }
     bool isMinimized() const { return m_minimized; }
 
@@ -86,6 +89,8 @@ private:
     glm::vec2 m_mouseRel;
     bool m_firstMouse = true;
 
+    f32 m_mouseScrollY = 0.0f;
+
     bool m_resized = false;
 
     bool m_minimized = false;
@@ -106,6 +111,12 @@ private:
     );
 
     static void mousePosCallback(
+        GLFWwindow *window,
+        double x,
+        double y
+    );
+
+    static void mouseScrollCallback(
         GLFWwindow *window,
         double x,
         double y

@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <functional>
 
+#include "game/game_state.hpp"
+
 using json = nlohmann::json;
 
 namespace gui
@@ -19,6 +21,7 @@ enum class ElementType
     BUTTON,
     LABEL,
     IMAGE,
+    NAVBAR
 };
 
 enum class ElementAnchor
@@ -41,10 +44,12 @@ struct GUIElement
     ElementAnchor anchor;
     glm::vec2 position;
     glm::vec2 size;
+    game::GameState state;
     bool visible;
     std::string texture;
     glm::vec4 uv;
-    std::string text = "";
+    std::string text;
+    bool invertEffect;
 
     std::function<void()> onClick = nullptr;
 
@@ -57,5 +62,8 @@ ElementType stringToElementType(const std::string &str);
 
 std::string elementAnchorToString(ElementAnchor anchor);
 ElementAnchor stringToElementAnchor(const std::string &str);
+
+std::string elementStateToString(game::GameState state);
+game::GameState stringToElementState(const std::string &str);
 
 } // namespace gui

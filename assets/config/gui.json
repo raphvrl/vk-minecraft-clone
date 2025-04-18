@@ -3,6 +3,7 @@
         {
             "anchor": "CENTER",
             "id": "crosshair",
+            "invertEffect": false,
             "position": [
                 0.0,
                 0.0
@@ -11,8 +12,9 @@
                 16.0,
                 16.0
             ],
+            "state": "RUNNING",
             "textureID": "icons",
-            "type": "PANEL",
+            "type": "IMAGE",
             "uv": [
                 0.0,
                 0.0,
@@ -24,6 +26,7 @@
         {
             "anchor": "BOTTOM_CENTER",
             "id": "navbar",
+            "invertEffect": false,
             "position": [
                 0.0,
                 0.0
@@ -32,8 +35,9 @@
                 182.0,
                 22.0
             ],
+            "state": "RUNNING",
             "textureID": "gui",
-            "type": "PANEL",
+            "type": "NAVBAR",
             "uv": [
                 0.0,
                 0.0,

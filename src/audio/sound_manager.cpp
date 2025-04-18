@@ -151,7 +151,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/grass3.ogg",
             "assets/sounds/dig/grass4.ogg",
         },
-        0.6f,
+        0.5f,
         1.0f
     );
 
@@ -163,7 +163,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/stone3.ogg",
             "assets/sounds/dig/stone4.ogg",
         },
-        0.6f,
+        0.5f,
         1.0f
     );
 
@@ -175,7 +175,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/sand3.ogg",
             "assets/sounds/dig/sand4.ogg",
         },
-        0.6f,
+        0.5f,
         1.0f
     );
 
@@ -187,7 +187,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/gravel3.ogg",
             "assets/sounds/dig/gravel4.ogg",
         },
-        0.6f,
+        0.5f,
         1.0f
     );
 
@@ -199,7 +199,7 @@ void SoundManager::registerSounds()
             "assets/sounds/dig/wood3.ogg",
             "assets/sounds/dig/wood4.ogg",
         },
-        0.6f,
+        0.5f,
         1.0f
     );
 }

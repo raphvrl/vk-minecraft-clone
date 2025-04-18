@@ -10,6 +10,7 @@ std::string elementTypeToString(ElementType type)
         case ElementType::BUTTON: return "BUTTON";
         case ElementType::LABEL: return "LABEL";
         case ElementType::IMAGE: return "IMAGE";
+        case ElementType::NAVBAR: return "NAVBAR";
         default: return "UNKNOWN";
     }
 }
@@ -20,6 +21,7 @@ ElementType stringToElementType(const std::string &str)
     if (str == "BUTTON") return ElementType::BUTTON;
     if (str == "LABEL") return ElementType::LABEL;
     if (str == "IMAGE") return ElementType::IMAGE;
+    if (str == "NAVBAR") return ElementType::NAVBAR;
     return ElementType::PANEL;
 }
 
@@ -53,6 +55,22 @@ ElementAnchor stringToElementAnchor(const std::string &str)
     return ElementAnchor::TOP_LEFT;
 }
 
+std::string elementStateToString(game::GameState state)
+{
+    switch (state) {
+        case game::GameState::RUNNING: return "RUNNING";
+        case game::GameState::PAUSED: return "PAUSED";
+        default: return "UNKNOWN";
+    }
+}
+
+game::GameState stringToElementState(const std::string &str)
+{
+    if (str == "RUNNING") return game::GameState::RUNNING;
+    if (str == "PAUSED") return game::GameState::PAUSED;
+    return game::GameState::RUNNING;
+}
+
 std::shared_ptr<GUIElement> GUIElement::fromJson(const json &data)
 {
     auto element = std::make_shared<GUIElement>();
@@ -60,6 +78,7 @@ std::shared_ptr<GUIElement> GUIElement::fromJson(const json &data)
     element->id = data.value("id", "");
     element->type = stringToElementType(data.value("type", "PANEL"));
     element->anchor = stringToElementAnchor(data.value("anchor", "TOP_LEFT"));
+    element->state = stringToElementState(data.value("state", "RUNNING"));
 
     if (
         data.contains("position") &&
@@ -93,6 +112,8 @@ std::shared_ptr<GUIElement> GUIElement::fromJson(const json &data)
         element->uv.w = data["uv"][3].get<float>();
     }
 
+    element->invertEffect = data.value("invertEffect", false);
+
     return element;
 }
 
@@ -105,8 +126,10 @@ json GUIElement::toJson() const
     data["position"] = { position.x, position.y };
     data["size"] = { size.x, size.y };
     data["visible"] = visible;
+    data["state"] = elementStateToString(state);
     data["textureID"] = texture;
     data["uv"] = { uv.x, uv.y, uv.z, uv.w };
+    data["invertEffect"] = invertEffect;
 
     return data;
 }

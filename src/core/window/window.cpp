@@ -46,6 +46,7 @@ void Window::init(u32 width, u32 height, const std::string &title)
     glfwSetKeyCallback(m_handle, keyCallback);
     glfwSetMouseButtonCallback(m_handle, mouseButtonCallback);
     glfwSetCursorPosCallback(m_handle, mousePosCallback);
+    glfwSetScrollCallback(m_handle, mouseScrollCallback);
     glfwSetFramebufferSizeCallback(m_handle, resizeCallback);
 }
 
@@ -169,6 +170,18 @@ void Window::mousePosCallback(
     );
 
     win->m_mousePos = glm::vec2(x, y);
+}
+
+void Window::mouseScrollCallback(
+    GLFWwindow *window,
+    double x,
+    double y
+)
+{
+    UNUSED(x);
+
+    Window *win = static_cast<Window *>(glfwGetWindowUserPointer(window));
+    win->m_mouseScrollY = static_cast<f32>(y);
 }
 
 void Window::resizeCallback(

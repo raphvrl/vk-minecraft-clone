@@ -1,0 +1,41 @@
+{
+    "selected": 2,
+    "slots": [
+        {
+            "quantity": 1,
+            "type": 1
+        },
+        {
+            "quantity": 1,
+            "type": 4
+        },
+        {
+            "quantity": 1,
+            "type": 45
+        },
+        {
+            "quantity": 1,
+            "type": 3
+        },
+        {
+            "quantity": 1,
+            "type": 5
+        },
+        {
+            "quantity": 1,
+            "type": 17
+        },
+        {
+            "quantity": 1,
+            "type": 18
+        },
+        {
+            "quantity": 1,
+            "type": 0
+        },
+        {
+            "quantity": 1,
+            "type": 0
+        }
+    ]
+}

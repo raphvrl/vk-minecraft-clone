@@ -23,6 +23,7 @@
 #include "admin/gui_editor.hpp"
 
 #include "game/game_state.hpp"
+#include "game/inventory.hpp"
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/physics/transform_component.hpp"
@@ -83,6 +84,7 @@ private:
     f32 m_fps;
 
     GameState m_state = GameState::RUNNING;
+    Inventory m_inventory;
 };
 
 } // namespace game

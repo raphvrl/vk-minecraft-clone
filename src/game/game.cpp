@@ -4,7 +4,7 @@ namespace game
 {
 
 Game::Game() :
-    m_playerSystem(&m_ecs, m_window, m_camera, m_world, m_overlay),
+    m_playerSystem(&m_ecs, m_window, m_camera, m_world, m_overlay, m_inventory),
     m_physicsSystem(&m_ecs, m_world)
 {
 }
@@ -36,9 +36,15 @@ void Game::init()
 
     m_overlay.init(m_device, m_textureCache);
 
+    m_imguiManager.init(m_device, m_window);
+    m_guiEditor.init(m_imguiManager, m_guiManager, m_textureCache);
+
+    m_inventory.load();
+    m_guiManager.setInventory(m_inventory);
+
     EntityID playerEntity = m_ecs.creatEntity();
     auto transform = m_ecs.addComponent<ecs::TransformComponent>(playerEntity);
-    transform->position = glm::vec3(0.0f, 80.0f, 0.0f);
+    transform->position = glm::vec3(0.0f, 127.0f, 0.0f);
 
     m_ecs.addComponent<ecs::VelocityComponent>(playerEntity);
     m_ecs.addComponent<ecs::PlayerComponent>(playerEntity);
@@ -51,14 +57,13 @@ void Game::init()
     playerCollider->isGhost = false;
 
     m_running = true;
-
-    m_imguiManager.init(m_device, m_window);
-    m_guiEditor.init(m_imguiManager, m_guiManager, m_textureCache);
 }
 
 void Game::destroy()
 {
     m_device.waitIdle();
+
+    m_inventory.save();
 
     m_imguiManager.destroy();
 
@@ -161,6 +166,29 @@ void Game::handleInput()
     if (m_window.isKeyJustPressed(GLFW_KEY_F11)) {
         m_window.toogleFullscreen();
     }
+
+    if (m_state == GameState::RUNNING) {
+        for (int i = GLFW_KEY_1; i <= GLFW_KEY_9; i++) {
+            if (m_window.isKeyJustPressed(i)) {
+                m_inventory.setSelectedSlot(i - GLFW_KEY_1);
+            }
+        }
+
+        f32 scroll = m_window.getMouseScrollY();
+        if (scroll != 0.0f) {
+            int currentSlot = m_inventory.getSelectedSlot();
+            int newSlot;
+
+            if (scroll > 0.0f) {
+                newSlot = (currentSlot - 1 + 9) % 9;
+            } else {
+                newSlot = (currentSlot + 1) % 9;
+            }
+
+            m_inventory.setSelectedSlot(newSlot);
+            m_window.resetMouseScrollY();
+        }
+    }
 }
 
 void Game::update(f32 dt)
@@ -223,6 +251,7 @@ void Game::render()
     m_outline.render(cmd, m_camera);
     m_clouds.render(cmd, m_camera);
     m_overlay.render(cmd);
+    m_guiManager.renderGame(cmd);
 
     m_display.end(cmd);
 
@@ -234,7 +263,7 @@ void Game::render()
 
     m_imguiManager.beginFrame();
 
-    m_guiManager.render(cmd);
+    m_guiManager.renderMenu(cmd);
     m_guiEditor.render();
 
     m_imguiManager.endFrame(cmd);

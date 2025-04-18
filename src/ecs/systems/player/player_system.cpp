@@ -10,13 +10,15 @@ PlayerSystem::PlayerSystem(
     core::Window &window,
     core::Camera &camera,
     wld::World &world,
-    gfx::OverlayRenderer &overlay
+    gfx::OverlayRenderer &overlay,
+    game::Inventory &inventory
 ) : 
     System(ecs), 
     m_window(window),
     m_camera(camera),
     m_world(world),
-    m_overlay(overlay)
+    m_overlay(overlay),
+    m_inventory(inventory)
 {
 }
 
@@ -307,9 +309,11 @@ void PlayerSystem::handleBlockPlacement(ecs::PlayerComponent *player, ecs::Trans
             return;
         }
 
-        m_world.placeBlock(result.normal, wld::BlockType::COBBLESTONE);
+        wld::BlockType type = m_inventory.getSelectedItemSlot().type;
+
+        m_world.placeBlock(result.normal, type);
         sfx::SoundManager::get().playPlaceBlock(
-            wld::BlockType::COBBLESTONE,
+            type,
             transform->position
         );
     }

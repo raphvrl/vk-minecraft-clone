@@ -200,9 +200,11 @@ void GUIEditor::renderElementProperties()
         }
     }
 
-    const char *types[] = {"Panel", "Button", "Label", "Image"};
-    static int selectedType = 0;
-    ImGui::Combo("Type", &selectedType, types, IM_ARRAYSIZE(types));
+    const char *types[] = {"Panel", "Button", "Label", "Image", "Navbar"};
+    int selectedType = static_cast<int>(m_selectedElement->type);
+    if (ImGui::Combo("Type", &selectedType, types, IM_ARRAYSIZE(types))) {
+        m_selectedElement->type = static_cast<gui::ElementType>(selectedType);
+    }
 
     renderAnchorSelector();
 
@@ -213,7 +215,17 @@ void GUIEditor::renderElementProperties()
 
     ImGui::Separator();
 
+    const char *states[] = {"Running", "Paused"};
+    static int selectedState = 0;
+    if (ImGui::Combo("State", &selectedState, states, IM_ARRAYSIZE(states))) {
+        m_selectedElement->state = static_cast<game::GameState>(selectedState);
+    }
+
     ImGui::Checkbox("Visible", &m_selectedElement->visible);
+
+    ImGui::Separator();
+
+    ImGui::Checkbox("Invert effect", &m_selectedElement->invertEffect);
 
     ImGui::EndChild();
 }
