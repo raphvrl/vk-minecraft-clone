@@ -16,6 +16,11 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ### Removed
 -
 
+## [0.2.2] - 2025-04-22
+
+### Fixed
+- Fixed shader files missing during Linux compilation
+
 ## [0.2.1] - 2025-04-13
 
 ### Added
@@ -83,7 +88,8 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
   - Face culling for meshes
   - Frustum culling for chunks and clouds
 
-[Unreleased]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.2.0...v0.2.2
 [0.2.1]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/raphvrl/vulkan-minecraft/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/raphvrl/vulkan-minecraft/releases/tag/v0.1.0
