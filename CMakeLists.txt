@@ -173,14 +173,20 @@ if(Vulkan_FOUND)
                 /usr/local/bin
         )
 
-        if (NOT GLSLC_EXECUTABLE)
-                message(STATUS "glslc not found in VULKAN_SDK/bin or system path.")
+        if(NOT GLSLC_EXECUTABLE)
+                find_program(GLSLANG_VALIDATOR glslangValidator)
+                if(GLSLANG_VALIDATOR)
+                        set(GLSLC_EXECUTABLE ${GLSLANG_VALIDATOR})
+                        set(GLSLC_ARGS "--target-env" "vulkan1.3" "-V")
+                        message(STATUS "Using glslangValidator as shader compiler: ${GLSLC_EXECUTABLE}")
+                endif()
         else()
+                set(GLSLC_ARGS "")
                 message(STATUS "Found glslc: ${GLSLC_EXECUTABLE}")
         endif()
         
         if(GLSLC_EXECUTABLE)
-                message(STATUS "Found glslc: ${GLSLC_EXECUTABLE}")
+                message(STATUS "Shader compiler: ${GLSLC_EXECUTABLE}")
 
                 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders)
 
@@ -204,6 +210,7 @@ if(Vulkan_FOUND)
                         add_custom_command(
                                 OUTPUT ${SHADER_OUTPUT}
                                 COMMAND ${GLSLC_EXECUTABLE} 
+                                        ${GLSLC_ARGS}
                                         -I${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/include
                                         ${SHADER} 
                                         -o ${SHADER_OUTPUT}
@@ -219,8 +226,8 @@ if(Vulkan_FOUND)
 
                 add_dependencies(vulkan-minecraft shaders)
         else()
-                message(WARNING 
-                        "Could not find glslc executable. Shaders will not be compiled.")
+                message(FATAL_ERROR 
+                        "No shader compiler found. Install glslc (libshaderc-dev) or glslangValidator (glslang-tools).")
         endif()
 endif()
 
