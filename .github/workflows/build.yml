@@ -96,6 +96,7 @@ jobs:
             libvulkan-dev \
             vulkan-tools \
             glslang-tools \
+            libshaderc-dev \
             libgl1-mesa-dev \
             xorg-dev \
             libwayland-dev \
