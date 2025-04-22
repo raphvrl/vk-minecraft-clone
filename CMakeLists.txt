@@ -169,7 +169,15 @@ if(Vulkan_FOUND)
         find_program(GLSLC_EXECUTABLE glslc HINTS 
                 $ENV{VULKAN_SDK}/bin 
                 ${Vulkan_GLSLC_EXECUTABLE}
+                /usr/bin
+                /usr/local/bin
         )
+
+        if (NOT GLSLC_EXECUTABLE)
+                message(STATUS "glslc not found in VULKAN_SDK/bin or system path.")
+        else()
+                message(STATUS "Found glslc: ${GLSLC_EXECUTABLE}")
+        endif()
         
         if(GLSLC_EXECUTABLE)
                 message(STATUS "Found glslc: ${GLSLC_EXECUTABLE}")
