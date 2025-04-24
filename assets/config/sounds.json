@@ -1,0 +1,104 @@
+{
+    "categories": {
+        "dig": {
+            "grass": {
+                "files": [
+                    "assets/sounds/dig/grass1.ogg",
+                    "assets/sounds/dig/grass2.ogg",
+                    "assets/sounds/dig/grass3.ogg",
+                    "assets/sounds/dig/grass4.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.5
+            },
+            "gravel": {
+                "files": [
+                    "assets/sounds/dig/gravel1.ogg",
+                    "assets/sounds/dig/gravel2.ogg",
+                    "assets/sounds/dig/gravel3.ogg",
+                    "assets/sounds/dig/gravel4.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.5
+            },
+            "sand": {
+                "files": [
+                    "assets/sounds/dig/sand1.ogg",
+                    "assets/sounds/dig/sand2.ogg",
+                    "assets/sounds/dig/sand3.ogg",
+                    "assets/sounds/dig/sand4.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.5
+            },
+            "stone": {
+                "files": [
+                    "assets/sounds/dig/stone1.ogg",
+                    "assets/sounds/dig/stone2.ogg",
+                    "assets/sounds/dig/stone3.ogg",
+                    "assets/sounds/dig/stone4.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.5
+            },
+            "wood": {
+                "files": [
+                    "assets/sounds/dig/wood1.ogg",
+                    "assets/sounds/dig/wood2.ogg",
+                    "assets/sounds/dig/wood3.ogg",
+                    "assets/sounds/dig/wood4.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.5
+            }
+        },
+        "step": {
+            "grass": {
+                "files": [
+                    "assets/sounds/step/grass1.ogg",
+                    "assets/sounds/step/grass2.ogg",
+                    "assets/sounds/step/grass3.ogg",
+                    "assets/sounds/step/grass4.ogg",
+                    "assets/sounds/step/grass5.ogg",
+                    "assets/sounds/step/grass6.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.30000001192092896
+            },
+            "sand": {
+                "files": [
+                    "assets/sounds/step/sand1.ogg",
+                    "assets/sounds/step/sand2.ogg",
+                    "assets/sounds/step/sand3.ogg",
+                    "assets/sounds/step/sand4.ogg",
+                    "assets/sounds/step/sand5.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.30000001192092896
+            },
+            "stone": {
+                "files": [
+                    "assets/sounds/step/stone1.ogg",
+                    "assets/sounds/step/stone2.ogg",
+                    "assets/sounds/step/stone3.ogg",
+                    "assets/sounds/step/stone4.ogg",
+                    "assets/sounds/step/stone5.ogg",
+                    "assets/sounds/step/stone6.ogg"
+                ],
+                "pitch": 1.0,
+                "volume": 0.30000001192092896
+            }
+        },
+        "ui": {
+            "button": {
+                "click": {
+                    "files": [
+                        "assets/sounds/ui/click.ogg"
+                    ],
+                    "pitch": 1.0,
+                    "volume": 0.5
+                }
+            }
+        }
+    }
+}

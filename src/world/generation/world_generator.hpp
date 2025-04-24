@@ -3,8 +3,8 @@
 #include <FastNoiseLite.h>
 #include <random>
 
-#include "block.hpp"
-#include "chunk.hpp"
+#include "world/blocks/block.hpp"
+#include "world/chunk/chunk.hpp"
 
 namespace wld
 {

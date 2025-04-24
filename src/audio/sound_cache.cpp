@@ -16,6 +16,32 @@ void SoundCache::load(const fs::path &path)
     m_buffers[path.string()] = buffer;
 }
 
+void SoundCache::remove(const fs::path &path)
+{
+    std::string name = path.stem().string();
+
+    auto it = m_buffers.find(name);
+    if (it != m_buffers.end()) {
+        it->second.destroy();
+        m_buffers.erase(it);
+    } else {
+        throw std::runtime_error("Sound not found: " + name);
+    }
+}
+
+void SoundCache::reload(const fs::path &path)
+{
+    std::string name = path.stem().string();
+
+    auto it = m_buffers.find(name);
+    if (it != m_buffers.end()) {
+        remove(path);
+        load(path);
+    } else {
+        throw std::runtime_error("Sound not found: " + name);
+    }
+}
+
 void SoundCache::destroy()
 {
     for (auto &pair : m_buffers) {

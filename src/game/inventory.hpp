@@ -7,7 +7,7 @@
 #include <fstream>
 #include <filesystem>
 
-#include "world/block_registry.hpp"
+#include "world/blocks/block_registry.hpp"
 
 using json = nlohmann::json;
 

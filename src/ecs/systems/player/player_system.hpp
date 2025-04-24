@@ -7,7 +7,7 @@
 #include "ecs/components/physics/transform_component.hpp"
 #include "ecs/components/physics/velocity_component.hpp"
 #include "ecs/components/physics/collider_component.hpp"
-#include "world/world.hpp"
+#include "world/core/world.hpp"
 #include "game/inventory.hpp"
 
 #include "graphics/renderer/overlay_renderer.hpp"

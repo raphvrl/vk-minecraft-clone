@@ -10,11 +10,12 @@
 #include <queue>
 #include <future>
 
-#include "chunk.hpp"
-#include "chunk_mesh.hpp"
-#include "block.hpp"
-#include "block_registry.hpp"
-#include "world_generator.hpp"
+#include "world/chunk/chunk.hpp"
+#include "world/chunk/chunk_mesh.hpp"
+#include "world/blocks/block.hpp"
+#include "world/blocks/block_registry.hpp"
+#include "world/generation/world_generator.hpp"
+#include "world/lighting/light_manager.hpp"
 #include "core/camera/camera.hpp"
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
@@ -60,18 +61,17 @@ public:
 
     usize getUpdatedChunks() const { return m_updatedChunks; }
 
+    void markChunkDirty(const ChunkPos &pos);
+
 public:
+    Chunk *getChunk(int x, int z) const {
+        return getChunk({x, z});
+    }
+    
     Chunk *getChunk(const ChunkPos &pos) const;
 
 
 private:
-    struct ChunkPosHash
-    {
-        std::size_t operator()(const ChunkPos &pos) const {
-            return std::hash<int>()(pos.x) ^ (std::hash<int>()(pos.z) << 1);
-        }
-    };
-    
     std::unordered_set<ChunkPos, ChunkPosHash> m_chunksNeeded;
     std::vector<std::pair<ChunkPos, f32>> m_chunksToLoad;
     std::vector<ChunkPos> m_chunksToUnload;
@@ -123,6 +123,8 @@ private:
     ChunkMeshMap m_meshes;
 
     WorldGenerator m_generator;
+
+    LightManager m_lightManager;
 };
 
 } // namespace wld

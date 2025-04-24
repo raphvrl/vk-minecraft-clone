@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/ext.hpp>
-#include <toml++/toml.hpp>
 
 #include "graphics/device.hpp"
 #include "graphics/buffer.hpp"

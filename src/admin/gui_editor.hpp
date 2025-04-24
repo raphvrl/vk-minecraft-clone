@@ -14,7 +14,6 @@ public:
     ~GUIEditor() = default;
 
     void init(
-        ImGuiManager &imguiManager,
         gui::GUIManager &guiManager,
         gfx::TextureCache &textureCache
     );
@@ -26,7 +25,6 @@ public:
     void toggleVisible() { m_visible = !m_visible; }
 
 private:
-    ImGuiManager *m_imguiManager = nullptr;
     gui::GUIManager *m_guiManager = nullptr;
     gfx::TextureCache *m_textureCache = nullptr;
 
@@ -41,6 +39,7 @@ private:
     void renderTextureSelector();
     void renderNoElementSelected();
 
+    void handleInput();
     void createNewElement();
     void deleteSelectedElement();
     void duplicateSelectedElement();

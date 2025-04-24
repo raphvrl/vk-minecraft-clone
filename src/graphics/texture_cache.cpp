@@ -8,6 +8,8 @@ void TextureCache::init(Device &device)
     m_device = &device;
 
     createDescriptorResources();
+
+    load();
 }
 
 void TextureCache::destroy()
@@ -37,8 +39,6 @@ void TextureCache::destroy()
 
 void TextureCache::loadTexture(const fs::path &path, const std::string &name)
 {
-    fs::path texturePath = fs::path(TEXTURE_DIR_STR) / path;
-
     if (m_textures.find(name) != m_textures.end()) {
         return;
     }
@@ -46,7 +46,7 @@ void TextureCache::loadTexture(const fs::path &path, const std::string &name)
     VkFormat format = m_device->getSwapchain().getFormat();
 
     Image image = m_device->loadImage(
-        texturePath,
+        path,
         format,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         false
@@ -62,6 +62,7 @@ void TextureCache::loadTexture(const fs::path &path, const std::string &name)
     }
 
     Texture texture;
+    texture.path = path.string();
     texture.gpuImage = image;
     texture.index = textureID;
     texture.width = image.getWidth();
@@ -90,6 +91,31 @@ void TextureCache::loadTexture(const fs::path &path, const std::string &name)
     );
 
     m_textures[name] = texture;
+}
+
+void TextureCache::save()
+{
+    std::ofstream file(TEXTURE_CONFIG_PATH);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open textures.json for writing.");
+    }
+
+    json root = toJson();
+    file << root.dump(4);
+    file.close();
+}
+
+void TextureCache::load()
+{
+    std::ifstream file(TEXTURE_CONFIG_PATH);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open textures.json for reading.");
+    }
+
+    json root;
+    file >> root;
+    fromJson(root);
+    file.close();
 }
 
 void TextureCache::createDescriptorResources()
@@ -153,6 +179,36 @@ VkDescriptorSet TextureCache::allocateDescriptorSet()
     vk::check(res, "Failed to allocate descriptor set.");
 
     return descriptorSet;
+}
+
+json &TextureCache::toJson()
+{
+    json root;
+    json texturesJson = json::object();
+
+    for (const auto &[name, texture] : m_textures) {
+        texturesJson[name] = {
+            {"path", texture.path},
+            {"name", name}
+        };
+    }
+
+    root["textures"] = texturesJson;
+    return root;
+}
+
+void TextureCache::fromJson(const json &root)
+{
+    if (root.contains("textures") && root["textures"].is_array()) {
+        for (const auto &textureJson : root["textures"]) {
+            std::string name = textureJson["name"];
+            std::string path = textureJson["path"];
+
+            loadTexture(path, name);
+        }
+    } else {
+        throw std::runtime_error("Invalid texture config format.");
+    }
 }
 
 } // namespace gfx

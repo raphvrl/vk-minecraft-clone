@@ -14,13 +14,13 @@
 
 #include "audio/sound_manager.hpp"
 
-#include "world/world.hpp"
-#include "world/sky.hpp"
-#include "world/outline.hpp"
-#include "world/clouds.hpp"
+#include "world/core/world.hpp"
+#include "world/environment/sky.hpp"
+#include "world/environment/clouds.hpp"
+#include "world/renderer/outline.hpp"
 
 #include "admin/imgui_manager.hpp"
-#include "admin/gui_editor.hpp"
+#include "admin/editor_manager.hpp"
 
 #include "game/game_state.hpp"
 #include "game/inventory.hpp"
@@ -77,7 +77,7 @@ private:
     ecs::PhysicsSystem m_physicsSystem;
 
     adm::ImGuiManager m_imguiManager;
-    adm::GUIEditor m_guiEditor;
+    adm::EditorManager m_editorManager;
 
     bool m_running;
 

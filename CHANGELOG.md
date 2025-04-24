@@ -5,17 +5,21 @@ All notable changes to the Vulkan Minecraft project will be documented in this f
 ## [Unreleased]
 
 ### Added
-- Custom admin GUI interface
+- Light propagation system for light-emitting blocks
+- Custom admin GUI interface for block and sound configuration/management
 - Keyboard shortcut for toggling fullscreen mode
+- Inventory bar for selecting block types for construction
+- Swimming mechanic in water blocks similar to Minecraft
 
 ### Changed
 - Completely redesigned GUI system architecture
+- Configuration format migration from TOML to JSON
+- Reduced overall sound volume for better audio balance
 
 ### Fixed
--
+- Fixed excessively loud sound effects during gameplay
 
 ### Removed
--
 
 ## [0.2.1] - 2025-04-13
 

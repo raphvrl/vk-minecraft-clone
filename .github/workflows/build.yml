@@ -94,7 +94,6 @@ jobs:
             build-essential \
             cmake \
             libvulkan-dev \
-            vulkan-tools \
             glslang-tools \
             libgl1-mesa-dev \
             xorg-dev \
@@ -105,6 +104,8 @@ jobs:
             libxcursor-dev \
             libxi-dev \
             libxkbcommon-dev \
+            libasound2-dev \
+            libpulse-dev \
             zip \
             ninja-build
       

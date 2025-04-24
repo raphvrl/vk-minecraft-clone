@@ -1,17 +1,21 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include <random>
 #include <filesystem>
 
 #include "audio_manager.hpp"
-#include "world/block.hpp"
+#include "world/blocks/block.hpp"
 
 namespace fs = std::filesystem;
+
+using json = nlohmann::json;
 
 namespace sfx
 {
 
-struct SoundGroup
+struct Sound
 {
     std::string name;
     std::vector<std::string> sounds;
@@ -50,6 +54,69 @@ public:
         m_audioManager.setListenerPos(pos, front, up);
     }
 
+    void load();
+    void save();
+
+    json toJson();
+    void fromJson(const json &data);
+    
+    void play(const Sound &sound, bool isLooping = false);
+    void play(const Sound &sound, glm::vec3 &pos, bool isLooping = false);
+
+    void play(const Sound &sound, f32 pitch, bool isLooping = false);
+    void play(const Sound &sound, glm::vec3 &pos, f32 pitch, bool isLooping = false);
+
+    void play(const std::string &name, f32 pitch, bool isLooping = false);
+
+    void stop(const Sound &sound);
+    void stopAll();
+
+    Sound *getSound(const std::string &name)
+    {
+        auto it = m_sounds.find(name);
+        if (it != m_sounds.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+
+    std::unordered_map<std::string, Sound> &getSounds()
+    {
+        return m_sounds;
+    }
+
+    void addSound(const std::string &name, const Sound &sound)
+    {
+        m_sounds[name] = sound;
+    }
+
+    void updateSound(const std::string &name)
+    {
+        auto it = m_sounds.find(name);
+        if (it != m_sounds.end()) {
+            auto &sounds = it->second.sounds;
+            for (const auto &sound : sounds) {
+                m_audioManager.loadSound(sound);
+            }
+        }
+    }
+    
+    void removeSound(const std::string &name)
+    {
+        m_sounds.erase(name);
+    }
+
+    void renameSound(const std::string &oldName, const std::string &newName)
+    {
+        auto it = m_sounds.find(oldName);
+        if (it != m_sounds.end()) {
+            Sound sound = it->second;
+            m_sounds.erase(it);
+            sound.name = newName;
+            m_sounds[newName] = sound;
+        }
+    }
+
 private:
     SoundManager() = default;
     ~SoundManager() = default;
@@ -57,39 +124,12 @@ private:
     AudioManager m_audioManager;
 
 private:
-    void registerSounds();
 
-    std::unordered_map<std::string, std::string> m_soundMap;
-    std::unordered_map<std::string, SoundGroup> m_soundGroups;
+    std::unordered_map<std::string, Sound> m_sounds;
 
     std::mt19937 m_rng{std::random_device{}()};
 
-    void registerSound(
-        const std::string &id,
-        const std::string &path,
-        f32 volume = 1.0f,
-        f32 pitch = 1.0f
-    );
-
-    void registerGroup(
-        const std::string &id,
-        const std::vector<fs::path> &paths,
-        f32 volume = 1.0f,
-        f32 pitch = 1.0f
-    );
-
-    void play(const std::string &name, bool isLooping = false)
-    {
-        m_audioManager.play(m_soundMap[name], isLooping);
-    }
-
-    void play(const std::string &name, glm::vec3 &pos, bool isLooping = false)
-    {
-        m_audioManager.play(m_soundMap[name], pos, isLooping);
-    }
-
-    void play(const SoundGroup &group, bool isLooping = false);
-    void play(const SoundGroup &group, glm::vec3 &pos, bool isLooping = false);
+    void processSound(const std::string &id, const json &info);
 };
      
 } // namespace sfx

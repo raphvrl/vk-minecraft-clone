@@ -12,6 +12,10 @@ class SoundCache
 
 public:
     void load(const fs::path &path);
+    void remove(const fs::path &path);
+
+    void reload(const fs::path &path);
+
     void destroy();
 
     ALuint getSoundID(const std::string &name) const;

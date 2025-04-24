@@ -4,7 +4,7 @@
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/texture_cache.hpp"
-#include "world/block_registry.hpp"
+#include "world/blocks/block_registry.hpp"
 
 namespace gfx
 {

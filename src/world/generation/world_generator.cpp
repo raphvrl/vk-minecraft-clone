@@ -1,5 +1,5 @@
 #include "world_generator.hpp"
-#include "chunk.hpp"
+#include "world/chunk/chunk.hpp"
 
 namespace wld
 {

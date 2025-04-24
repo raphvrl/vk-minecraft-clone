@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ecs/systems/system.hpp"
-#include "world/world.hpp"
+#include "world/core/world.hpp"
 
 #include "ecs/components/physics/transform_component.hpp"
 #include "ecs/components/physics/velocity_component.hpp"

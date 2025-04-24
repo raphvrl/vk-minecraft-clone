@@ -1,0 +1,24 @@
+{
+  "textures": [
+    {
+      "path": "assets/textures/terrain.png",
+      "name": "terrain"
+    },
+    {
+      "path": "assets/textures/font.png",
+      "name": "font"
+    },
+    {
+      "path": "assets/textures/water.png",
+      "name": "water"
+    },
+    {
+      "path": "assets/textures/gui/gui.png",
+      "name": "gui"
+    },
+    {
+      "path": "assets/textures/gui/icons.png",
+      "name": "icons"
+    }
+  ]
+}

@@ -16,13 +16,6 @@ void Game::init()
     m_device.init(m_window, "Minecraft Clone", {0, 1, 0});
     m_gpuData.init(m_device);
     m_textureCache.init(m_device);
-
-    m_textureCache.loadTexture("terrain.png", "terrain");
-    m_textureCache.loadTexture("font.png", "font");
-    m_textureCache.loadTexture("water.png", "water");
-    m_textureCache.loadTexture("gui/gui.png", "gui");
-    m_textureCache.loadTexture("gui/icons.png", "icons");
-
     m_display.init(m_device);
 
     m_guiManager.init(m_device, m_textureCache);
@@ -37,7 +30,7 @@ void Game::init()
     m_overlay.init(m_device, m_textureCache);
 
     m_imguiManager.init(m_device, m_window);
-    m_guiEditor.init(m_imguiManager, m_guiManager, m_textureCache);
+    m_editorManager.init(m_guiManager, m_textureCache);
 
     m_inventory.load();
     m_guiManager.setInventory(m_inventory);
@@ -160,7 +153,7 @@ void Game::handleInput()
     }
 
     if (m_window.isKeyJustPressed(GLFW_KEY_F7)) {
-        m_guiEditor.toggleVisible();
+        m_editorManager.toggleVisible();
     }
 
     if (m_window.isKeyJustPressed(GLFW_KEY_F11)) {
@@ -261,11 +254,11 @@ void Game::render()
 
     m_device.beginRenderLoad(cmd);
 
+    m_guiManager.renderMenu(cmd);
     m_imguiManager.beginFrame();
 
-    m_guiManager.renderMenu(cmd);
-    m_guiEditor.render();
-
+    m_editorManager.render();
+    
     m_imguiManager.endFrame(cmd);
 
     m_device.endRender(cmd);

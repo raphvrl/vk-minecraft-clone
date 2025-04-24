@@ -1,15 +1,21 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
+#include <fstream>
+
 #include "device.hpp"
 #include "image.hpp"
 
-constexpr const char* TEXTURE_DIR_STR = "assets/textures/";
+using json = nlohmann::json;
 
 namespace gfx
 {
 
 struct Texture
 {
+    std::string path;
+
     Image gpuImage;
     u32 index;
 
@@ -63,6 +69,9 @@ public:
         return names;
     }
 
+    void load();
+    void save();
+
 private:
     Device *m_device = nullptr;
 
@@ -73,6 +82,11 @@ private:
     VkDescriptorSet allocateDescriptorSet();
 
     std::unordered_map<std::string, Texture> m_textures;
+
+    const char *TEXTURE_CONFIG_PATH = "assets/config/textures.json";
+
+    json &toJson();
+    void fromJson(const json &data);
 }; 
 
 } // namespace gfx

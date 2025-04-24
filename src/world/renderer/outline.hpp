@@ -3,7 +3,7 @@
 #include "core/camera/camera.hpp"
 #include "graphics/device.hpp"
 #include "graphics/pipeline.hpp"
-#include "world/world.hpp"
+#include "world/core/world.hpp"
 
 
 namespace wld

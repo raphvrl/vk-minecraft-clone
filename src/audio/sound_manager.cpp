@@ -1,5 +1,5 @@
 #include "sound_manager.hpp"
-#include "world/block_registry.hpp"
+#include "world/blocks/block_registry.hpp"
 
 namespace sfx
 {
@@ -8,7 +8,7 @@ namespace sfx
 void SoundManager::init()
 {
     m_audioManager.init();
-    registerSounds();
+    load();
 }
 
 void SoundManager::destroy()
@@ -23,7 +23,10 @@ void SoundManager::update()
 
 void SoundManager::playButtonClick()
 {
-    play("ui.button.click", false);
+    auto it = m_sounds.find("ui.button.click");
+    if (it != m_sounds.end()) {
+        play(it->second, false);
+    }
 }
 
 void SoundManager::playFootstep(
@@ -31,14 +34,11 @@ void SoundManager::playFootstep(
     glm::vec3 &pos
 )
 {
-    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+    auto &block = wld::BlockRegistry::get().getBlock(blockType);
+    std::string &name = block.stepSound.sound;
+    f32 pitch = block.stepSound.pitch;
 
-    std::string groupName = "step." + block.material;
-
-    auto it = m_soundGroups.find(groupName);
-    if (it != m_soundGroups.end()) {
-        play(it->second, pos, false);
-    }
+    play(m_sounds[name], pos, pitch, false);
 }
 
 void SoundManager::playPlaceBlock(
@@ -46,13 +46,11 @@ void SoundManager::playPlaceBlock(
     glm::vec3 &pos
 )
 {
-    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+    auto &block = wld::BlockRegistry::get().getBlock(blockType);
+    std::string &name = block.placeSound.sound;
+    f32 pitch = block.placeSound.pitch;
 
-    std::string groupName = "dig." + block.material;
-    auto it = m_soundGroups.find(groupName);
-    if (it != m_soundGroups.end()) {
-        play(it->second, pos, false);
-    }
+    play(m_sounds[name], pos, pitch, false);
 }
 
 void SoundManager::playBreakBlock(
@@ -60,200 +58,232 @@ void SoundManager::playBreakBlock(
     glm::vec3 &pos
 )
 {
-    wld::Block block = wld::BlockRegistry::get().getBlock(blockType);
+    auto &block = wld::BlockRegistry::get().getBlock(blockType);
+    std::string &name = block.breakSound.sound;
+    f32 pitch = block.breakSound.pitch;
 
-    std::string groupName = "dig." + block.material;
-    auto it = m_soundGroups.find(groupName);
-    if (it != m_soundGroups.end()) {
-        play(it->second, pos, false);
+    play(m_sounds[name], pos, pitch, false);
+}
+
+void SoundManager::load()
+{
+    std::ifstream file("assets/config/sounds.json");
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open sound config file.");
+    }
+
+    json data;
+    file >> data;
+    fromJson(data);
+
+    play(m_sounds["ui.button.click"], false);
+}
+
+void SoundManager::save()
+{
+    std::ofstream file("assets/config/sounds.json");
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open sound config file for writing.");
+    }
+
+    json data = toJson();
+    file << data.dump(4);
+}
+
+void SoundManager::play(const Sound &sound, bool isLooping)
+{
+    if (sound.sounds.size() > 1) {
+        std::uniform_int_distribution<size_t> dist(0, sound.sounds.size() - 1);
+        size_t index = dist(m_rng);
+        m_audioManager.play(
+            sound.sounds[index],
+            sound.volume,
+            sound.pitch,
+            isLooping
+        );
+    } else if (sound.sounds.size() == 1) {
+        m_audioManager.play(
+            sound.sounds[0],
+            sound.volume,
+            sound.pitch,
+            isLooping
+        );
     }
 }
 
-void SoundManager::registerSounds()
+void SoundManager::play(const Sound &sound, glm::vec3 &pos, bool isLooping)
 {
-    registerSound(
-        "ui.button.click",
-        "assets/sounds/ui/click.ogg"
-    );
-
-    registerGroup(
-        "step.grass",
-        {
-            "assets/sounds/step/grass1.ogg",
-            "assets/sounds/step/grass2.ogg",
-            "assets/sounds/step/grass3.ogg",
-            "assets/sounds/step/grass4.ogg",
-            "assets/sounds/step/grass5.ogg",
-            "assets/sounds/step/grass6.ogg",
-        },
-        0.3f,
-        1.0f
-    );
-
-    registerGroup(
-        "step.stone",
-        {
-            "assets/sounds/step/stone1.ogg",
-            "assets/sounds/step/stone2.ogg",
-            "assets/sounds/step/stone3.ogg",
-            "assets/sounds/step/stone4.ogg",
-            "assets/sounds/step/stone5.ogg",
-            "assets/sounds/step/stone6.ogg",
-        },
-        0.3f,
-        1.0f
-    );
-
-    registerGroup(
-        "step.sand",
-        {
-            "assets/sounds/step/sand1.ogg",
-            "assets/sounds/step/sand2.ogg",
-            "assets/sounds/step/sand3.ogg",
-            "assets/sounds/step/sand4.ogg",
-            "assets/sounds/step/sand5.ogg",
-        },
-        0.3f,
-        1.0f
-    );
-
-    registerGroup(
-        "step.gravel",
-        {
-            "assets/sounds/step/gravel1.ogg",
-            "assets/sounds/step/gravel2.ogg",
-            "assets/sounds/step/gravel3.ogg",
-            "assets/sounds/step/gravel4.ogg",
-        },
-        0.3f,
-        1.0f
-    );
-
-    registerGroup(
-        "step.wood",
-        {
-            "assets/sounds/step/wood1.ogg",
-            "assets/sounds/step/wood2.ogg",
-            "assets/sounds/step/wood3.ogg",
-            "assets/sounds/step/wood4.ogg",
-            "assets/sounds/step/wood5.ogg",
-            "assets/sounds/step/wood6.ogg",
-        },
-        0.3f,
-        1.0f
-    );
-
-    registerGroup(
-        "dig.grass",
-        {
-            "assets/sounds/dig/grass1.ogg",
-            "assets/sounds/dig/grass2.ogg",
-            "assets/sounds/dig/grass3.ogg",
-            "assets/sounds/dig/grass4.ogg",
-        },
-        0.5f,
-        1.0f
-    );
-
-    registerGroup(
-        "dig.stone",
-        {
-            "assets/sounds/dig/stone1.ogg",
-            "assets/sounds/dig/stone2.ogg",
-            "assets/sounds/dig/stone3.ogg",
-            "assets/sounds/dig/stone4.ogg",
-        },
-        0.5f,
-        1.0f
-    );
-
-    registerGroup(
-        "dig.sand",
-        {
-            "assets/sounds/dig/sand1.ogg",
-            "assets/sounds/dig/sand2.ogg",
-            "assets/sounds/dig/sand3.ogg",
-            "assets/sounds/dig/sand4.ogg",
-        },
-        0.5f,
-        1.0f
-    );
-
-    registerGroup(
-        "dig.gravel",
-        {
-            "assets/sounds/dig/gravel1.ogg",
-            "assets/sounds/dig/gravel2.ogg",
-            "assets/sounds/dig/gravel3.ogg",
-            "assets/sounds/dig/gravel4.ogg",
-        },
-        0.5f,
-        1.0f
-    );
-
-    registerGroup(
-        "dig.wood",
-        {
-            "assets/sounds/dig/wood1.ogg",
-            "assets/sounds/dig/wood2.ogg",
-            "assets/sounds/dig/wood3.ogg",
-            "assets/sounds/dig/wood4.ogg",
-        },
-        0.5f,
-        1.0f
-    );
-}
-
-void SoundManager::registerSound(
-    const std::string &id,
-    const std::string &path,
-    f32 volume,
-    f32 pitch
-)
-{
-    UNUSED(volume);
-    UNUSED(pitch);
-
-    m_soundMap[id] = path;
-    m_audioManager.loadSound(path);
-}
-
-void SoundManager::registerGroup(
-    const std::string &id,
-    const std::vector<fs::path> &paths,
-    f32 volume,
-    f32 pitch
-)
-{
-    SoundGroup group;
-    group.name = id;
-    group.volume = volume;
-    group.pitch = pitch;
-    for (const auto &path : paths) {
-        group.sounds.push_back(path.string());
-        m_audioManager.loadSound(path);
+    if (sound.sounds.size() > 1) {
+        std::uniform_int_distribution<size_t> dist(0, sound.sounds.size() - 1);
+        size_t index = dist(m_rng);
+        m_audioManager.play(
+            sound.sounds[index],
+            pos,
+            sound.volume,
+            sound.pitch,
+            isLooping
+        );
+    } else if (sound.sounds.size() == 1) {
+        m_audioManager.play(
+            sound.sounds[0],
+            pos, 
+            sound.volume,
+            sound.pitch,
+            isLooping
+        );
     }
-    m_soundGroups[id] = group;
 }
 
-void SoundManager::play(const SoundGroup &group, bool isLooping)
+void SoundManager::play(const Sound &sound, f32 pitch, bool isLooping)
 {
-    std::uniform_int_distribution<int> dist(0, group.sounds.size() - 1);
-    int index = dist(m_rng);
-    m_audioManager.play(group.sounds[index], 1.0f, 1.0f, isLooping);
+    if (sound.sounds.size() > 1) {
+        std::uniform_int_distribution<size_t> dist(0, sound.sounds.size() - 1);
+        size_t index = dist(m_rng);
+        m_audioManager.play(
+            sound.sounds[index],
+            sound.volume,
+            pitch,
+            isLooping
+        );
+    } else if (sound.sounds.size() == 1) {
+        m_audioManager.play(
+            sound.sounds[0],
+            sound.volume,
+            pitch,
+            isLooping
+        );
+    }
 }
 
-void SoundManager::play(const SoundGroup &group, glm::vec3 &pos, bool isLooping)
+void SoundManager::play(const Sound &sound, glm::vec3 &pos, f32 pitch, bool isLooping)
 {
-    std::uniform_int_distribution<int> dist(0, group.sounds.size() - 1);
-    int index = dist(m_rng);
-    m_audioManager.play(
-        group.sounds[index],
-        pos,
-        group.volume,
-        group.pitch,
-        isLooping
-    );
+    if (sound.sounds.size() > 1) {
+        std::uniform_int_distribution<size_t> dist(0, sound.sounds.size() - 1);
+        size_t index = dist(m_rng);
+        m_audioManager.play(
+            sound.sounds[index],
+            pos,
+            sound.volume,
+            pitch,
+            isLooping
+        );
+    } else if (sound.sounds.size() == 1) {
+        m_audioManager.play(
+            sound.sounds[0],
+            pos,
+            sound.volume,
+            pitch,
+            isLooping
+        );
+    }
+}
+
+void SoundManager::play(const std::string &name, f32 pitch, bool isLooping)
+{
+    auto it = m_sounds.find(name);
+    if (it != m_sounds.end()) {
+        play(it->second, pitch, isLooping);
+    }
+}
+
+void SoundManager::stop(const Sound &sound)
+{
+    m_audioManager.stop(sound.name);
+}
+
+void SoundManager::stopAll()
+{
+    m_audioManager.stopAll();
+}
+
+json SoundManager::toJson()
+{
+    json root;
+    json categories = json::object();
+
+    for (const auto &[id, sound] : m_sounds) {
+        std::vector<std::string> parts;
+        std::string currentPart;
+        std::istringstream iss(id);
+
+        while (std::getline(iss, currentPart, '.')) {
+            parts.push_back(currentPart);
+        }
+
+        if (parts.size() < 1) continue;
+
+        json* currentNode = &categories;
+
+        for (size_t i = 0; i < parts.size() - 1; i++) {
+            const std::string& part = parts[i];
+
+            if (!currentNode->contains(part)) {
+                (*currentNode)[part] = json::object();
+            }
+
+            currentNode = &(*currentNode)[part];
+        }
+
+        const std::string& lastPart = parts.back();
+        (*currentNode)[lastPart] = {
+            {"volume", sound.volume},
+            {"pitch", sound.pitch},
+            {"files", json::array()}
+        };
+
+        for (const auto &file : sound.sounds) {
+            (*currentNode)[lastPart]["files"].push_back(file);
+        }
+    }
+
+    root["categories"] = categories;
+    return root;
+}
+
+void SoundManager::fromJson(const json &data)
+{
+    if (!data.contains("categories") || !data["categories"].is_object()) {
+        throw std::runtime_error("Invalid sound config format.");
+    }
+
+    std::function<void(const json&, const std::string&)> processNode = 
+        [this, &processNode](const json& node, const std::string& path) {
+            for (auto it = node.begin(); it != node.end(); ++it) {
+                const std::string& key = it.key();
+                const json& value = it.value();
+                
+                std::string newPath = path.empty() ? key : path + "." + key;
+
+                if (value.contains("files")) {
+                    processSound(newPath, value);
+                }
+
+                else if (value.is_object()) {
+                    processNode(value, newPath);
+                }
+            }
+        };
+
+    processNode(data["categories"], "");
+}
+
+void SoundManager::processSound(const std::string &id, const json &info)
+{
+    if (!info.contains("files") || !info["files"].is_array()) {
+        throw std::runtime_error("Invalid sound config format.");
+    }
+
+    Sound sound;
+    sound.name = id;
+    sound.volume = info.value("volume", 1.0f);
+    sound.pitch = info.value("pitch", 1.0f);
+    
+    for (const auto &file : info["files"]) {
+        sound.sounds.push_back(file.get<std::string>());
+        m_audioManager.loadSound(file.get<std::string>());
+    }
+
+    m_sounds[id] = sound;
 }
 
 } // namespace sfx

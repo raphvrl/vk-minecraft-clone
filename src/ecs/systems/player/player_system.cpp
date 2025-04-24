@@ -99,11 +99,13 @@ void PlayerSystem::handleMovement(
     }
 
     if (player->isFlying) {
+        velocity->position.y = 0.0f;
+
         if (m_window.isKeyPressed(GLFW_KEY_SPACE)) {
-            transform->position.y += player->moveSpeed;
+            velocity->position.y += player->moveSpeed;
         }
         if (m_window.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-            transform->position.y -= player->moveSpeed;
+            velocity->position.y -= player->moveSpeed;
         }
     }
 }
@@ -117,13 +119,28 @@ void PlayerSystem::handleJumping(
 )
 {
     static bool wasSpacePressed = false;
+    static float lastSpacePress = 0.0f;
+    static const float DOUBLE_PRESS_THRESHOLD = 0.3f;
     bool spacePressed = m_window.isKeyPressed(GLFW_KEY_SPACE);
+    bool spaceJustPressed = spacePressed && !wasSpacePressed;
     
     if (m_jumpCooldown > 0.0f) {
         m_jumpCooldown -= dt;
     }
 
-    bool spaceJustPressed = spacePressed && !wasSpacePressed;
+    if (spaceJustPressed) {
+        if (lastSpacePress > 0.0f && lastSpacePress <= DOUBLE_PRESS_THRESHOLD) {
+            player->isFlying = !player->isFlying;
+            if (player->isFlying) {
+                velocity->position.y = 0.0f;
+            }
+        }
+        lastSpacePress = 0.0f;
+    }
+
+    if (lastSpacePress <= DOUBLE_PRESS_THRESHOLD) {
+        lastSpacePress += dt;
+    }
 
     if (player->isInWater) {
         if (spacePressed) {

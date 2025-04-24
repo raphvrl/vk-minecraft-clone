@@ -1,7 +1,7 @@
 #include "chunk_mesh.hpp"
-#include "block_registry.hpp"
-#include "world.hpp"
-#include "block_registry.hpp"
+#include "world/blocks/block_registry.hpp"
+#include "world/core/world.hpp"
+#include "world/blocks/block_registry.hpp"
 
 namespace wld
 {
@@ -440,7 +440,7 @@ std::array<glm::vec2, 4> ChunkMesh::getUVs(
 {
     f32 tileSize = 16.0f / 256.0f;
 
-    TextureInfo texInfo = wld::BlockRegistry::get().getBlock(block).textures;
+    TextureInfo &texInfo = wld::BlockRegistry::get().getBlock(block).textures;
     glm::uvec2 uv = texInfo.getUV(face);
 
     f32 x = (uv.x * tileSize);
@@ -496,8 +496,8 @@ bool ChunkMesh::isFaceVisible(
         return true;
     }
 
-    Block currentData = wld::BlockRegistry::get().getBlock(block);
-    Block adjacentData = wld::BlockRegistry::get().getBlock(adjacentBlock);
+    auto &currentData = wld::BlockRegistry::get().getBlock(block);
+    auto &adjacentData = wld::BlockRegistry::get().getBlock(adjacentBlock);
 
     if (isChunkBoundary && block == adjacentBlock) {
         return false;

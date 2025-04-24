@@ -62,6 +62,8 @@ void World::init(gfx::Device &device, gfx::TextureCache &textureCache)
     m_meshes.reserve(RENDER_DISTANCE * RENDER_DISTANCE);
 
     m_generator.init(0);
+
+    m_lightManager.init(*this);
 }
 
 void World::destroy()
@@ -174,6 +176,15 @@ void World::update(const glm::vec3 &playerPos, f32 dt)
             }
             
             chunksLoaded++;
+        }
+    }
+
+    m_lightManager.update();
+
+    for (auto &[pos, chunkPtr] : m_chunks) {
+        if (chunkPtr->isDirty()) {
+            updateMeshe(pos);
+            chunkPtr->clearDirty();
         }
     }
 
@@ -314,26 +325,49 @@ void World::placeBlock(const glm::ivec3 &pos, BlockType type)
             pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
         };
 
+        m_lightManager.onBlockPlaced(pos, type);
+
         it->second->setBlock(localPos, type);
 
-        it->second->update();
-
-        updateMeshe(chunkPos);
-
         if (localPos.x == 0)
-            updateMeshe({chunkPos.x - 1, chunkPos.z});
+            markChunkDirty({chunkPos.x - 1, chunkPos.z});
         if (localPos.x == Chunk::CHUNK_SIZE - 1)
-            updateMeshe({chunkPos.x + 1, chunkPos.z});
+            markChunkDirty({chunkPos.x + 1, chunkPos.z});
         if (localPos.z == 0)
-            updateMeshe({chunkPos.x, chunkPos.z - 1});
+            markChunkDirty({chunkPos.x, chunkPos.z - 1});
         if (localPos.z == Chunk::CHUNK_SIZE - 1)
-            updateMeshe({chunkPos.x, chunkPos.z + 1});
+            markChunkDirty({chunkPos.x, chunkPos.z + 1});
     }
 }
 
 void World::deleteBlock(const glm::ivec3 &pos)
 {
-    placeBlock(pos, BlockType::AIR);
+    ChunkPos chunkPos = {
+        (pos.x < 0) ? (pos.x - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.x / Chunk::CHUNK_SIZE,
+        (pos.z < 0) ? (pos.z - (Chunk::CHUNK_SIZE - 1)) / Chunk::CHUNK_SIZE : pos.z / Chunk::CHUNK_SIZE
+    };
+
+    if (auto it = m_chunks.find(chunkPos); it != m_chunks.end()) {
+        glm::ivec3 localPos = {
+            pos.x - (chunkPos.x * Chunk::CHUNK_SIZE),
+            pos.y,
+            pos.z - (chunkPos.z * Chunk::CHUNK_SIZE)
+        };
+
+        BlockType oldType = it->second->getBlock(localPos);
+        m_lightManager.onBlockRemoved(pos, oldType);
+
+        it->second->setBlock(localPos, BlockType::AIR);
+
+        if (localPos.x == 0)
+            markChunkDirty({chunkPos.x - 1, chunkPos.z});
+        if (localPos.x == Chunk::CHUNK_SIZE - 1)
+            markChunkDirty({chunkPos.x + 1, chunkPos.z});
+        if (localPos.z == 0)
+            markChunkDirty({chunkPos.x, chunkPos.z - 1});
+        if (localPos.z == Chunk::CHUNK_SIZE - 1)
+            markChunkDirty({chunkPos.x, chunkPos.z + 1});
+    }
 }
 
 bool World::raycast(
@@ -465,6 +499,13 @@ bool World::checkCollision(const glm::vec3 &min, const glm::vec3 &max)
     return false;
 }
 
+void World::markChunkDirty(const ChunkPos &pos)
+{
+    if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
+        it->second->markDirty();
+    }
+}
+
 Chunk *World::getChunk(const ChunkPos &pos) const
 {
     if (auto it = m_chunks.find(pos); it != m_chunks.end()) {
@@ -477,10 +518,9 @@ Chunk *World::getChunk(const ChunkPos &pos) const
 void World::loadChunks(const ChunkPos &pos)
 {
     auto chunk = std::make_unique<Chunk>(*this, pos);
-
     m_generator.generateChunk(*chunk, pos);
 
-    chunk->update();
+    m_lightManager.initalizeChunkLight(chunk.get());
 
     m_chunks[pos] = std::move(chunk);
 }

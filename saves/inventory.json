@@ -1,5 +1,5 @@
 {
-    "selected": 0,
+    "selected": 2,
     "slots": [
         {
             "quantity": 1,
@@ -31,7 +31,7 @@
         },
         {
             "quantity": 1,
-            "type": 0
+            "type": 50
         },
         {
             "quantity": 1,

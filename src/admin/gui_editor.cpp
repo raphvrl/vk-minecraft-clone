@@ -4,12 +4,10 @@ namespace adm
 {
 
 void GUIEditor::init(
-    ImGuiManager &imguiManager,
     gui::GUIManager &guiManager,
     gfx::TextureCache &textureCache
 )
 {
-    m_imguiManager = &imguiManager;
     m_guiManager = &guiManager;
     m_textureCache = &textureCache;
 }
@@ -18,28 +16,56 @@ void GUIEditor::render()
 {
     if (!m_visible) return;
 
-    ImGui::Begin("GUI", &m_visible);
+    ImGui::Begin("GUI", &m_visible, ImGuiWindowFlags_MenuBar);
 
-    if (ImGui::Button("Save")) {
-        m_guiManager->saveConfig();
-    }
+    handleInput();
 
-    ImGui::SameLine();
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New Element", "Ctrl+N")) {
+                createNewElement();
+            }
 
-    if (ImGui::Button("Load")) {
-        m_guiManager->loadConfig();
-    }
+            ImGui::Separator();
 
-    ImGui::SameLine();
+            if (ImGui::MenuItem("Save", "Ctrl+S")) {
+                m_guiManager->saveConfig();
+            }
 
-    if (ImGui::Button("Delete")) {
-        deleteSelectedElement();
-    }
+            if (ImGui::MenuItem("Load", "Ctrl+O")) {
+                m_guiManager->loadConfig();
+            }
 
-    ImGui::SameLine();
+            ImGui::Separator();
 
-    if (ImGui::Button("Duplicate")) {
-        duplicateSelectedElement();
+            if (ImGui::MenuItem("Exit", "Ctrl+W")) {
+                m_visible = false;
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem(
+                "Duplicate",
+                "Ctrl+D",
+                false,
+                m_selectedElement != nullptr
+            )) {
+                duplicateSelectedElement();
+            }
+
+            if (ImGui::MenuItem(
+                "Delete",
+                "Del",
+                false,
+                m_selectedElement != nullptr
+            )) {
+                deleteSelectedElement();
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
     }
 
     ImGui::Separator();
@@ -486,6 +512,29 @@ void GUIEditor::renderNoElementSelected()
     
     ImGui::EndChild();
     return;
+}
+
+void GUIEditor::handleInput()
+{
+    bool ctrlPressed = ImGui::GetIO().KeyCtrl;
+
+    if (ctrlPressed) {
+        if (ImGui::IsKeyPressed(ImGuiKey_N)) {
+            createNewElement();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_S)) {
+            m_guiManager->saveConfig();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_O)) {
+            m_guiManager->loadConfig();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_D) && m_selectedElement) {
+            duplicateSelectedElement();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_W)) {
+            m_visible = false;
+        }
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_Delete) && m_selectedElement) {
+        deleteSelectedElement();
+    }
 }
 
 void GUIEditor::createNewElement()

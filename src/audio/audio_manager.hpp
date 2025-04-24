@@ -55,6 +55,10 @@ public:
         m_soundCache.load(path);
     }
 
+    void reloadSound(const fs::path &path) {
+        m_soundCache.reload(path);
+    }
+
 private:
     ALCdevice *m_device = nullptr;
     ALCcontext *m_context = nullptr;

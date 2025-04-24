@@ -6,7 +6,7 @@
 #include <string>
 
 #include "core/types.hpp"
-#include "chunk_mesh.hpp"
+#include "world/chunk/chunk_mesh.hpp"
 
 namespace wld
 {
@@ -27,6 +27,7 @@ enum class BlockType
     FLOWER = 37,
     ROSE = 38,
     BRICK = 45,
+    TORCH = 50,
 };
 
 struct TextureInfo
@@ -57,6 +58,12 @@ struct TextureInfo
     }
 };
 
+struct BlockSoundInfo
+{
+    std::string sound = "";
+    f32 pitch = 1.0f;
+};
+
 struct Block
 {
     std::string name;
@@ -65,7 +72,10 @@ struct Block
     bool collision = true;
     bool breakable = true;
     bool cross = false;
-    std::string material = "none";
+    BlockSoundInfo breakSound;
+    BlockSoundInfo placeSound;
+    BlockSoundInfo stepSound;
+    u8 emission = 0;
 };
 
 } // namespace wld

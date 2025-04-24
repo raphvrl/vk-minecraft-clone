@@ -1,111 +1,727 @@
 {
-	"atlas": {
-		"size": 256,
-		"tile_size": 16,
-		"count": 256
-	},
-	"blocks": {
-		"stone": {
-			"id": 1,
-			"textures": {
-				"all": { "x": 1, "y": 0 }
-			},
-			"material": "stone"
-		},
-		"grass": {
-			"id": 2,
-			"textures": {
-				"top": { "x": 0, "y": 0 },
-				"bottom": { "x": 2, "y": 0 },
-				"sides": { "x": 3, "y": 0 }
-			},
-			"material": "grass"
-		},
-		"dirt": {
-			"id": 3,
-			"textures": {
-				"all": { "x": 2, "y": 0 }
-			},
-			"material": "gravel"
-		},
-		"cobblestone": {
-			"id": 4,
-			"textures": {
-				"all": { "x": 0, "y": 1 }
-			},
-			"material": "stone"
-		},
-		"planks": {
-			"id": 5,
-			"textures": {
-				"all": { "x": 4, "y": 0 }
-			},
-			"material": "wood"
-		},
-		"bedrock": {
-			"id": 7,
-			"textures": {
-				"all": { "x": 1, "y": 1 }
-			},
-			"material": "stone"
-		},
-		"water": {
-			"id": 9,
-			"textures": {
-				"all": { "x": 13, "y": 12 }
-			},
-			"transparency": true,
-			"collision": false,
-			"breakable": false,
-			"material": "water"
-		},
-		"sand": {
-			"id": 12,
-			"textures": {
-				"all": { "x": 2, "y": 1 }
-			},
-			"material": "sand"
-		},
-		"log": {
-			"id": 17,
-			"textures": {
-				"top": { "x": 5, "y": 1 },
-				"bottom": { "x": 5, "y": 1 },
-				"sides": { "x": 4, "y": 1 }
-			},
-			"material": "wood"
-		},
-		"leaves": {
-			"id": 18,
-			"textures": {
-				"all": { "x": 5, "y": 3 }
-			},
-			"material": "grass"
-		},
-		"flower": {
-			"id": 37,
-			"textures": {
-				"all": { "x": 13, "y": 0 }
-			},
-			"cross": true,
-			"collision": false,
-			"material": "grass"
-		},
-		"rose": {
-			"id": 38,
-			"textures": {
-				"all": { "x": 12, "y": 0 }
-			},
-			"cross": true,
-			"collision": false,
-			"material": "grass"
-		},
-		"brick": {
-			"id": 45,
-			"textures": {
-				"all": { "x": 7, "y": 0 }
-			},
-			"material": "stone"
-		}
-	}
+    "atlas": {
+        "count": 15
+    },
+    "blocks": {
+        "bedrock": {
+            "breakable": false,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 7,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.stone"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 1,
+                    "y": 1
+                },
+                "east": {
+                    "x": 1,
+                    "y": 1
+                },
+                "north": {
+                    "x": 1,
+                    "y": 1
+                },
+                "south": {
+                    "x": 1,
+                    "y": 1
+                },
+                "top": {
+                    "x": 1,
+                    "y": 1
+                },
+                "west": {
+                    "x": 1,
+                    "y": 1
+                }
+            },
+            "transparency": false
+        },
+        "brick": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 45,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.stone"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 7,
+                    "y": 0
+                },
+                "east": {
+                    "x": 7,
+                    "y": 0
+                },
+                "north": {
+                    "x": 7,
+                    "y": 0
+                },
+                "south": {
+                    "x": 7,
+                    "y": 0
+                },
+                "top": {
+                    "x": 7,
+                    "y": 0
+                },
+                "west": {
+                    "x": 7,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "cobblestone": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 4,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.stone"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 0,
+                    "y": 1
+                },
+                "east": {
+                    "x": 0,
+                    "y": 1
+                },
+                "north": {
+                    "x": 0,
+                    "y": 1
+                },
+                "south": {
+                    "x": 0,
+                    "y": 1
+                },
+                "top": {
+                    "x": 0,
+                    "y": 1
+                },
+                "west": {
+                    "x": 0,
+                    "y": 1
+                }
+            },
+            "transparency": false
+        },
+        "dirt": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 3,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.gravel"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.gravel"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.gravel"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 2,
+                    "y": 0
+                },
+                "east": {
+                    "x": 2,
+                    "y": 0
+                },
+                "north": {
+                    "x": 2,
+                    "y": 0
+                },
+                "south": {
+                    "x": 2,
+                    "y": 0
+                },
+                "top": {
+                    "x": 2,
+                    "y": 0
+                },
+                "west": {
+                    "x": 2,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "flower": {
+            "breakable": true,
+            "collision": false,
+            "cross": true,
+            "emission": 0,
+            "id": 37,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.grass"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 13,
+                    "y": 0
+                },
+                "east": {
+                    "x": 13,
+                    "y": 0
+                },
+                "north": {
+                    "x": 13,
+                    "y": 0
+                },
+                "south": {
+                    "x": 13,
+                    "y": 0
+                },
+                "top": {
+                    "x": 13,
+                    "y": 0
+                },
+                "west": {
+                    "x": 13,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "grass": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 2,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.grass"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 2,
+                    "y": 0
+                },
+                "east": {
+                    "x": 3,
+                    "y": 0
+                },
+                "north": {
+                    "x": 3,
+                    "y": 0
+                },
+                "south": {
+                    "x": 3,
+                    "y": 0
+                },
+                "top": {
+                    "x": 0,
+                    "y": 0
+                },
+                "west": {
+                    "x": 3,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "leaves": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 18,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.grass"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 5,
+                    "y": 3
+                },
+                "east": {
+                    "x": 5,
+                    "y": 3
+                },
+                "north": {
+                    "x": 5,
+                    "y": 3
+                },
+                "south": {
+                    "x": 5,
+                    "y": 3
+                },
+                "top": {
+                    "x": 5,
+                    "y": 3
+                },
+                "west": {
+                    "x": 5,
+                    "y": 3
+                }
+            },
+            "transparency": false
+        },
+        "log": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 17,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.wood"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.wood"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.wood"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 5,
+                    "y": 1
+                },
+                "east": {
+                    "x": 4,
+                    "y": 1
+                },
+                "north": {
+                    "x": 4,
+                    "y": 1
+                },
+                "south": {
+                    "x": 4,
+                    "y": 1
+                },
+                "top": {
+                    "x": 5,
+                    "y": 1
+                },
+                "west": {
+                    "x": 4,
+                    "y": 1
+                }
+            },
+            "transparency": false
+        },
+        "planks": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 14,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.wood"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.wood"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.wood"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 4,
+                    "y": 0
+                },
+                "east": {
+                    "x": 4,
+                    "y": 0
+                },
+                "north": {
+                    "x": 4,
+                    "y": 0
+                },
+                "south": {
+                    "x": 4,
+                    "y": 0
+                },
+                "top": {
+                    "x": 4,
+                    "y": 0
+                },
+                "west": {
+                    "x": 4,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "rose": {
+            "breakable": true,
+            "collision": false,
+            "cross": true,
+            "emission": 0,
+            "id": 38,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.grass"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.grass"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 12,
+                    "y": 0
+                },
+                "east": {
+                    "x": 12,
+                    "y": 0
+                },
+                "north": {
+                    "x": 12,
+                    "y": 0
+                },
+                "south": {
+                    "x": 12,
+                    "y": 0
+                },
+                "top": {
+                    "x": 12,
+                    "y": 0
+                },
+                "west": {
+                    "x": 12,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "sand": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 12,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.sand"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.sand"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.sand"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 2,
+                    "y": 1
+                },
+                "east": {
+                    "x": 2,
+                    "y": 1
+                },
+                "north": {
+                    "x": 2,
+                    "y": 1
+                },
+                "south": {
+                    "x": 2,
+                    "y": 1
+                },
+                "top": {
+                    "x": 2,
+                    "y": 1
+                },
+                "west": {
+                    "x": 2,
+                    "y": 1
+                }
+            },
+            "transparency": false
+        },
+        "stone": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 1,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.stone"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 1,
+                    "y": 0
+                },
+                "east": {
+                    "x": 1,
+                    "y": 0
+                },
+                "north": {
+                    "x": 1,
+                    "y": 0
+                },
+                "south": {
+                    "x": 1,
+                    "y": 0
+                },
+                "top": {
+                    "x": 1,
+                    "y": 0
+                },
+                "west": {
+                    "x": 1,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        },
+        "torch": {
+            "breakable": true,
+            "collision": false,
+            "cross": false,
+            "emission": 15,
+            "id": 50,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "dig.stone"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "step.stone"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 6,
+                    "y": 1
+                },
+                "east": {
+                    "x": 6,
+                    "y": 1
+                },
+                "north": {
+                    "x": 6,
+                    "y": 1
+                },
+                "south": {
+                    "x": 6,
+                    "y": 1
+                },
+                "top": {
+                    "x": 6,
+                    "y": 1
+                },
+                "west": {
+                    "x": 6,
+                    "y": 1
+                }
+            },
+            "transparency": false
+        },
+        "water": {
+            "breakable": false,
+            "collision": false,
+            "cross": false,
+            "emission": 0,
+            "id": 9,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": "liquid.water"
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": "liquid.water"
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": "liquid.splash"
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 13,
+                    "y": 12
+                },
+                "east": {
+                    "x": 13,
+                    "y": 12
+                },
+                "north": {
+                    "x": 13,
+                    "y": 12
+                },
+                "south": {
+                    "x": 13,
+                    "y": 12
+                },
+                "top": {
+                    "x": 13,
+                    "y": 12
+                },
+                "west": {
+                    "x": 13,
+                    "y": 12
+                }
+            },
+            "transparency": true
+        },
+        "wood": {
+            "breakable": true,
+            "collision": true,
+            "cross": false,
+            "emission": 0,
+            "id": 5,
+            "sounds": {
+                "break": {
+                    "pitch": 1.0,
+                    "sound": ""
+                },
+                "place": {
+                    "pitch": 1.0,
+                    "sound": ""
+                },
+                "step": {
+                    "pitch": 1.0,
+                    "sound": ""
+                }
+            },
+            "textures": {
+                "bottom": {
+                    "x": 4,
+                    "y": 0
+                },
+                "east": {
+                    "x": 4,
+                    "y": 0
+                },
+                "north": {
+                    "x": 4,
+                    "y": 0
+                },
+                "south": {
+                    "x": 4,
+                    "y": 0
+                },
+                "top": {
+                    "x": 4,
+                    "y": 0
+                },
+                "west": {
+                    "x": 4,
+                    "y": 0
+                }
+            },
+            "transparency": false
+        }
+    }
 }
